@@ -86,17 +86,15 @@ void setup() {
 
   // Show the display buffer on the screen. You MUST call display() after
   // drawing commands to make them visible on screen!
-  display.display();
-  delay(2000);
+
   // display.display() is NOT necessary after every single drawing command,
   // unless that's what you want...rather, you can batch up a bunch of
   // drawing operations and then update the screen all at once by calling
   // display.display(). These examples demonstrate both approaches...
 
-  for (;;) {
-    display_first_contact();delay(1000);
-    //testdrawstyles();     delay(1000);
-  #if 0
+
+   testdrawstyles();     delay(1000);
+  #//if 0
       // XXX testanimate(logo_bmp, LOGO_WIDTH, LOGO_HEIGHT); // Animate bitmaps
     testdrawchar();      // Draw characters of the default font
     delay(1000);
@@ -105,8 +103,8 @@ void setup() {
     delay(1000);
     display.invertDisplay(false);
     delay(1000);
-  #endif
-  }
+  //#endif
+  
 
   testdrawline();      // Draw many lines
 
