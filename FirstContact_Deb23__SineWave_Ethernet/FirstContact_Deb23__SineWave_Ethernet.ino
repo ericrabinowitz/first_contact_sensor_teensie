@@ -6,6 +6,31 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
+// Begin Ethernet Requirements
+#include "defines.h" 
+  
+#include <SD.h> 
+#include <SPI.h> 
+#include <QNEthernet.h>
+
+#define PASV_RESPONSE_STYLE_NEW       true 
+#define FTP_FILESYST                  FTP_SDFAT2 
+
+// Default 2048 
+#define FTP_BUF_SIZE                  8192 
+
+#define FTP_USER_NAME_LEN             64        // Max permissible and default are 64 
+#define FTP_USER_PWD_LEN             128        // Max permissible and default are 128 
+
+byte mac[] = {
+  0x92, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+IPAddress NETWORK_IP      (192,168,1,48); //static IP
+IPAddress NETWORK_MASK    (255,255,255,0);
+IPAddress NETWORK_GATEWAY (192,168,1,20);
+IPAddress NETWORK_DNS     (192,168,1,20);
+IPAddress UDP_LOG_PC_IP   (192,168,1,50);
+// End  Ethernet Requirements
+
 #define LED1_PIN 3
 #define LED2_PIN 4
 #define LED3_PIN 5
@@ -46,7 +71,124 @@ AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
 elapsedMillis since_main = 0;
 uint16_t main_period_ms = 60; 
 
+// Begin Ethernet Setup
+ #define FTP_ACCOUNT       "teensy4x" 
+ #define FTP_PASSWORD      "ftp_test" 
+  
+ void initEthernet() 
+ { 
+ #if USE_QN_ETHERNET 
+   Serial.println(F("=========== USE_QN_ETHERNET ===========")); 
+ #elif USE_NATIVE_ETHERNET 
+   Serial.println(F("======== USE_NATIVE_ETHERNET ========")); 
+ #elif USE_ETHERNET_GENERIC 
+   Serial.println(F("======== USE_ETHERNET_GENERIC ========")); 
+ #else 
+   Serial.println(F("=======================================")); 
+ #endif 
+  
+ #if USE_NATIVE_ETHERNET 
+  
+   // start the ethernet connection and the server: 
+   // Use DHCP dynamic IP and random mac 
+   uint16_t index = millis() % NUMBER_OF_MAC; 
+   // Use Static IP 
+   //Ethernet.begin(mac[index], ip); 
+   Ethernet.begin(mac[index]); 
+  
+   Serial.print(F("Using mac index = ")); 
+   Serial.println(index); 
+  
+   Serial.print(F("Connected! IP address: ")); 
+   Serial.println(Ethernet.localIP()); 
+  
+ #elif USE_QN_ETHERNET 
+
+
+
+ #if USING_DHCP 
+
+   // Start the Ethernet connection, using DHCP 
+   Serial.print("Initialize Ethernet using DHCP => "); 
+   Ethernet.begin(); 
+   // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
+   delay(1000); 
+ #else 
+   // Start the Ethernet connection, using static IP 
+   Serial.print("Initialize Ethernet using STATIC IP => "); 
+   Ethernet.begin(NETWORK_IP, NETWORK_MASK, NETWORK_GATEWAY, NETWORK_DNS);  
+ #endif 
+  
+   if (!Ethernet.waitForLocalIP(5000)) 
+   { 
+     Serial.println("Failed to configure Ethernet"); 
+  
+     if (!Ethernet.linkStatus()) 
+     { 
+       Serial.println("Ethernet cable is not connected."); 
+     } 
+  
+     // Stay here forever 
+     while (true) 
+     { 
+       delay(1); 
+     } 
+   } 
+   else 
+   { 
+     Serial.print("IP Address = "); 
+     Serial.println(Ethernet.localIP()); 
+   } 
+  
+   // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
+   //delay(2000); 
+  
+ #else 
+  
+   FTP_LOGWARN(F("Default SPI pinout:")); 
+   FTP_LOGWARN1(F("MOSI:"), MOSI); 
+   FTP_LOGWARN1(F("MISO:"), MISO); 
+   FTP_LOGWARN1(F("SCK:"),  SCK); 
+   FTP_LOGWARN1(F("SS:"),   SS); 
+   FTP_LOGWARN(F("=========================")); 
+    
+   // unknown board, do nothing, use default SS = 10 
+   #ifndef USE_THIS_SS_PIN 
+     #define USE_THIS_SS_PIN   10    // For other boards 
+   #endif 
+  
+   #if defined(BOARD_NAME) 
+     FTP_LOGWARN3(F("Board :"), BOARD_NAME, F(", setCsPin:"), USE_THIS_SS_PIN); 
+   #else 
+     FTP_LOGWARN1(F("Unknown board setCsPin:"), USE_THIS_SS_PIN); 
+   #endif 
+  
+   // For other boards, to change if necessary  
+   Ethernet.init (USE_THIS_SS_PIN); 
+  
+   // start the ethernet connection and the server: 
+   // Use DHCP dynamic IP and random mac 
+   uint16_t index = millis() % NUMBER_OF_MAC; 
+   // Use Static IP 
+   //Ethernet.begin(mac[index], ip); 
+   Ethernet.begin(mac[index]); 
+   Ethernet.macAddress(mac);
+   Serial.print("IP Address = "); 
+   Serial.println(Ethernet.localIP()); 
+    
+ #endif 
+ } 
+
+// End Ethernet Setup
+
+
+
+
+
 void setup() {
+
+ 
+  
   // Audio connections require memory to work.  For more
   // detailed information, see the MemoryAndCpuUsage example
   AudioMemory(12);
@@ -57,6 +199,10 @@ void setup() {
   
   while (!Serial);
   delay(100);
+
+  Serial.printf("SineWaveEthernet\n");
+
+  initEthernet();
   
   // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
@@ -73,9 +219,12 @@ void setup() {
   right_f_3.frequency(f_3, sample_time_ms*f_3/1000);
   right_f_4.frequency(f_4, sample_time_ms*f_4/1000);
 
+
+#if 0
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
   pinMode(LED3_PIN, OUTPUT);
+#endif
 
   // start the outputs
   AudioNoInterrupts();  // disable audio library momentarily
@@ -90,6 +239,11 @@ const float row_threshold = 0.2;
 const float column_threshold = 0.2;
 
 void loop() {
+
+// XXX remove for signal processing
+  return; // XXX
+
+
 
   if (since_main >= main_period_ms) {
     since_main = 0;
@@ -109,7 +263,7 @@ void loop() {
 
 void process_signal(uint8_t signal_num) {
   float l1, l2, l3, l4, r1, r2, r3, r4;
-  uint8_t led1_val, led2_val;
+ // uint8_t led1_val, led2_val;
 
   static uint32_t count = 0;
 
@@ -154,6 +308,7 @@ void process_signal(uint8_t signal_num) {
   // Serial.print("%   ");
   // Serial.print("\n");
 
+#ifdef LED_DISPLAY_ENABLE
  
   if (signal_num == 1) {
     led1_val = (r1 > thresh) ? 1 : 0;
@@ -162,7 +317,7 @@ void process_signal(uint8_t signal_num) {
   if (signal_num == 2) {
     led2_val = (r2 > thresh) ? 1 : 0;
   }
-
+#endif // LED_DISPLAY_ENABLE
 
   //analogWrite(LED1_PIN, (1-r1)*255); // write result to LED
   //analogWrite(LED2_PIN, (1-l4)*255); // write result to LED
