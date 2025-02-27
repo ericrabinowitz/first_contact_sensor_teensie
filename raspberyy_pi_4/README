@@ -15,7 +15,7 @@ sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
 sudo cp raspberyy_pi_4/dnsmasq.conf /etc/dnsmasq.conf
 
 # 4. Append the contents of dhcpcd.conf to your local file
-sudo cat raspberyy_pi_4/dhcpcd.conf >> /etc/dhcpcd.conf
+cat raspberyy_pi_4/dhcpcd.conf | sudo tee -a /etc/dhcpcd.conf
 
 # 5. Restart and Enable dnsmasq
 sudo systemctl restart dnsmasq
