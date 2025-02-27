@@ -2,7 +2,7 @@
 
 # Run on a Raspberry Pi 4 Model B Rev 1.2
 # Raspbian GNU/Linux
-# Version 11 (byllseye)
+# Version 11 (bullseye)
 
 # 1. Install dnsmasq
 sudo apt-get update
