@@ -1,27 +1,27 @@
-These commands were run to get set up
+# These commands were run to get set up
 
-Run on a Raspberry Pi 4 Model B Rev 1.2
-Raspbian GNU/Linux
-Version 11 (byllseye)
+# Run on a Raspberry Pi 4 Model B Rev 1.2
+# Raspbian GNU/Linux
+# Version 11 (byllseye)
 
-1. Install dnsmasq
+# 1. Install dnsmasq
 sudo apt-get update
 sudo apt-get install dnsmasq
 
-2. Back up the original configuration
+# 2. Back up the original configuration
 sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
 
-3. Copy in dnsmasq configuration
+# 3. Copy in dnsmasq configuration
 sudo cp raspberyy_pi_4/dnsmasq.conf /etc/dnsmasq.conf
 
-4. Append the contents of dhcpcd.conf to your local file
+# 4. Append the contents of dhcpcd.conf to your local file
 sudo cat raspberyy_pi_4/dhcpcd.conf >> /etc/dhcpcd.conf
 
-5. Restart and Enable dnsmasq
+# 5. Restart and Enable dnsmasq
 sudo systemctl restart dnsmasq
 
-6. Check it's up
+# 6. Check it's up
 sudo systemctl status dnsmasq
 
-6. Enable service to start at bootup
+# 6. Enable service to start at bootup
 sudo systemctl enable dnsmasq
