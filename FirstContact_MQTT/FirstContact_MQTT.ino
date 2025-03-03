@@ -42,7 +42,7 @@ IPAddress NETWORK_GATEWAY (192,168,1,20);
 IPAddress NETWORK_DNS     (192,168,1,20);
 IPAddress UDP_LOG_PC_IP   (192,168,1,50);
 #endif
-IPAddress server          (192,168,0,105);
+IPAddress server          (192,168,4,1);
 
 // End  Ethernet Requirements
 // ------
@@ -187,7 +187,7 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect("arduinoClient")) {
+    if (client.connect("ArduinoClient")) {
       Serial.println("connected");
       // Once connected, publish an announcement...
       client.publish("wled/dee","hello world");
