@@ -326,6 +326,7 @@ void audioProcessSignal(uint8_t signal_num) {
   r3 = right_f_3.read();
   r4 = right_f_4.read();
 
+#ifdef DEBUG_PRINT
   // print the raw data, for troubleshooting
   //Serial.print("tones: ");
   Serial.print(l1);
@@ -344,6 +345,7 @@ void audioProcessSignal(uint8_t signal_num) {
   Serial.print(", ");
   Serial.print(r4);
   Serial.print("\n");
+#endif
 
   if (
     l1 > thresh ||
@@ -372,12 +374,14 @@ void audioProcessSignal(uint8_t signal_num) {
 
   publishOn(contact);
 
+#ifdef DEBUG_PRINT
   if ( contact == 1 )
   {
     Serial.print ("CONTACT\n");
   } else {
     Serial.print ("--------\n");
   }
+#endif
 
  #if 0
   if (signal_num == 1) {
