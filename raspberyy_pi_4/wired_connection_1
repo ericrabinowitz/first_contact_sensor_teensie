@@ -1,0 +1,17 @@
+# Place this file under /etc/NetworkManager/system-connections/wired_connection_1
+[connection]
+id=wired_connection_1
+uuid=83e27d9c-e22e-4559-bfac-f04b6035bce1
+type=ethernet
+interface-name=eth0
+
+[ipv4]
+method=manual
+# addresses1 syntax: IP/Prefix,Gateway
+addresses1=192.168.4.1/24,192.168.4.1
+# Set the DNS to the Pi's IP (the Pi will be your DNS server for local queries)
+dns=192.168.4.1;
+dns-search=local
+
+[ipv6]
+method=ignore
