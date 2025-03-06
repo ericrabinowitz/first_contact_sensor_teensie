@@ -190,9 +190,16 @@ void reconnect() {
     if (client.connect("ArduinoClient")) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("wled/dee","hello world");
-      // ... and resubscribe
-      client.subscribe("wled/command");
+      //client.publish("wled/dee","hello world");
+
+
+      Serial.println("Sending ON");
+      client.publish(
+        "wled/all/api",
+        "{\"on\": true, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, {\"col\": [0, 0, 255], \"fx\": 70}]}"
+      );
+        // ... and resubscribe
+      //client.subscribe("wled/command");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -205,8 +212,9 @@ void reconnect() {
 
 void setup()
 {
-  while (!Serial);
-  delay(100);
+  while (!Serial && millis () < 1000u)  {// wait up to 1 seconds for the serial console to be available
+    delay (10);
+ };
   Serial.printf("MQTT Demo\n");
 
   initEthernet();
