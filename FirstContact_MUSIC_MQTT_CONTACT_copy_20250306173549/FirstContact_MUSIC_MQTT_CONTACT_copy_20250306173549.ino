@@ -10,12 +10,6 @@ DHCP, MQTT, Contact Sense
 #include <SerialFlash.h>
 // ------ Audio Includes - End
 
-//
-// Audio Player Data Start
-AudioPlaySdWav           playSdWav1;
-AudioOutputI2S           i2s1;
-AudioConnection          patchCord11(playSdWav1, 0, i2s1, 0);
-AudioConnection          patchCord12(playSdWav1, 1, i2s1, 1);
 
 
 char file[][40] {
@@ -79,10 +73,13 @@ void playMusic (const char * song);
 #define LED2_PIN 4
 #define LED3_PIN 5
 
-const int f_1 = 1047; // c6  1046.5
-const int f_2 = 1109; // c6# 1108.7
-const int f_3 = 1175; // d6  1174.7
-const int f_4 = 1245; // d6# 1244.5
+
+// 
+// Frequencies to Transmit and listen for through hands (f_1 and f_2 are the tx frequencies)
+const int f_1 = 40; 
+const int f_2 = 41; 
+const int f_3 = 42; 
+const int f_4 = 43; 
 
 float thresh = 0.01;
 unsigned int contact = 0;
@@ -113,9 +110,17 @@ AudioConnection          patchCord10(sine1, 0, audioOut, 0);
 AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
 // GUItool: end automatically generated code
 elapsedMillis since_main = 0;
-uint16_t main_period_ms = 60; 
+uint16_t main_period_ms = 100; 
 // ------ Audio Contact Defines - End
 
+
+//
+// Audio 
+AudioPlaySdWav           playSdWav1;
+AudioConnection          patchCord11(playSdWav1, 0, audioOut, 0);
+AudioConnection          patchCord12(playSdWav1, 1, audioOut, 1);
+//
+// Audio
 
 // ------
 // ------
@@ -323,7 +328,15 @@ void publishOn(unsigned int on) {
     }
     
     previous = on;
-  
+
+    if ( on == 1 )
+      {
+        Serial.print ("CONTACT\n");
+      } else {
+        Serial.print ("--OFF---\n");
+      }
+
+
     if ( on == 1 )
       client.publish(
         "wled/all/api",
@@ -337,6 +350,17 @@ void publishOn(unsigned int on) {
 
     init = 1;
 }
+
+/* Play Audio Based On State */
+void playState(unsigned int on)
+{
+    if ( on == 1 )
+      playMusic ("connected.wav");
+    else
+      playMusic ("disconnected.wav");
+}
+
+
 
 // Contact Sense Start
 //
@@ -378,7 +402,7 @@ void audioSenseSetup() {
 }
 
 
-void audioProcessSignal(uint8_t signal_num) {
+void audioSenseProcessSignal() {
   float l1, l2, l3, l4, r1, r2, r3, r4;
   //uint8_t led1_val, led2_val;
 
@@ -439,15 +463,9 @@ void audioProcessSignal(uint8_t signal_num) {
   // Serial.print("\n");
 
   publishOn(contact);
+  playState(contact);
 
-#ifdef DEBUG_PRINT
-  if ( contact == 1 )
-  {
-    Serial.print ("CONTACT\n");
-  } else {
-    Serial.print ("--------\n");
-  }
-#endif
+
 
  #if 0
   if (signal_num == 1) {
@@ -457,29 +475,37 @@ void audioProcessSignal(uint8_t signal_num) {
   if (signal_num == 2) {
     led2_val = (r2 > thresh) ? 1 : 0;
   }
-#endif
+
 
   //analogWrite(LED1_PIN, (1-r1)*255); // write result to LED
   //analogWrite(LED2_PIN, (1-l4)*255); // write result to LED
   //analogWrite(LED3_PIN, (1-c3)*255); // write result to LED 
+
+#endif
 }
 
 const float row_threshold = 0.2;
 const float column_threshold = 0.2;
 
 void audioSenseLoop() {
+
+    sine1.amplitude(1.0);
+    audioSenseProcessSignal();
+
+#if 0
   if (since_main >= main_period_ms) {
     since_main = 0;
     sine1.amplitude(1.0);
     sine2.amplitude(0.0);
-    audioProcessSignal(2); // process the previous signal
+    audioSenseProcessSignal(2); // process the previous signal
   }
 
   if (since_main >= main_period_ms/2) {
     sine1.amplitude(0.0);
     sine2.amplitude(1.0);
-    audioProcessSignal(1); // process the previous signal
+    audioSenseProcessSignal(1); // process the previous signal
   }
+#endif
 }
 // Contact Sense End
 //
@@ -490,8 +516,8 @@ void audioSenseLoop() {
 
 void audioMusicSetup() {
   // AudioMemory(8); // NOTE:   This memory allocation should be combined with Audio Sense Setup
-  sgtl5000_1.enable();
-  sgtl5000_1.volume(0.5);
+  //audioShield.enable();
+  //audioShield.volume(0.5);
   SPI.setMOSI(SDCARD_MOSI_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
   if (!(SD.begin(SDCARD_CS_PIN))) {
@@ -504,9 +530,14 @@ void audioMusicSetup() {
 }
 
 void playMusic (const char * song) {
+  if (playSdWav1.isPlaying() ==true)
+    return;
+
+#if 0
   while (playSdWav1.isPlaying() == true ) {
     delay(10); // wait for library to parse WAV info
   }
+#endif
   //Serial.println("Playing ");
   Serial.println( song);
   if (playSdWav1.play(song) == false) {
@@ -531,9 +562,11 @@ void setup()
   // Allow the hardware to sort itself out
   delay(1500);
 
-  AudioMemory(12 + 8); // 12 for Sens, 8 for Wav Player
+  AudioMemory(12); // 12 for Sens, 8 for Wav Player
   audioSenseSetup(); // Setup for sensing
+
   audioMusicSetup();
+
 }
 
 void loop()
