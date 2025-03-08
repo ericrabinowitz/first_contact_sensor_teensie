@@ -1,8 +1,8 @@
 #ifndef defines_h 
  #define defines_h 
   
- #define TEENSY41_DEBUG_PORT                 Serial 
- #define USING_DHCP    true   //true 
+ #define TEENSY41_DEBUG_PORT         Serial 
+ #define USING_DHCP                  true   //true 
   
  // Debug Level from 0 to 4 
  #define _FTP_SERVER_LOGLEVEL_               1 

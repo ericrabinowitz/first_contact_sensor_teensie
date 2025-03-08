@@ -1,7 +1,76 @@
 /*
-DHCP, MQTT, Contact Sense, MicroSd Card + Wav file player
- 
+
+2/1/2025
+FIRST CONTACT ART PROJECT 
+Contact Sensor and Music Player - Eric Linn Rabinowitz. 415-336-6938
+
+This code is the contact sensor + Music Player that runs in each sculpture.
+
+Details:
+========
+  Human Contact Sensing
+  The contact sensing is performed by sending a sine wave through the line out pin(s)
+  of the Audio Shield DAC to the sculpture hands.
+  The receiving side listens for the sinewave tone.
+  The sinewave generation, tone detection and DAC drivers are part of the PJRC audio library.
+
+Audio Player:
+-------------
+  Audio wave files are stored in a MicroSd card on the Teensy board with a DOS-format.
+  There is another MicroSd slot on the Audio but it is not used.
+
+  Audio is played using using thr PJRC audio library
+
+Audio Mixing:
+-------------
+  Both the sensing and audio player share the PJRC audio library and send their outputs through the same
+  DAC (Digital to Analog Converter).   Mixing of the signals is performed with the PJRC Audio Library.
+
+Networking
+-----------
+  A  CAT-5 network interface is connected to an external, on-board ethernet chip via a SPI in interface.
+  A full TCP/UDP-IP stack is utilized using the QNEthernet library
+  The network address is obtained using DHCP from the Rasspberry PI.
+  DNS is used for all network devices.
+  We employed MQTT (aka 'Mosquito') for messaging.
+  This software acts as both a MQTT publisher and subscriber for events.
+  The MQTT Broker (databasde server) is running on a Raspberry PI on the network.
+  FTP is available for file transfer to the MicroSD card, but we aren't using using it.
+
+Hardware:  
+---------
+          Teensy 4.1 + Teensy Audio Shield (DAC)
+          Ethernet adapter and cable
+          SSD1307 OledDisplay
+
+
+Software Requirements:
+======================
+          Arduino IDE 2.3.4
+
+Boards Support:
+          Teensy (for Arduino IDE 2.0.4 or later). v.1.59.0
+            Instructions to install: https://www.pjrc.com/teensy/td_download.html 
+            Installer For IDE: https://www.pjrc.com/teensy/package_teensy_index.json
+            NOTE: I think this also installs the Audio library
+Libraries:
+          QNEthernet v0.30.1
+          PubSubClient MQTT 3.1.1  v2.8
+          FTP_Server_teensy41. v1.2.0
+          ArduinoMqttClient by Arduino. v0.1.8
+          AdaFruit GFX Library v1.11.11
+          AdaFruit BusIO v1.17.0
+          AdaFruit SSD1306 v2.5.13
+          LightMDNS v1.0.5
+
+Consider Removing:
+          Ethernet_Generic by Various.  v2.8.1
+          PPOSClient v1.0
+          TeensyView by SparkFun. v1.1.0
+
+
 */
+
 // ------ Audio Includes - Start
 #include <Audio.h>
 #include <Wire.h>
@@ -11,6 +80,7 @@ DHCP, MQTT, Contact Sense, MicroSd Card + Wav file player
 // ------ Audio Includes - End
 
 
+/* I Added these files to the MicroSd Card */
 
 char file[][40] {
     "Formant Squish2.wav",
@@ -47,6 +117,16 @@ char file[][40] {
 };
 #define MAX_FILES 31
 
+
+// Audio Files used for Contact and Idle States
+//
+#ifdef TEST_CONNECTION_ENABLE
+#define SONG_NAME_IDLE "disconnected.wav"
+#define SONG_NAME_CONTACT "connected.wav"
+#else
+#define SONG_NAME_IDLE "eros_dormant1.wav"
+#define SONG_NAME_CONTACT "eros_active1.wav"
+#endif
 
 // Audio Playa Date End
 
@@ -85,7 +165,7 @@ float thresh = 0.01;
 unsigned int contact = 0;
 
 // GUItool: begin automatically generated code
-AudioSynthWaveformSine   sine2;          //xy=190.99998474121094,122.99998474121094
+//AudioSynthWaveformSine   sine2;          //xy=190.99998474121094,122.99998474121094
 AudioInputI2S            audioIn;        //xy=192.99998474121094,369
 AudioSynthWaveformSine   sine1;          //xy=207.99998474121094,60.99998474121094
 
@@ -105,18 +185,19 @@ AudioMixer4              mixerRight;
 AudioMixer4              mixerLeft;
 
 AudioConnection          patchCordM1L(sine1, 0, mixerLeft, 0);
-AudioConnection          patchCordM1R(sine1, 0, mixerRight, 0);
+//AudioConnection          patchCordM1R(sine1, 0, mixerRight, 0);
 
-AudioConnection          patchCordM2L(sine2, 0, mixerLeft, 1);
-AudioConnection          patchCordM2R(sine2, 0, mixerRight, 1);
+
+//AudioConnection          patchCordM2L(sine2, 0, mixerLeft, 1);
+//AudioConnection          patchCordM2R(sine2, 0, mixerRight, 1);
 
 //
-// Audio 
+// Audio Player
 AudioPlaySdWav           playSdWav1;
 AudioConnection          patchCord11(playSdWav1, 0, mixerLeft, 2);
 AudioConnection          patchCord12(playSdWav1, 1, mixerRight, 2);
+// Audio Player
 //
-// Audio
 
 AudioConnection          patchCord2(audioIn, 0, left_f_1, 0);
 AudioConnection          patchCord6(audioIn, 1, right_f_1, 0);
@@ -134,16 +215,11 @@ AudioConnection          patchCord9(audioIn, 1, right_f_4, 0);
 AudioConnection          patchCordMOL(mixerLeft, 0, audioOut, 0);
 AudioConnection          patchCordMOR(mixerRight, 0, audioOut, 1);
 
-
-
 AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
 
 elapsedMillis since_main = 0;
 uint16_t main_period_ms = 100; 
 // ------ Audio Contact Defines - End
-
-
-
 // GUItool: end automatically generated code
 
 
@@ -168,7 +244,7 @@ uint16_t main_period_ms = 100;
 #define FTP_USER_PWD_LEN             128        // Max permissible and default are 128 
 
 byte mac[] = {  0x92, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-#if 0
+#if 0 // This is replaced with DHCP informatiom.   Use these as static definitions if standalone 
 IPAddress NETWORK_IP      (192,168,1,48); //static IP
 IPAddress NETWORK_MASK    (255,255,255,0);
 IPAddress NETWORK_GATEWAY (192,168,1,20);
@@ -296,8 +372,14 @@ IPAddress server          (192,168,4,1);
 #include <SPI.h>
 #include <PubSubClient.h>
 
-// Update these with values suitable for your network.
-void callback(char* topic, byte* payload, unsigned int length) {
+
+
+
+/*
+   mqttSubCallback() - Receive MQTT Messages from MQTT Broker (Raspbery Pi)
+
+*/
+void mqttSubCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -338,7 +420,13 @@ void reconnect() {
   }
 }
 
-void publishOn(unsigned int on) {
+
+/*
+  printState() - Print the contact state to the serial console
+      - This routine is called at high-speed in our main loop
+      - It only publishes changes to state
+*/
+void printState(unsigned int on) {
     static unsigned int init = 0;
     static unsigned int previous = 0;
 
@@ -361,28 +449,74 @@ void publishOn(unsigned int on) {
         Serial.print ("--OFF---\n");
       }
 
+    
+
+  //uncomment these lines to see how much CPU time
+  //the tone detectors and audio library are using
+
+      Serial.print("CPU=");
+      Serial.print(AudioProcessorUsage());
+      Serial.print("%, max=");
+      Serial.print(AudioProcessorUsageMax());
+      Serial.print("%   ");
+      Serial.print("\n");
+
+  init = 1;
+
+}
+
+/*
+  publishState() - Publish via MQTT if we are on(Connected) or off
+      - This routine is called at high-speed in our main loop
+      - It only publishes changes to state
+*/
+void publishState(unsigned int on) {
+    static unsigned int init = 0;
+    static unsigned int previous = 0;
+
+    if ( init == 0 ) {
+      previous = on;
+    }
+
+    if ( init == 1 ) {
+      if ( previous == on ) {
+        return;
+      }
+    }
+    
+    previous = on;
 
     if ( on == 1 )
       client.publish(
-        "wled/all/api",
-        "{\"on\": true, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, {\"col\": [0, 0, 255], \"fx\": 70}]}"
+         "wled/all/api",
+        "{\"on\": true, \
+          \"bri\": 255, \
+          \"seg\": \
+        [{\"col\": [255, 255, 0],   \"fx\": 36},  \
+         {\"col\": [0, 255, 255],   \"fx\": 36},   \
+         {\"col\": [128, 128, 255], \"fx\": 36}]   \
+         }" 
       );
     else
       client.publish(
+          "wled/all/api",
+         "{\"on\": true, \
+          \"bri\": 255, \
+          \"seg\":  \
+        [{\"col\": [255, 0, 0], \"fx\": 42},    \
+         {\"col\": [0, 255, 0], \"fx\": 42},    \
+         {\"col\": [0, 0, 255], \"fx\": 42}]    \
+         }" 
+
+#if 0
         "wled/all/api",
-        "{\"on\": false, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, {\"col\": [0, 0, 255], \"fx\": 70}]}"
+        "{\"on\": false, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 0}, {\"col\": [0, 255, 0], \"fx\": 00}, {\"col\": [0, 0, 255], \"fx\": 00}]}"
+#endif
       );
 
     init = 1;
 }
 
-#ifdef TEST_CONNECTION_ENABLE
-#define SONG_NAME_IDLE "disconnected.wav"
-#define SONG_NAME_CONTACT "connected.wav"
-#else
-#define SONG_NAME_IDLE "eros_dormant1.wav"
-#define SONG_NAME_CONTACT "eros_active1.wav"
-#endif
 /* Play Audio Based On State */
 void playState(unsigned int on)
 {
@@ -431,22 +565,35 @@ void audioSenseSetup() {
   AudioNoInterrupts();  // disable audio library momentarily
   sine1.frequency(f_1); // left
   sine1.amplitude(1.0);
+  /*
   sine2.frequency(f_4); // right
   sine2.amplitude(1.0);
+  */
   AudioInterrupts();    // enable, both tones will start together
 }
 
 
+/*
+  audioSenseProcessSignal() - 
+          - Read the audio line-in
+          - perform a tone-detection
+          - Report contact/no-contact to:
+              - Music Player
+              - MQTT
+*/
 void audioSenseProcessSignal() {
-  //float l1, l2, l3, l4, r1, r2, r3, r4;
   float l1, r1;
   //uint8_t led1_val, led2_val;
 
-  // read all seven tone detectors
+  // read tone detectors
   l1 = left_f_1.read();
   r1 = right_f_1.read();
 
 /*
+  float l1, l2, l3, l4, r1, r2, r3, r4;
+  // read all seven tone detectors
+  l1 = left_f_1.read();
+  r1 = right_f_1.read();
   l2 = left_f_2.read();
   l3 = left_f_3.read();
   l4 = left_f_4.read();
@@ -495,18 +642,9 @@ void audioSenseProcessSignal() {
   }
  
 
-
-  //uncomment these lines to see how much CPU time
-  //the tone detectors and audio library are using
-  // Serial.print("CPU=");
-  // Serial.print(AudioProcessorUsage());
-  // Serial.print("%, max=");
-  // Serial.print(AudioProcessorUsageMax());
-  // Serial.print("%   ");
-  // Serial.print("\n");
-
-  publishOn(contact);
-  playState(contact);
+  publishState(contact); // MQTT
+  playState(contact);    // Audio Music Player
+  printState(contact);  // Serial Console
 
 
 
@@ -534,21 +672,6 @@ void audioSenseLoop() {
 
     sine1.amplitude(1.0);
     audioSenseProcessSignal();
-
-#if 0
-  if (since_main >= main_period_ms) {
-    since_main = 0;
-    sine1.amplitude(1.0);
-    sine2.amplitude(0.0);
-    audioSenseProcessSignal(2); // process the previous signal
-  }
-
-  if (since_main >= main_period_ms/2) {
-    sine1.amplitude(0.0);
-    sine2.amplitude(1.0);
-    audioSenseProcessSignal(1); // process the previous signal
-  }
-#endif
 }
 // Contact Sense End
 //
@@ -558,9 +681,14 @@ void audioSenseLoop() {
 // Music Player Start
 
 void audioMusicSetup() {
-  // AudioMemory(8); // NOTE:   This memory allocation should be combined with Audio Sense Setup
+  //audioMemory(8); // NOTE:   This memory allocation should be combined with Audio Sense Setup
   //audioShield.enable();
   //audioShield.volume(0.5);
+
+  //
+  // Setup the SPI driver for MicroSd Card 
+  // Our project uses the on board MicroSd, NOT the AudioShield's MicroSd slot
+  //
   SPI.setMOSI(SDCARD_MOSI_PIN);
   SPI.setSCK(SDCARD_SCK_PIN);
   if (!(SD.begin(SDCARD_CS_PIN))) {
@@ -572,8 +700,8 @@ void audioMusicSetup() {
   delay(1000);
 }
 
-void playMusic (const char * song, unsigned int state) {
-
+void playMusic (const char * song, unsigned int state) 
+{
   static unsigned int init = 0;
   static unsigned int previous_state = 0;
 
@@ -599,28 +727,29 @@ void playMusic (const char * song, unsigned int state) {
 
   init = 1;
 }
-
 // Music Player End
 //
+
+
 void setup()
 {
-  while (!Serial && millis () < 1000u)  {// wait up to 1 seconds for the serial console to be available
-    delay (10);
- };
-  Serial.printf("MQTT Demo\n");
+  
+  Serial.printf("_______FIRST CONTACT_______ ");
+  Serial.printf("%s %sd \n", __DATE__, __TIME__);
 
+  // TCP/IP Setup
   initEthernet();
+
+  // MQTT Setup
   client.setServer(server, 1883);
-  client.setCallback(callback);
+  client.setCallback(mqttSubCallback);
 
   // Allow the hardware to sort itself out
   delay(1500);
 
-  AudioMemory(12); // 12 for Sens, 8 for Wav Player
-  audioSenseSetup(); // Setup for sensing
-
+  AudioMemory(22); // NOTE this number is simply a guess.   Working: 12 for Sens, 8 for Wav Player + margin
+  audioSenseSetup(); 
   audioMusicSetup();
-
 }
 
 void loop()
