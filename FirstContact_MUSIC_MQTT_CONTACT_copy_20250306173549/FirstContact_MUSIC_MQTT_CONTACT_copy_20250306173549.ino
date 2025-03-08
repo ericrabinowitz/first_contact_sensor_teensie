@@ -1,5 +1,5 @@
 /*
-DHCP, MQTT, Contact Sense
+DHCP, MQTT, Contact Sense, MicroSd Card + Wav file player
  
 */
 // ------ Audio Includes - Start
@@ -97,7 +97,15 @@ AudioAnalyzeToneDetect   left_f_3;           //xy=475,348
 AudioAnalyzeToneDetect   left_f_2;           //xy=477,313
 AudioAnalyzeToneDetect   left_f_1;           //xy=483,276
 AudioOutputI2S           audioOut;       //xy=711,92.99998474121094
-AudioConnection          patchCord1(sine2, 0, audioOut, 1);
+AudioMixer4              mixerRight;
+AudioMixer4              mixerLeft;
+
+AudioConnection          patchCordM1L(sine1, 0, mixerLeft, 0);
+AudioConnection          patchCordM1R(sine1, 0, mixerRight, 0);
+
+AudioConnection          patchCordM2L(sine2, 0, mixerLeft, 1);
+AudioConnection          patchCordM2R(sine2, 0, mixerRight, 1);
+
 AudioConnection          patchCord2(audioIn, 0, left_f_1, 0);
 AudioConnection          patchCord3(audioIn, 0, left_f_2, 0);
 AudioConnection          patchCord4(audioIn, 0, left_f_3, 0);
@@ -106,9 +114,12 @@ AudioConnection          patchCord6(audioIn, 1, right_f_1, 0);
 AudioConnection          patchCord7(audioIn, 1, right_f_2, 0);
 AudioConnection          patchCord8(audioIn, 1, right_f_3, 0);
 AudioConnection          patchCord9(audioIn, 1, right_f_4, 0);
-AudioConnection          patchCord10(sine1, 0, audioOut, 0);
+
+AudioConnection          patchCordMOL(mixerLeft, 0, audioOut, 0);
+AudioConnection          patchCordMOR(mixerRight, 0, audioOut, 1);
+
 AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
-// GUItool: end automatically generated code
+
 elapsedMillis since_main = 0;
 uint16_t main_period_ms = 100; 
 // ------ Audio Contact Defines - End
@@ -121,6 +132,8 @@ AudioConnection          patchCord11(playSdWav1, 0, audioOut, 0);
 AudioConnection          patchCord12(playSdWav1, 1, audioOut, 1);
 //
 // Audio
+// GUItool: end automatically generated code
+
 
 // ------
 // ------
@@ -539,7 +552,7 @@ void playMusic (const char * song) {
   }
 #endif
   //Serial.println("Playing ");
-  Serial.println( song);
+  //Serial.println( song);
   if (playSdWav1.play(song) == false) {
     Serial.println("Error playing ");
     Serial.println(song);

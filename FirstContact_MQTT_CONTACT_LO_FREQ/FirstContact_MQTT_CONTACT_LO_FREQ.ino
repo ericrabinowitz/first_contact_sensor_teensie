@@ -15,6 +15,8 @@ DHCP, MQTT, Contact Sense
 #define LED2_PIN 4
 #define LED3_PIN 5
 
+// 
+// Frequencies to Transmit and listen for through hands (f_1 and f_2 are the tx frequencies)
 const int f_1 = 40; 
 const int f_2 = 41; 
 const int f_3 = 42; 
