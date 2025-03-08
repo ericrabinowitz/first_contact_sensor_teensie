@@ -281,7 +281,7 @@ void audioSetup() {
 
   // Enable the audio shield and set the output volume.
   audioShield.enable();
-  audioShield.volume(0.0);
+  audioShield.volume(0.5);
 
     // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match

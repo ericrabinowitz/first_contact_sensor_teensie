@@ -106,6 +106,14 @@ AudioConnection          patchCordM1R(sine1, 0, mixerRight, 0);
 AudioConnection          patchCordM2L(sine2, 0, mixerLeft, 1);
 AudioConnection          patchCordM2R(sine2, 0, mixerRight, 1);
 
+//
+// Audio 
+AudioPlaySdWav           playSdWav1;
+AudioConnection          patchCord11(playSdWav1, 0, mixerLeft, 2);
+AudioConnection          patchCord12(playSdWav1, 1, mixerRight, 2);
+//
+// Audio
+
 AudioConnection          patchCord2(audioIn, 0, left_f_1, 0);
 AudioConnection          patchCord3(audioIn, 0, left_f_2, 0);
 AudioConnection          patchCord4(audioIn, 0, left_f_3, 0);
@@ -115,8 +123,12 @@ AudioConnection          patchCord7(audioIn, 1, right_f_2, 0);
 AudioConnection          patchCord8(audioIn, 1, right_f_3, 0);
 AudioConnection          patchCord9(audioIn, 1, right_f_4, 0);
 
+
+
 AudioConnection          patchCordMOL(mixerLeft, 0, audioOut, 0);
 AudioConnection          patchCordMOR(mixerRight, 0, audioOut, 1);
+
+
 
 AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
 
@@ -125,13 +137,7 @@ uint16_t main_period_ms = 100;
 // ------ Audio Contact Defines - End
 
 
-//
-// Audio 
-AudioPlaySdWav           playSdWav1;
-AudioConnection          patchCord11(playSdWav1, 0, audioOut, 0);
-AudioConnection          patchCord12(playSdWav1, 1, audioOut, 1);
-//
-// Audio
+
 // GUItool: end automatically generated code
 
 
