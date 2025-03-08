@@ -76,10 +76,10 @@ void playMusic (const char * song);
 
 // 
 // Frequencies to Transmit and listen for through hands (f_1 and f_2 are the tx frequencies)
-const int f_1 = 40; 
-const int f_2 = 41; 
-const int f_3 = 42; 
-const int f_4 = 43; 
+const int f_1 = 20; 
+const int f_2 = 20; 
+const int f_3 = 20; 
+const int f_4 = 20; 
 
 float thresh = 0.01;
 unsigned int contact = 0;
@@ -370,13 +370,20 @@ void publishOn(unsigned int on) {
     init = 1;
 }
 
+#ifdef TEST_CONNECTION_ENABLE
+#define SONG_NAME_IDLE "disconnected.wav"
+#define SONG_NAME_CONTACT "connected.wav"
+#else
+#define SONG_NAME_IDLE "eros_dormant1.wav"
+#define SONG_NAME_CONTACT "eros_active1.wav"
+#endif
 /* Play Audio Based On State */
 void playState(unsigned int on)
 {
     if ( on == 1 )
-      playMusic ("connected.wav");
+      playMusic (SONG_NAME_CONTACT, on);
     else
-      playMusic ("disconnected.wav");
+      playMusic (SONG_NAME_IDLE, on);
 }
 
 
@@ -390,7 +397,7 @@ void audioSenseSetup() {
 
   // Enable the audio shield and set the output volume.
   audioShield.enable();
-  audioShield.volume(0.5);
+  audioShield.volume(0.4);
 
     // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
@@ -548,21 +555,32 @@ void audioMusicSetup() {
   delay(1000);
 }
 
-void playMusic (const char * song) {
-  if (playSdWav1.isPlaying() ==true)
-    return;
+void playMusic (const char * song, unsigned int state) {
 
-#if 0
-  while (playSdWav1.isPlaying() == true ) {
-    delay(10); // wait for library to parse WAV info
+  static unsigned int init = 0;
+  static unsigned int previous_state = 0;
+
+  if ( init == 0 ) {
+      previous_state = state;
   }
-#endif
-  //Serial.println("Playing ");
-  //Serial.println( song);
+
+  if ((playSdWav1.isPlaying() ==true) && (previous_state == state))
+  {
+    return;
+  }
+
+  if ( previous_state != state ) {
+    playSdWav1.stop();
+  }
+
+  previous_state = state;
+
   if (playSdWav1.play(song) == false) {
     Serial.println("Error playing ");
     Serial.println(song);
   }
+
+  init = 1;
 }
 
 // Music Player End
