@@ -88,6 +88,8 @@ unsigned int contact = 0;
 AudioSynthWaveformSine   sine2;          //xy=190.99998474121094,122.99998474121094
 AudioInputI2S            audioIn;        //xy=192.99998474121094,369
 AudioSynthWaveformSine   sine1;          //xy=207.99998474121094,60.99998474121094
+
+/*
 AudioAnalyzeToneDetect   right_f_4; //xy=466.20001220703125,575.2000122070312
 AudioAnalyzeToneDetect   right_f_3;        //xy=467,540
 AudioAnalyzeToneDetect   right_f_2;        //xy=471,502
@@ -95,6 +97,8 @@ AudioAnalyzeToneDetect   right_f_1;        //xy=472,464
 AudioAnalyzeToneDetect   left_f_4;           //xy=474,384
 AudioAnalyzeToneDetect   left_f_3;           //xy=475,348
 AudioAnalyzeToneDetect   left_f_2;           //xy=477,313
+*/
+AudioAnalyzeToneDetect   right_f_1;        //xy=472,464
 AudioAnalyzeToneDetect   left_f_1;           //xy=483,276
 AudioOutputI2S           audioOut;       //xy=711,92.99998474121094
 AudioMixer4              mixerRight;
@@ -115,6 +119,8 @@ AudioConnection          patchCord12(playSdWav1, 1, mixerRight, 2);
 // Audio
 
 AudioConnection          patchCord2(audioIn, 0, left_f_1, 0);
+AudioConnection          patchCord6(audioIn, 1, right_f_1, 0);
+/*
 AudioConnection          patchCord3(audioIn, 0, left_f_2, 0);
 AudioConnection          patchCord4(audioIn, 0, left_f_3, 0);
 AudioConnection          patchCord5(audioIn, 0, left_f_4, 0);
@@ -122,7 +128,7 @@ AudioConnection          patchCord6(audioIn, 1, right_f_1, 0);
 AudioConnection          patchCord7(audioIn, 1, right_f_2, 0);
 AudioConnection          patchCord8(audioIn, 1, right_f_3, 0);
 AudioConnection          patchCord9(audioIn, 1, right_f_4, 0);
-
+*/
 
 
 AudioConnection          patchCordMOL(mixerLeft, 0, audioOut, 0);
@@ -406,14 +412,17 @@ void audioSenseSetup() {
   const int sample_time_ms = main_period_ms/2;
 
   left_f_1.frequency(f_1,  sample_time_ms*f_1/1000);  //(1209, 36);
+  /*
   left_f_2.frequency(f_2,  sample_time_ms*f_2/1000);
   left_f_3.frequency(f_3,  sample_time_ms*f_3/1000);
   left_f_4.frequency(f_4,  sample_time_ms*f_4/1000);
+  */
   right_f_1.frequency(f_1, sample_time_ms*f_1/1000);  // assuming the calcs get optomized out
+  /*
   right_f_2.frequency(f_2, sample_time_ms*f_2/1000);
   right_f_3.frequency(f_3, sample_time_ms*f_3/1000);
   right_f_4.frequency(f_4, sample_time_ms*f_4/1000);
-
+*/
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
   pinMode(LED3_PIN, OUTPUT);
@@ -429,11 +438,15 @@ void audioSenseSetup() {
 
 
 void audioSenseProcessSignal() {
-  float l1, l2, l3, l4, r1, r2, r3, r4;
+  //float l1, l2, l3, l4, r1, r2, r3, r4;
+  float l1, r1;
   //uint8_t led1_val, led2_val;
 
   // read all seven tone detectors
   l1 = left_f_1.read();
+  r1 = right_f_1.read();
+
+/*
   l2 = left_f_2.read();
   l3 = left_f_3.read();
   l4 = left_f_4.read();
@@ -441,7 +454,7 @@ void audioSenseProcessSignal() {
   r2 = right_f_2.read();
   r3 = right_f_3.read();
   r4 = right_f_4.read();
-
+*/
 #ifdef DEBUG_PRINT
   // print the raw data, for troubleshooting
   //Serial.print("tones: ");
@@ -464,13 +477,17 @@ void audioSenseProcessSignal() {
 #endif
 
   if (
-    l1 > thresh ||
+    l1 > thresh ||   r1 > thresh
+  )
+  /*
     l2 > thresh ||
     l3 > thresh ||
     r1 > thresh ||
     r2 > thresh ||
     l3 > thresh 
-  ) {
+  ) 
+  */
+  {
       contact = 1;
   }
   else {
