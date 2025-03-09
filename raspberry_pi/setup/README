@@ -2,6 +2,8 @@ README
 
 This directory includes configurations and installation for setting up the raspberry pi server.
 
+To install, run from within the setup directory: bash setup.sh
+
 The server acts as dhcp server, dns server, and mqtt broker for the other nodes in the network over ethernet. There are 3 services that accomplish this:
 - dnsmasq acts as both the dhcp server and dns services
 - NetworkManager configure the local pi's network setup such as its static ip and dns.
