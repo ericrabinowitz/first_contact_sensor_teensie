@@ -36,8 +36,8 @@ for service in NetworkManager mosquitto dnsmasq; do
 done
 
 # Install aliases.
-alias mosquitto.install="sudo apt-get install mosquitto mosquitto-clients"
-alias dnsmasq.install="sudo apt-get install dnsmasq"
+alias mosquitto.install="sudo apt-get install -y mosquitto mosquitto-clients"
+alias dnsmasq.install="sudo apt-get install -y dnsmasq"
 # NetworkManager should already be installed by default.
 alias NetworkManager.install="echo 'NetworkManager should already be installed'"
 
