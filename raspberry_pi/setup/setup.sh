@@ -40,7 +40,7 @@ mosquitto.status
 dnsmasq.install
 dnsmasq.cpconf
 # NOTE: These might fail if ethernet is not plugged in. It should succeed when it does. 
-dnsmasq.enable
-dnsmasq.restart
+#dnsmasq.enable
+#dnsmasq.restart
 dnsmasq.status
 
