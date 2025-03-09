@@ -286,6 +286,13 @@ IPAddress server          (192,168,4,1);
   
  void initEthernet() 
  { 
+
+  networkErrorRetry: // Entry point if we fail to initialize network
+
+   bool networkError;
+   
+   networkError = false;
+
  #if USE_QN_ETHERNET 
    Serial.println(F("=========== USE_QN_ETHERNET ===========")); 
  #elif USE_NATIVE_ETHERNET 
@@ -314,40 +321,58 @@ IPAddress server          (192,168,4,1);
  #elif USE_QN_ETHERNET 
 
 
+//  display.print(Ethernet.localIP());
 
  #if USING_DHCP 
 
    // Start the Ethernet connection, using DHCP 
    Serial.print("Initialize Ethernet using DHCP => "); 
+   displayNetworkStatus( "DHCP Waiting...");
+
    Ethernet.begin(); 
    // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
    delay(1000); 
  #else 
    // Start the Ethernet connection, using static IP 
    Serial.print("Initialize Ethernet using STATIC IP => "); 
+   displayNetworkStatus( "Static IP:" F(NETWORK_IP));
    Ethernet.begin(NETWORK_IP, NETWORK_MASK, NETWORK_GATEWAY, NETWORK_DNS);  
  #endif 
   
    if (!Ethernet.waitForLocalIP(5000)) 
    { 
+     networkError = true;
+
      Serial.println("Failed to configure Ethernet"); 
+     displayNetworkStatus( "** Network Failed **");
   
      if (!Ethernet.linkStatus()) 
      { 
+       displayNetworkStatus( "CHECK ETHERNET CABLE" );
        Serial.println("Ethernet cable is not connected."); 
-     } 
-  
-     // Stay here forever 
-     while (true) 
-     { 
-       delay(1); 
+       delay(5000);
      } 
    } 
    else 
    { 
-     Serial.print("IP Address = "); 
-     Serial.println(Ethernet.localIP()); 
-   } 
+      networkError = false;
+
+      //char text[128];
+      //sprintf (text, "IP:%s", Ethernet.localIP() );
+      //displayNetworkStatus ( Ethernet.localIP().printTo() );
+
+      IPAddress ipAddress = Ethernet.localIP(); // Assuming Ethernet.localIP() returns an IP address
+
+      // Convert IP address to char* (C-string)
+      char ipString[128];  // Enough space for an IPv4 address in dot-decimal format
+
+      sprintf(ipString, "IP:%d.%d.%d.%d", ipAddress[0], ipAddress[1], ipAddress[2], ipAddress[3]);
+
+      displayNetworkStatus(ipString);
+
+      Serial.print("IP Address = "); 
+      Serial.println(Ethernet.localIP()); 
+    } 
   
    // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
    //delay(2000); 
@@ -386,6 +411,10 @@ IPAddress server          (192,168,4,1);
    Serial.println(Ethernet.localIP()); 
     
  #endif 
+
+
+  if (networkError == true)
+    goto networkErrorRetry;
  } 
 
 // End Ethernet Setup
@@ -756,6 +785,21 @@ void playMusic (const char * song, unsigned int state)
 //
 
 
+void displayNetworkStatus( const char string[] )
+{
+  //display.setTextSize(2);             // Draw 2X-scale text
+  display.setTextColor(SSD1306_WHITE);
+  //display.print(F("IP:")); 
+  display.setCursor(0,10);
+  display.fillRect(0, 10, 128, 20, SSD1306_BLACK);  // Erase text area
+  //display.printf (".....................");
+  display.display();
+  display.setCursor(0,10); 
+  display.print(string);
+  
+  //isplay.print(Ethernet.localIP());
+  display.display();
+}
 
 void displaySplashScreen(void) {
   display.clearDisplay();
@@ -763,16 +807,15 @@ void displaySplashScreen(void) {
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("      1st CONTACT!"));
+  display.println(F("    1st CONTACT!"));
   display.println(F(""));
   display.println(F(""));
 
-
-  display.setTextSize(2);             // Draw 2X-scale text
+  display.setCursor(0,10); 
+  //display.setTextSize(2);             // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
-  display.print(F("NODE: 1")); 
-
-
+  display.print(F("IP:")); 
+  display.print(Ethernet.localIP());
 
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
@@ -823,7 +866,7 @@ void setup()
 {
   
   displaySetup();
-  
+
   Serial.printf("_______FIRST CONTACT_______ ");
   Serial.printf("%s %sd \n", __DATE__, __TIME__);
 
