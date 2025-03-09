@@ -25,7 +25,7 @@ alias arp.local="arp -a | grep 192.168.4."
 # Generic service aliases using a loop
 for service in NetworkManager mosquitto dnsmasq; do
   # To get status and logs.
-  alias ${service}.status="sudo systemctl status ${service}"
+  alias ${service}.status="sudo systemctl status --no-pager ${service}"
   alias ${service}.logs="journalctl -eu ${service}"
   # To stop/restart.
   alias ${service}.stop="sudo systemctl stop ${service}"
