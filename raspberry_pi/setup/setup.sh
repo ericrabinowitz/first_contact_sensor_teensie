@@ -18,6 +18,9 @@ sudo apt-get update
 cp bash_aliases ~/.bash_aliases
 source ~/.bash_aliases
 
+# Copy /etc/hosts and /etc/hostname
+host.cpconf
+
 # Install and configure NetworkManager for rpi static ip.
 # NM should already be install on latest Raspbian
 NetworkManager.status
@@ -36,9 +39,8 @@ mosquitto.status
 # Install and configure dnsmasq dhcp/dns server
 dnsmasq.install
 dnsmasq.cpconf
+# NOTE: These might fail if ethernet is not plugged in. It should succeed when it does. 
 dnsmasq.enable
 dnsmasq.restart
 dnsmasq.status
 
-# Copy /etc/hosts and /etc/hostname
-host.cpconf
