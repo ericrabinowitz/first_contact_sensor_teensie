@@ -283,7 +283,15 @@ IPAddress server          (192,168,4,1);
 // Begin Ethernet Setup
  #define FTP_ACCOUNT       "teensy4x" 
  #define FTP_PASSWORD      "ftp_test" 
-  
+
+
+#include <QNEthernet.h>
+#include <string>
+#include <cstring>
+
+using namespace qindesign::network;
+
+
  void initEthernet() 
  { 
 
@@ -372,6 +380,14 @@ IPAddress server          (192,168,4,1);
 
       Serial.print("IP Address = "); 
       Serial.println(Ethernet.localIP()); 
+
+    // Convert to DNS name
+      Ethernet.hostByName(host, ip)
+    
+    // Use the DNS name
+    Serial.println(dnsName.c_str());
+
+
     } 
   
    // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
