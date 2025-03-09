@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # These commands were run to get set up. Run via ./setup.sh
 
+# Make sourcing alias files work in non-interactive shell.
+shopt -s expand_aliases
+
 # Run on a Raspberry Pi 3/4/5
 # Raspbian GNU/Linux
 # Version 12 (bookworm) -- needs to be a recent version.
