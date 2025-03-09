@@ -1,0 +1,73 @@
+# Define variables for configuration file paths
+NM_CONF="/etc/NetworkManager/system-connections/wired_connection_1.nmconnection"
+MOSQUITTO_CONF="/etc/mosquitto/mosquitto.conf"
+DNSMASQ_CONF="/etc/dnsmasq.conf"
+DNSMASQ_OVERRIDE="/etc/systemd/system/dnsmasq.service.d/override.conf"
+HOSTS_CONF="/etc/hosts"
+HOSTNAME_CONF="/etc/hostname"
+
+# Aliases for editing configuration files using these variables
+# NetworkManager manages the static IP and configuration of the pi.
+alias NetworkManager.conf="sudo vim $NM_CONF"
+# dnsmasq runs the dhcp and dns server for all clients.
+alias dnsmasq.conf="sudo vim $DNSMASQ_CONF"
+# mosquitto runs the mqtt broker used for communication.
+alias mosquitto.conf="sudo vim $MOSQUITTO_CONF"
+# The hosts file has some static ip mappings that are resolved locally and for dns clients.
+alias hosts.conf="sudo vim $HOSTS_CONF"
+# The hostname of the raspberry pi server
+alias hostname.conf="sudo vim $HOSTNAME_CONF"
+
+alias aliases="vim ~/.bash_aliases && source ~/.bashrc"
+alias leases="cat /var/lib/misc/dnsmasq.leases"
+alias arp.local="arp -a | grep 192.168.4."
+
+# Generic service aliases using a loop
+for service in NetworkManager mosquitto dnsmasq; do
+  # To get status and logs.
+  alias ${service}.status="sudo systemctl status ${service}"
+  alias ${service}.logs="journalctl -eu ${service}"
+  # To stop/restart.
+  alias ${service}.stop="sudo systemctl stop ${service}"
+  alias ${service}.restart="sudo systemctl restart ${service}"
+  # To enable or disable running on startup.
+  alias ${service}.disable="sudo systemctl disable ${service}"
+  alias ${service}.enable="sudo systemctl enable ${service}"
+done
+
+# Install aliases.
+alias mosquitto.install="sudo apt-get install mosquitto mosquitto-clients"
+alias dnsmasq.install="sudo apt-get install dnsmasq"
+# NetworkManager should already be installed by default.
+alias NetworkManager.install="echo 'NetworkManager should already be installed'"
+
+# Shortcuts to copy configuration.
+alias NetworkManager.cpconf="cpconf $(basename $NM_CONF)"
+alias dnsmasq.cpconf="cpconf $(basename $DNSMASQ_CONF) && cpconf $(basename $DNSMASQ_OVERRIDE)"
+alias mosquitto.cpconf="cpconf $(basename $MOSQUITTO_CONF)"
+alias host.cpconf="cpconf $(basename $HOSTS_CONF) && cpconf $(basename $HOSTNAME_CONF)"
+
+
+# Custom function to copy configuration files using the variables and sudo
+cpconf() {
+  case "$1" in
+    dnsmasq.conf)
+      sudo cp "$1" "$DNSMASQ_CONF" ;;
+    override.conf)
+      sudo mkdir -p $(dirname $DNSMASQ_OVERRIDE)
+      sudo cp "$1" "$DNSMASQ_OVERRIDE" ;;
+    mosquitto.conf)
+      sudo cp "$1" "$MOSQUITTO_CONF" ;;
+    wired_connection_1.nmconnection)
+      sudo mkdir -p $(dirname $NM_CONF)
+      sudo cp "$1" "$NM_CONF" && sudo chmod 600 "$NM_CONF" ;;
+    hosts)
+      sudo cp "$1" "$HOSTS_CONF" ;;
+    hostname)
+      sudo cp "$1" "$HOSTNAME_CONF" ;;
+    *)
+      echo "Usage: cpconf {dnsmasq.conf|mosquitto.conf|wired_connection_1.nmconnection}"
+      return 1 ;;
+  esac
+}
+

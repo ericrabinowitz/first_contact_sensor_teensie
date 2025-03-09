@@ -9,14 +9,14 @@ permissions=
 [ipv4]
 method=manual
 # addresses1 syntax: IP/Prefix,Gateway
+# Set the static IP for eth0 without a gateway so it doesn't become the default route.
 addresses1=192.168.4.1/24
-#addresses1=192.168.4.1
 # Set the DNS to the Pi's IP (the Pi will be your DNS server for local queries)
-#dns=192.168.4.1;
-#dns=8.8.8.8;4.4.4.4
+dns=192.168.4.1;
+# TODO: should we have a local search domain?
 #dns-search=local
+# Prevent this interface from being used as the default route, so internet works.
 never-default=true
-
 
 [ipv6]
 method=ignore
