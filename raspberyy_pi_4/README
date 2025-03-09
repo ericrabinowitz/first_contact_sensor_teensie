@@ -24,3 +24,7 @@ sudo systemctl status mosquitto
 sudo apt-get install dnsmasq
 sudo cp dnsmasq.conf /etc/
 
+
+# Copy /etc/hosts
+sudo cp hosts /etc/
+sudo cp hostname /etc/
