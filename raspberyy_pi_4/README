@@ -1,32 +1,26 @@
 # These commands were run to get set up
 
-# Run on a Raspberry Pi 4 Model B Rev 1.2
+# Run on a Raspberry Pi 4/5
 # Raspbian GNU/Linux
-# Version 11 (bullseye)
+# Version 12 (bookworm)
 
-# 1. Install dnsmasq and dhcpcd
+# Update
 sudo apt-get update
+
+# Install and configure NetworkManager for rpi static ip.
+mkdir -p /etc/NetworkManager/system-connections
+sudo cp wired_connection_1.nmconnection /etc/NetworkManager/system-connections/
+sudo systemctl restart NetworkManager
+sudo systemctl status NetworkManager
+
+# Install and configure mosquitto MQTT broker.
+sudo apt install mosquitto
+# Set the system to bring up the mosquitto broker.
+systemctl enable mosquitto
+# Confirm it's up and running.
+sudo systemctl status mosquitto
+
+# Install and configure dnsmasq dhcp/dns server
 sudo apt-get install dnsmasq
-sudo apt-get install dhcpcd5
+sudo cp dnsmasq.conf /etc/
 
-# 2. Back up the original configuration
-sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
-
-# 3. Copy in dnsmasq configuration
-sudo cp raspberyy_pi_4/dnsmasq.conf /etc/dnsmasq.conf
-
-# 4. Append the contents of dhcpcd.conf to your local file
-cat raspberyy_pi_4/dhcpcd.conf | sudo tee -a /etc/dhcpcd.conf
-sudo systemctl restart dhcpcd
-
-# 5. Restart and Enable dnsmasq. Note you'll need to have ethernet plugged in.
-sudo systemctl restart dnsmasq
-
-# 6. Check it's up
-sudo systemctl status dnsmasq
-
-# 7. Enable service to start at bootup
-sudo systemctl enable dnsmasq
-
-# 8. Check if any client has received a lease
-cat /var/lib/misc/dnsmasq.leases
