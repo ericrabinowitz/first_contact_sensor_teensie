@@ -19,18 +19,19 @@ cp bash_aliases ~/.bash_aliases
 source ~/.bash_aliases
 
 # Copy /etc/hosts and /etc/hostname
-host.cpconf
+cpconf hosts
+cpconf hostname
 
 # Install and configure NetworkManager for rpi static ip.
 # NM should already be install on latest Raspbian
 NetworkManager.status
-NetworkManager.cpconf
+cpconf wired_connection_1.nmconnection
 NetworkManager.restart
 NetworkManager.status
 
 # Install and configure mosquitto MQTT broker.
 mosquitto.install
-mosquitto.cpconf
+cpconf mosquitto.conf
 # Set the system to bring up the mosquitto broker.
 mosquitto.enable
 mosquitto.restart
@@ -38,8 +39,11 @@ mosquitto.status
 
 # Install and configure dnsmasq dhcp/dns server
 dnsmasq.install
-dnsmasq.cpconf
-# NOTE: These might fail if ethernet is not plugged in. It should succeed when it does. 
+cpconf dnsmasq.conf
+# Set it to start up automatically when ethernet is plugged in.
+cpconf override.conf
+# NOTE: These might fail if ethernet is not plugged in.
+# It will succeed when it does -- no need to re-run the script.
 dnsmasq.enable
 dnsmasq.restart
 dnsmasq.status
