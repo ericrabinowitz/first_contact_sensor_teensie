@@ -1,4 +1,5 @@
-# These commands were run to get set up. Run via `bash setup.sh`.
+#!/usr/bin/env bash
+# These commands were run to get set up. Run via ./setup.sh
 
 # Run on a Raspberry Pi 3/4/5
 # Raspbian GNU/Linux
