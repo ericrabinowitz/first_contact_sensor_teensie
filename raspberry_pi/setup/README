@@ -4,6 +4,9 @@ This directory includes configurations and installation for setting up the raspb
 
 To install, run from within the setup directory: bash setup.sh
 
+A working image that can be flashed is also availabe at https://www.dropbox.com/scl/fi/znpy3l43pblnhp0es6y9i/rpi_server.tgz?rlkey=r8cva44kwib85w6e607yqzol5&st=vzqh2c9j&dl=0
+TODO: test the image
+
 The server acts as dhcp server, dns server, and mqtt broker for the other nodes in the network over ethernet. There are 3 services that accomplish this:
 - dnsmasq acts as both the dhcp server and dns services
 - NetworkManager configure the local pi's network setup such as its static ip and dns.
