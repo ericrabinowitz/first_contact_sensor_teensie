@@ -297,6 +297,62 @@ IPAddress server          (192,168,4,1);
 
 using namespace qindesign::network;
 
+/*
+stringToCharArray(String str):
+
+
+Explanation and Important Considerations:
+It takes an Arduino String object as input.
+It allocates memory dynamically for a char array using new char[str.length() + 1]. The + 1 is crucial to accommodate the null terminator (\0) required by C-style strings.
+It copies the contents of the String object to the char array using str.toCharArray(charArray, str.length() + 1).
+It returns a char* pointer to the newly created array.
+It now handles empty strings by returning a nullptr.
+It also handles memory allocation failures by returning a nullptr.
+Memory Management:
+
+Crucially, you must delete[] charArray; when you're finished with the char array. Failure to do so will result in a memory leak.
+Set the pointer to nullptr after deleting the memory. This prevents dangling pointer issues.
+The example code demonstrates proper memory management.
+printf() Usage:
+
+The printf() function expects a char* (C-style string) as its %s argument.
+The stringToCharArray() function converts the Arduino String to the required format.
+Error Handling:
+
+The code now includes checks to handle cases where memory allocation fails.
+It also handles empty strings.
+Alternative (Using c_str()):
+
+For read-only use (where you don't need to modify the resulting char array), you can use the String.c_str() method. This returns a const char* that points to the internal buffer of the String object.
+Important: The c_str() method returns a pointer to internal String data, which may become invalid if the String object is modified or goes out of scope. Therefore, use it immediately or make a copy.
+Example:
+C++
+
+String myString = "Hello, world!";
+printf("String: %s\n", myString.c_str());
+Using c_str() is generally preferred when you don't need to modify the string, as it avoids dynamic memory allocation and deallocation.
+Which method to use:
+
+Use myString.c_str() when you only need to read the string's value and you are sure the string will remain in scope.
+Use stringToCharArray() when you need to modify the string or when you need a separate copy of the string that will persist beyond the scope of the original String object. Remember to free the memory.
+
+
+*/
+
+char* stringToCharArray(String str) {
+  if (str.length() == 0) {
+    return nullptr; // Return nullptr for empty strings
+  }
+
+  char* charArray = new char[str.length() + 1]; // Allocate memory for the char array
+  if (charArray == nullptr) {
+    return nullptr; // Handle memory allocation failure
+  }
+
+  str.toCharArray(charArray, str.length() + 1); // Copy the String to the char array
+  return charArray;
+}
+
 
 
 
@@ -556,7 +612,7 @@ String reverseDnsLookup(IPAddress ip) {
 
    Ethernet.begin(); 
    // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
-   delay(1000); 
+   // delay(1000);  XXX 3 
  #else 
    // Start the Ethernet connection, using static IP 
    Serial.print("Initialize Ethernet using STATIC IP => "); 
@@ -655,8 +711,20 @@ String reverseDnsLookup(IPAddress ip) {
   udp.begin(12345);
 
   Serial.println(F("======== Reverse DNS Lookup ============"));
-  Serial.printf ("Hostname:",reverseDnsLookup(Ethernet.localIP()) );
-  Serial.println( reverseDnsLookup(Ethernet.localIP()));
+
+
+  String Hostname = reverseDnsLookup(Ethernet.localIP());
+
+  //Serial.printf ("Hostname:",reverseDnsLookup(Ethernet.localIP()) );
+  Serial.printf ("Hostname:");
+  Serial.print (Hostname);
+
+  //Serial.println( reverseDnsLookup(Ethernet.localIP()));
+
+  char *hostname = stringToCharArray(Hostname);
+
+  displayHostname ( hostname);
+  delete[] hostname;
 
  } 
 
@@ -988,7 +1056,7 @@ void audioMusicSetup() {
       delay(500);
     }
   }
-  delay(1000);
+  // delay(1000); XXX 1
 }
 
 void playMusic (const char * song, unsigned int state) 
@@ -1021,6 +1089,13 @@ void playMusic (const char * song, unsigned int state)
 // Music Player End
 //
 
+void displayHostname ( char * hostname )
+{
+  display.setCursor(0,20);  
+  display.print("name:");
+  display.print(hostname);
+  display.display();
+}
 
 void displayNetworkStatus( const char string[] )
 {
@@ -1062,7 +1137,7 @@ void displaySplashScreen(void) {
  
 
   display.display();
-  delay(2000);
+  //delay(2000); XXX
 }
 
 void displaySetup()
@@ -1119,7 +1194,7 @@ void setup()
   client.setCallback(mqttSubCallback);
 
   // Allow the hardware to sort itself out
-  delay(1500);
+  // delay(1500); XXX
 
   Serial.printf("_______Audio Memory Init________\n");
   AudioMemory(22); // NOTE this number is simply a guess.   Working: 12 for Sens, 8 for Wav Player + margin
