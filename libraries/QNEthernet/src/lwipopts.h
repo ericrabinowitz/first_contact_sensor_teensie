@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2021-2024 Shawn Silverman <shawn@pobox.com>
+// SPDX-FileCopyrightText: (c) 2021-2025 Shawn Silverman <shawn@pobox.com>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // lwipopts.h is the lwIP configuration.
@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "driver_select.h"
+#include "qnethernet/driver_select.h"
 #include "qnethernet_opts.h"
 
 #ifdef __cplusplus
@@ -28,7 +28,7 @@ extern "C" {
 // #define LWIP_TCPIP_CORE_LOCKING_INPUT 0
 #define SYS_LIGHTWEIGHT_PROT          0  /* 1 */
 #define LWIP_ASSERT_CORE_LOCKED() \
-  qnethernet_hal_check_core_locking(__FILE__, __LINE__, __FUNCTION__)
+  qnethernet_hal_check_core_locking(__FILE__, __LINE__, __func__)
 void qnethernet_hal_check_core_locking(const char *file, int line,
                                        const char *func);
 
@@ -429,7 +429,7 @@ void qnethernet_hal_check_core_locking(const char *file, int line,
 // #define LWIP_DHCP6_MAX_DNS_SERVERS      DNS_MAX_SERVERS
 
 // Hook options
-#define LWIP_HOOK_FILENAME "lwip_hooks.h"
+#define LWIP_HOOK_FILENAME "qnethernet/lwip_hooks.h"
 // #define LWIP_HOOK_TCP_ISN(local_ip, local_port, remote_ip, remote_port)
 // #define LWIP_HOOK_TCP_INPACKET_PCB(pcb, hdr, optlen, opt1len, opt2, p)
 // #define LWIP_HOOK_TCP_OUT_TCPOPT_LENGTH(pcb, internal_len)

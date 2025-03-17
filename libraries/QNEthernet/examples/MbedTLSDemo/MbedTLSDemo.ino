@@ -12,7 +12,7 @@
 // 2. Enable the QNETHERNET_ALTCP_TLS_ADAPTER option.
 //    (In the qnethernet_opts.h library file or the project build options.)
 // 3. Install the latest 2.x.x version of Mbed TLS. As of this
-//    writing, the current version is 2.28.8. In order to use this
+//    writing, the current version is 2.28.9. In order to use this
 //    example program in the Arduino IDE, Mbed TLS needs to be
 //    installed as a library. Please see the README for more
 //    information.
@@ -33,7 +33,7 @@ using namespace qindesign::network;
 constexpr uint32_t kDHCPTimeout = 15'000;  // 15 seconds
 
 // Connection information
-#define HOST "www.example.com"
+#define HOST "www.google.com"
 constexpr char kHost[]{HOST};
 constexpr char kRequest[]{
     "HEAD / HTTP/1.1\r\n"

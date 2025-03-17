@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2021-2024 Shawn Silverman <shawn@pobox.com>
+// SPDX-FileCopyrightText: (c) 2021-2025 Shawn Silverman <shawn@pobox.com>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // QNEthernet.h defines an Arduino-style Ethernet driver for Teensy 4.1.
@@ -13,23 +13,21 @@
 
 #include <IPAddress.h>
 
-#include "QNEthernetClient.h"
-#include "QNEthernetFrame.h"
-#include "QNEthernetServer.h"
-#include "QNEthernetUDP.h"
-#include "QNMDNS.h"
-#include "StaticInit.h"
 #include "lwip/apps/mdns_opts.h"
-#include "lwip/dns.h"
-#include "lwip/ip_addr.h"
+#include "lwip/arch.h"
 #include "lwip/netif.h"
 #include "lwip/opt.h"
 #include "lwip/prot/ethernet.h"
-#include "lwip_driver.h"
+#include "qnethernet/QNEthernetClient.h"
+#include "qnethernet/QNEthernetFrame.h"
+#include "qnethernet/QNEthernetServer.h"
+#include "qnethernet/QNEthernetUDP.h"
+#include "qnethernet/QNMDNS.h"
+#include "qnethernet/StaticInit.h"
+#include "qnethernet/lwip_driver.h"
+#include "qnethernet/security/RandomDevice.h"
+#include "qnethernet/util/PrintUtils.h"
 #include "qnethernet_opts.h"
-#include "security/RandomDevice.h"
-#include "util/PrintUtils.h"
-#include "util/ip_tools.h"
 
 namespace qindesign {
 namespace network {
@@ -59,12 +57,13 @@ class EthernetClass final {
   static constexpr int kMACAddrSize = ETH_HWADDR_LEN;
 
   // EthernetClass is neither copyable nor movable
+  // See also: https://en.cppreference.com/w/cpp/language/rule_of_three
   EthernetClass(const EthernetClass &) = delete;
   EthernetClass &operator=(const EthernetClass &) = delete;
 
   // Returns a string containing the library version number.
   static const char *libraryVersion() {
-    return "0.30.1";
+    return "0.31.0";
   }
 
   // Returns the maximum number of multicast groups. Note that mDNS will use
@@ -224,6 +223,8 @@ class EthernetClass final {
   // Returns the link status, one of the EthernetLinkStatus enumerators. This
   // will return Unknown if the hardware hasn't yet been probed, LinkON if
   // linkState() returns true, and LinkOFF if linkState() returns false.
+  //
+  // This function is defined by the Arduino API.
   EthernetLinkStatus linkStatus() const;
 
   // Returns the interface-level link state. It may be managed manually with
@@ -257,7 +258,7 @@ class EthernetClass final {
   // Sets a link state callback.
   //
   // Note that no network tasks should be done from inside the listener.
-  void onLinkState(std::function<void(bool state)> cb) {
+  void onLinkState(const std::function<void(bool state)> cb) {
     linkStateCB_ = cb;
   }
 
@@ -265,7 +266,7 @@ class EthernetClass final {
   // addresses changed: IP address, subnet mask, or gateway.
   //
   // Note that no network tasks should be done from inside the listener.
-  void onAddressChanged(std::function<void()> cb) {
+  void onAddressChanged(const std::function<void()> cb) {
 #if LWIP_IPV4 || LWIP_IPV6
     addressChangedCB_ = cb;
 #endif  // LWIP_IPV4 || LWIP_IPV6
@@ -275,12 +276,14 @@ class EthernetClass final {
   // is up but BEFORE the interface goes down.
   //
   // Note that no network tasks should be done from inside the listener.
-  void onInterfaceStatus(std::function<void(bool status)> cb) {
+  void onInterfaceStatus(const std::function<void(bool status)> cb) {
     interfaceStatusCB_ = cb;
   }
 
   // Returns the interface status, true for UP and false for DOWN.
   bool interfaceStatus() const;
+
+  // These functions are defined by the Arduino API:
 
   IPAddress localIP() const;
   IPAddress subnetMask() const;
@@ -288,6 +291,8 @@ class EthernetClass final {
 
   // Returns the DNS server address at index zero. This returns INADDR_NONE if
   // DNS is disabled.
+  //
+  // This function is defined by the Arduino API.
   IPAddress dnsServerIP() const;
 
   // Returns the DNS server IP at the specified index. This returns INADDR_NONE
@@ -300,8 +305,11 @@ class EthernetClass final {
   // This will return 255.255.255.255 if Ethernet is not initialized.
   IPAddress broadcastIP() const;
 
-  // None of the following address setting functions do anything unless the
+  // None of the following address-setting functions do anything unless the
   // system is initialized after a `begin` call
+  //
+  // These functions are defined by the Arduino API
+
   void setLocalIP(const IPAddress &ip) const;
   void setSubnetMask(const IPAddress &subnetMask) const;
   void setGatewayIP(const IPAddress &ip) const;
@@ -320,7 +328,10 @@ class EthernetClass final {
   //
   // Wish: Boolean returns
   // Technically, the non-DHCP begin() functions aren't supposed to
-  // return anything
+  // return anything.
+  //
+  // These functions are defined by the Arduino API.
+
   int begin(const uint8_t mac[kMACAddrSize],
             uint32_t timeout = QNETHERNET_DEFAULT_DHCP_CLIENT_TIMEOUT);
   [[deprecated("See begin(ip, subnet, gateway)")]]
@@ -335,21 +346,33 @@ class EthernetClass final {
              const IPAddress &dns, const IPAddress &gateway,
              const IPAddress &subnet);
 
+  // This function is defined by the Arduino API.
   EthernetHardwareStatus hardwareStatus() const;
 
-  void init(int sspin) {
+  // This function is defined by the Arduino API.
+  void init(const int sspin) {
     chipSelectPin_ = sspin;
   }
 
   // Deprecated and unused functions
+  //
+  // These functions are defined by the Arduino API
+
   [[deprecated("DHCP maintained internally")]]
   uint8_t maintain() const { return 0; }
   [[deprecated("See TCP_MAXRTX")]]
-  void setRetransmissionCount([[maybe_unused]] uint8_t number) const {}
+  void setRetransmissionCount(const uint8_t number) const {
+    LWIP_UNUSED_ARG(number);
+  }
   [[deprecated("Handled internally")]]
-  void setRetransmissionTimeout([[maybe_unused]] uint16_t milliseconds) const {}
+  void setRetransmissionTimeout(const uint16_t milliseconds) const {
+    LWIP_UNUSED_ARG(milliseconds);
+  }
 
   // These call something equivalent
+  //
+  // These functions are defined by the Arduino API
+
   void MACAddress(uint8_t mac[kMACAddrSize]) { macAddress(mac); }
   void setDnsServerIP(const IPAddress &dnsServerIP) const {
     setDNSServerIP(dnsServerIP);
@@ -401,10 +424,18 @@ class EthernetClass final {
   // hostname is set. The default is "qnethernet-lwip".
   //
   // This returns the empty string if 'LWIP_NETIF_HOSTNAME' is not enabled.
-  const char *hostname() const;
+  const char *hostname() const {
+#if LWIP_NETIF_HOSTNAME
+    return hostname_;
+#else
+    return "";
+#endif  // LWIP_NETIF_HOSTNAME
+  }
 
   // Tests if Ethernet is initialized.
-  explicit operator bool() const;
+  explicit operator bool() const {
+    return (netif_ != nullptr);
+  }
 
   // Convenience function that tries to resolve the given hostname into an IP
   // address. This returns whether successful.

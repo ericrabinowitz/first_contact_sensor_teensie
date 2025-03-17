@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2023-2024 Shawn Silverman <shawn@pobox.com>
+// SPDX-FileCopyrightText: (c) 2023-2025 Shawn Silverman <shawn@pobox.com>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // test_main.cpp tests the entropy functions.
@@ -7,8 +7,8 @@
 #include <cerrno>
 
 #include <Arduino.h>
-#include <security/RandomDevice.h>
-#include <security/entropy.h>
+#include <qnethernet/security/RandomDevice.h>
+#include <qnethernet/security/entropy.h>
 #include <unity.h>
 
 // --------------------------------------------------------------------------
@@ -78,9 +78,6 @@ static void test_random_range() {
 // Tests entropy_random().
 static void test_randomDevice() {
   qindesign::security::RandomDevice::instance()();
-  TEST_ASSERT_EQUAL_MESSAGE(&qindesign::security::randomDevice,
-                            &qindesign::security::RandomDevice::instance(),
-                            "Expected objects equal");
   TEST_ASSERT_EQUAL_MESSAGE(0, qindesign::security::RandomDevice::min(),
                             "Expected full-range minimum");
   TEST_ASSERT_EQUAL_MESSAGE(UINT32_MAX, qindesign::security::RandomDevice::max(),
@@ -88,7 +85,7 @@ static void test_randomDevice() {
 
   errno = 0;
   for (int i = 0; i < (1 << 10); i++) {
-    qindesign::security::randomDevice();
+    qindesign::security::RandomDevice::instance()();
     TEST_ASSERT_EQUAL_MESSAGE(0, errno, "Expected no error");
   }
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2021-2024 Shawn Silverman <shawn@pobox.com>
+// SPDX-FileCopyrightText: (c) 2021-2025 Shawn Silverman <shawn@pobox.com>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // cc.h is the lwIP architecture configuration.
@@ -23,8 +23,8 @@
 extern "C" {
 #endif  // __cplusplus
 
-#define LWIP_RAND() qnethernet_hal_rand()
-uint32_t qnethernet_hal_rand();
+#define LWIP_RAND() qnethernet_hal_entropy()
+uint32_t qnethernet_hal_entropy(void);
 
 #define LWIP_PLATFORM_ASSERT(x)                          \
   do {                                                   \

@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.0]
+
+### Added
+* Added `qnethernet_hal_fill_entropy(buf, size)` for filling a buffer with
+  random values.
+* Added `EthernetClient::setConnectionTimeoutEnabled(flag)` to enable or disable
+  blocking with calls to `connect(...)` and `stop()`. This supersedes calls to
+  `connectNoWait(...)` and `close()`. Also added `isConnectionTimeoutEnabled()`.
+* Added templated versions of `util::writeFully()` and `util::writeMagic()` that
+  use a break function that static_casts a given object to a `bool`.
+* Added `EthernetClient::connecting()` for determining if the client is still in
+  the process of connecting during a non-blocking connect.
+
+### Changed
+* Remove internal uses of `String` from `MDNSClass` and replace them with
+  char arrays.
+* Updated Mbed TLS version mentions to 2.28.9 from 2.28.8.
+* Made `EthernetClient::isNoDelay()` `const`.
+* Disallow compilation for Teensyduino < 1.59 because there's no support for
+  casting a `const IPAddress` to a `uint32_t` or for equality-comparing them.
+* Replaced `EthernetClient::writeFully(const char *, size_t)` and
+  `writeFully(const uint8_t *, size_t)` with `writeFully(const void *, size_t)`.
+* Updated the file structure to put most sources underneath _src/qnethernet/_.
+* Changed `EthernetClient::setConnectionTimeout(timeout)` and
+  `connectionTimeout()` to use 32-bit values.
+* Renamed `qnethernet_hal_rand()` and `qnethernet_hal_init_rand()` to
+  `qnethernet_hal_entropy()` and `qnethernet_hal_init_entropy()`, respectively.
+* Changed the non-entropy version of the entropy functions in the HAL to use
+  `std::minstd_rand` instead of `std::rand()` and `std::srand()`.
+* Changed uses of "www.example.com" to "www.google.com" in the examples
+  and tests.
+
+### Fixed
+* Now using `(void)` instead of `()` for all C function declarations because
+  `()` doesn't mean "no parameters" in C.
+* Fixed `driver_unsupported`'s `driver_init(void)` parameters to be empty.
+
 ## [0.30.1]
 
 ### Fixed
@@ -70,6 +107,8 @@ and this project adheres to
   driver capabilities.
 * Removed `get_uint32(ip)` utility function because a `static_cast<uint32_t>()`
   is sufficient.
+* Removed `const IPAddress` equality comparison operators because these exist in
+  Teensyduino 1.59.
 
 ### Fixed
 * Fixed iperf v2 tests by commenting out per-block settings compare.
@@ -1150,4 +1189,4 @@ and this project adheres to
 
 ---
 
-Copyright (c) 2021-2024 Shawn Silverman
+Copyright (c) 2021-2025 Shawn Silverman

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2022-2024 Shawn Silverman <shawn@pobox.com>
+// SPDX-FileCopyrightText: (c) 2022-2025 Shawn Silverman <shawn@pobox.com>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // IPerfServer implements an iPerf server for TCP traffic.
@@ -14,7 +14,7 @@
 //
 // With this command: `iperf -c <IP address> -i 1 -l 1460 -r`
 // it appears that the QNEthernet stack can achieve about 94.9 Mbps in
-// both directions.
+// both directions. (Note: The `iperf3` command won't work.)
 //
 // Multiple connections are supported.
 //
@@ -36,6 +36,7 @@
 #include <vector>
 
 #include <QNEthernet.h>
+#include <lwip/def.h>
 #include <lwip/opt.h>
 
 using namespace qindesign::network;

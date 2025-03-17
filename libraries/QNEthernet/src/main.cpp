@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2021-2024 Shawn Silverman <shawn@pobox.com>
+// SPDX-FileCopyrightText: (c) 2021-2025 Shawn Silverman <shawn@pobox.com>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // main.cpp is a testing playground for this library.
@@ -10,8 +10,8 @@
 #include <Arduino.h>
 
 #include "QNEthernet.h"
-#include "QNDNSClient.h"
 #include "lwip/dns.h"
+#include "qnethernet/QNDNSClient.h"
 
 using namespace qindesign::network;
 
@@ -143,7 +143,7 @@ static void dnsLookup() {
 #endif  // LWIP_DNS
 }
 
-#define HOST "www.example.com"
+#define HOST "www.google.com"
 static constexpr char kHost[]{HOST};
 static constexpr char kRequest[]{
     "HEAD / HTTP/1.1\r\n"
@@ -155,6 +155,7 @@ static constexpr char kRequest[]{
 static constexpr uint16_t kPort = 80;
 
 static void clientConnect() {
+#if LWIP_TCP
   EthernetClient client;
   printf("[Main] Connecting to %s...\r\n", kHost);
   if (!client.connect(kHost, 80)) {
@@ -191,6 +192,7 @@ static void clientConnect() {
     }
   }
   printf("\r\n");
+#endif  // LWIP_TCP
 }
 
 #endif  // MAIN_TEST_PROGRAM

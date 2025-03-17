@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2023-2024 Shawn Silverman <shawn@pobox.com>
+// SPDX-FileCopyrightText: (c) 2023-2025 Shawn Silverman <shawn@pobox.com>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // mbedtls_entropy.c defines the entropy generation function for Mbed TLS.
@@ -10,6 +10,7 @@
 #if LWIP_ALTCP && LWIP_ALTCP_TLS
 
 #include <lwip/apps/altcp_tls_mbedtls_opts.h>
+#include <lwip/arch.h>
 
 #if LWIP_ALTCP_TLS_MBEDTLS
 
@@ -19,7 +20,7 @@
 #if (defined(TEENSYDUINO) && defined(__IMXRT1062__)) && \
     !QNETHERNET_USE_ENTROPY_LIB
 
-#include <security/entropy.h>
+#include <qnethernet/security/entropy.h>
 
 int mbedtls_hardware_poll(void *data,
                           unsigned char *output, size_t len, size_t *olen) {

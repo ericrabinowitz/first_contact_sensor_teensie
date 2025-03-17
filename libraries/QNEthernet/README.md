@@ -4,7 +4,7 @@ or
 
 # _QNEthernet_, an lwIP-Based Ethernet Library For Teensy 4.1 and possibly some other platforms
 
-_Version: 0.30.1_
+_Version: 0.31.0_
 
 The _QNEthernet_ library provides Ethernet functionality for the Teensy 4.1 and
 possibly some other platforms. It's designed to be compatible with the
@@ -34,8 +34,8 @@ lwIP release.
    6. [`MDNS`](#mdns)
    7. [`DNSClient`](#dnsclient)
    8. [Print utilities](#print-utilities)
-   9. [`IPAddress` operators](#ipaddress-operators)
-   10. [`operator bool()` and `explicit`](#operator-bool-and-explicit)
+   9. [`operator bool()` and `explicit`](#operator-bool-and-explicit)
+   10. [Use of `errno`](#use-of-errno)
 3. [How to run](#how-to-run)
    1. [Concurrent use is not supported](#concurrent-use-is-not-supported)
    2. [How to move the stack forward and receive data](#how-to-move-the-stack-forward-and-receive-data)
@@ -48,7 +48,7 @@ lwIP release.
 6. [A survey of how connections (aka `EthernetClient`) work](#a-survey-of-how-connections-aka-ethernetclient-work)
    1. [Connections and link/interface detection](#connections-and-linkinterface-detection)
    2. [`connect()` behaviour and its return values](#connect-behaviour-and-its-return-values)
-   3. [Non-blocking connection functions, `connectNoWait()`](#non-blocking-connection-functions-connectnowait)
+   3. [Non-blocking connection functions](#non-blocking-connection-functions)
    4. [Getting the TCP state](#getting-the-tcp-state)
 7. [How to use multicast](#how-to-use-multicast)
 8. [How to use listeners](#how-to-use-listeners)
@@ -324,25 +324,35 @@ The `Ethernet` object is the main Ethernet interface.
 
 * `abort()`: Aborts a connection without going through the TCP close process.
 * `close()`: Closes a connection, but without waiting. It's similar to `stop()`.
+  This is superseded by `setConnectionTimeoutEnabled(flag)` with `stop()`.
 * `closeOutput()`: Shuts down the transmit side of the socket. This is a
   half-close operation.
 * `connectNoWait(ip, port)`: Similar to `connect(ip, port)`, but it doesn't
-  wait for a connection.
+  wait for a connection. This is superseded by
+  `setConnectionTimeoutEnabled(flag)` with `connect(ip, port)`.
 * `connectNoWait(host, port)`: Similar to `connect(host, port)`, but it doesn't
-  wait for a connection. Note that the DNS lookup will still wait.
+  wait for a connection. Note that the DNS lookup will still wait. This is
+  superseded by `setConnectionTimeoutEnabled(flag)` with `connect(host, port)`.
+* `connecting()`: Returns whether the client is in the middle of connecting.
+  This is used when doing a non-blocking connect.
 * `connectionId()`: Returns an ID for the connection to which the client refers.
   It will return non-zero if connected and zero if not connected. Note that it's
   possible for new connections to reuse previously-used IDs.
 * `connectionTimeout()`: Returns the current timeout value.
+* `isConnectionTimeoutEnabled()`: Returns whether connection timeout is enabled.
 * `localIP()`: Returns the local IP of the network interface used for the
   client. Currently, This returns the same value as `Ethernet.localIP()`.
+* `setConnectionTimeout(timeout)`: The parameter is a `uint32_t` and not a
+  `uint16_t`. The spec, as of this writing, specifies a `uint16_t` parameter.
+* `setConnectionTimeoutEnabled(flag)`: Enables or disables use of a connection
+  timeout. If disabled, then calls to `connect(...)` and `stop()` won't block.
+  This supersedes the `connectNoWait(...)` and `close()` calls.
 * `status()`: Returns the current TCP connection state. This returns one of
   lwIP's `tcp_state` enum values. To use with _altcp_, define the
   `LWIP_DEBUG` macro.
 * `writeFully(b)`: Writes a single byte.
 * `writeFully(s)`: Writes a string (`const char *`).
-* `writeFully(s, size)`: Writes characters (`const char *`).
-* `writeFully(buf, size)`: Writes a data buffer (`const uint8_t *`).
+* `writeFully(buf, size)`: Writes a data buffer (`const void *`).
 * `static constexpr int maxSockets()`: Returns the maximum number of
   TCP connections.
 
@@ -570,9 +580,9 @@ The `DNSClient` class provides an interface to the DNS client.
 
 ### Print utilities
 
-The `util/PrintUtils.h` file declares some useful output functions and classes.
-Note that this file is included when `QNEthernet.h` is included; there's no need
-to include it separately.
+The `qnethernet/util/PrintUtils.h` file declares some useful output functions
+and classes. Note that this file is included when `QNEthernet.h` is included;
+there's no need to include it separately.
 
 The functions and classes are in the `qindesign::network::util` namespace, so if
 you've already added `using namespace qindesign::network;` to your code, they
@@ -592,7 +602,7 @@ Functions:
    pass the "am I disconnected" condition as the `breakf` function.
 
 2. `writeMagic(Print &, mac, breakf = nullptr)`: Writes the payload for a
-   [Magic packet](#https://en.wikipedia.org/wiki/Wake-on-LAN#Magic_packet) to
+   [Magic packet](https://en.wikipedia.org/wiki/Wake-on-LAN#Magic_packet) to
    the given `Print` object. This uses `writeFully(...)` under the covers and
    passes along the `breakf` function as the stopping condition.
 
@@ -606,15 +616,6 @@ Classes:
    `Print` interface so that it is easy to print `Printable` objects to `stdout`
    or `stderr` without having to worry about buffering and the need to flush any
    output before printing a `Printable` directly to, say, `Serial`.
-
-### `IPAddress` operators
-
-The core library version of `IPAddress` is missing `==` and `!=` operators that
-can compare `const IPAddress` values. Provided in this library are these two
-operators. They are declared as follows in the usual namespace:
-
-1. `bool operator==(const IPAddress &a, const IPAddress &b);`
-2. `bool operator!=(const IPAddress &a, const IPAddress &b);`
 
 ### `operator bool()` and `explicit`
 
@@ -663,6 +664,12 @@ bool isConnected() {
 See also:
 1. [The safe bool problem](https://en.cppreference.com/w/cpp/language/implicit_conversion#The_safe_bool_problem)
 2. [`explicit` specifier](https://en.cppreference.com/w/cpp/language/explicit)
+
+### Use of `errno`
+
+When a function call fails, it is often the case that `errno` will be set to
+something appropriate. See the function documentation of interest in the
+relevant header for more information.
 
 ## How to run
 
@@ -914,7 +921,7 @@ sending network data, checking the return values and acting on them. Or you can
 use the library's `writeFully(...)` functions.
 
 See the discussion at:
-https://forum.pjrc.com/threads/68389-NativeEthernet-stalling-with-dropped-packets
+https://forum.pjrc.com/index.php?threads/nativeethernet-stalling-with-dropped-packets.68389/
 
 ### `writeFully()` with more break conditions
 
@@ -1056,15 +1063,16 @@ The Arduino-style API,
 this function, but now it returns a Boolean value indicating success. Note that
 the function signatures still return an `int`.
 
-### Non-blocking connection functions, `connectNoWait()`
+### Non-blocking connection functions
 
 The `connectNoWait()` functions implement non-blocking TCP connections. These
 functions behave similarly to `connect()`, however they do not wait for the
 connection to be established.
 
-To check for connection establishment, simply call either `connected()` or the
-Boolean operator. If a connection can't be established then `close()` must be
-called on the object.
+To check for connection establishment, simply call `connecting()` to determine
+if the client is still in the process of connecting, and then either
+`connected()` or the Boolean operator. If a connection can't be established then
+`close()` must be called on the object.
 
 Note that DNS lookups for hostnames will still wait.
 
@@ -1094,8 +1102,8 @@ The states, as defined by lwIP's `tcp_state` enum:
 11. TIME_WAIT
 
 This enum isn't a C++ "enum class", so its values can be used directly. The
-definition is already included by _QNEthernetClient.h_, which is, in turn,
-included by _QNEthernet.h_.
+definition is already included by _qnethernet/QNEthernetClient.h_, which is, in
+turn, included by _QNEthernet.h_.
 
 References:
 1. [TCP states](https://www.rfc-editor.org/rfc/rfc9293#name-state-machine-overview)
@@ -1278,7 +1286,7 @@ the system default, then leave the `QNETHERNET_CUSTOM_WRITE` macro undefined.
 ### Adapt stdio files to the Print interface
 
 There is a utility class for decorating stdio `FILE*` objects with the `Print`
-interface. See the `StdioPrint` class in _src/util/PrintUtils.h_.
+interface. See the `StdioPrint` class in _src/qnethernet/util/PrintUtils.h_.
 
 This is useful when:
 1. A `FILE*` object does its own buffering and you also need to write to the
@@ -1439,36 +1447,36 @@ Currently, this file is only built if the `LWIP_ALTCP`, `LWIP_ALTCP_TLS`, and
 
 The lwIP distribution comes with a way to use the Mbed TLS library as an ALTCP
 TLS layer. It currently only supports the 2.x.x versions; as of this writing,
-the latest version is 2.28.8.
+the latest version is 2.28.9.
 
 More detailed information are in the subsections below, but here is an outline
 of how to use this feature:
 1. Set the following macros to `1` in _lwipopts.h_:
-   1. LWIP_ALTCP &mdash; Enables the ALTCP layer
-   2. LWIP_ALTCP_TLS &mdash; Enables the TLS features of ALTCP
-   3. LWIP_ALTCP_TLS_MBEDTLS &mdash; Enables the Mbed TLS code for ALTCP TLS
-   4. QNETHERNET_ALTCP_TLS_ADAPTER &mdash; Enables the _altcp_tls_adapter_
-      functions that help ease integration
-2. Install the latest Mbed TLS v2.x.x.
-3. Implement the functions required by _src/altcp_tls_adapter.cpp_. This file
+   1. `LWIP_ALTCP` &mdash; Enables the ALTCP layer
+   2. `LWIP_ALTCP_TLS` &mdash; Enables the TLS features of ALTCP
+   3. `LWIP_ALTCP_TLS_MBEDTLS` &mdash; Enables the Mbed TLS code for ALTCP TLS
+2. Set the `QNETHERNET_ALTCP_TLS_ADAPTER` macro to `1` in _qnethernet_opts.h_.
+   This enables the _altcp_tls_adapter_ functions that help ease integration.
+3. Install the latest Mbed TLS v2.x.x.
+4. Implement the functions required by _src/altcp_tls_adapter.cpp_. This file
    implements the above allocator functions and simplifies the integration.
-4. Implement an entropy function for internal Mbed TLS use.
+5. Implement an entropy function for internal Mbed TLS use.
 
 #### Installing the Mbed TLS library
 
 Currently, there doesn't seem to be an Arduino-friendly version of this library.
 So, first download or clone a snapshot of the latest 2.x.x version (current as
-of this writing is 2.28.8): http://github.com/Mbed-TLS/mbedtls
+of this writing is 2.28.9): http://github.com/Mbed-TLS/mbedtls
 
-See the `v2.28.8` or `mbedtls-2.28.8` tags for the 2.28.8 version, or the
+See the `v2.28.9` or `mbedtls-2.28.9` tags for the 2.28.9 version, or the
 `mbedtls-2.28` branch for the latest 2.28.x version. The `development` and
 `master` branches currently point to version 3.6.x.
 
 ##### Mbed TLS library install for Arduino IDE
 
 In your preferred "Libraries" folder, create a folder named _mbedtls_.
-Underneath that, create a _src_ folder. Copy, recursively, all files from the
-distribution as follows:
+Underneath that, create a _src_ folder. Copy, recursively, all files and folders
+from the distribution as follows:
 1. distro/library/* -> "Libraries"/mbedtls/src
 2. distro/include/* -> "Libraries"/mbedtls/src
 
@@ -1481,7 +1489,7 @@ Next, create an empty _mbedtls.h_ file inside _"Libraries"/mbedtls/src/_.
 Next, create a _library.properties_ file inside _"Libraries"/mbedtls/_:
 ```properties
 name=Mbed TLS
-version=2.28.8
+version=2.28.9
 sentence=Mbed TLS is a C library that implements cryptographic primitives, X.509 certificate manipulation and the SSL/TLS and DTLS protocols.
 paragraph=Its small code footprint makes it suitable for embedded systems.
 category=Communication
@@ -1498,15 +1506,15 @@ presence rather than macro values.
 For posterity, the following changes are the minimum possible set just to be
 able to get the library to compile:
 1. Define:
-   1. MBEDTLS_NO_PLATFORM_ENTROPY
-   2. MBEDTLS_ENTROPY_HARDWARE_ALT &mdash; Requires `mbedtls_hardware_poll()`
+   1. `MBEDTLS_NO_PLATFORM_ENTROPY`
+   2. `MBEDTLS_ENTROPY_HARDWARE_ALT` &mdash; Requires `mbedtls_hardware_poll()`
       function implementation
 2. Undefine:
-   1. MBEDTLS_NET_C
-   2. MBEDTLS_TIMING_C
-   3. MBEDTLS_FS_IO
-   4. MBEDTLS_PSA_ITS_FILE_C
-   5. MBEDTLS_PSA_CRYPTO_STORAGE_C
+   1. `MBEDTLS_NET_C`
+   2. `MBEDTLS_TIMING_C`
+   3. `MBEDTLS_FS_IO`
+   4. `MBEDTLS_PSA_ITS_FILE_C`
+   5. `MBEDTLS_PSA_CRYPTO_STORAGE_C`
 
 There are also example configuration headers in Mbed TLS under _configs/_.
 
@@ -1516,7 +1524,7 @@ after installing the library.
 ##### Mbed TLS library install for PlatformIO
 
 In your preferred "Libraries" folder, create a folder named _mbedtls_. Copy all
-files, recursively, from the Mbed TLS distribution into that folder.
+files and folders, recursively, from the Mbed TLS distribution into that folder.
 
 The "Libraries" folder is either PlatformIO's global libraries location or the
 application's local _lib/_ folder.
@@ -1525,7 +1533,7 @@ Next, create a _library.json_ file inside _"Libraries"/mbedtls/_:
 ```json
 {
   "name": "Mbed TLS",
-  "version": "2.28.8",
+  "version": "2.28.9",
   "description": "Mbed TLS is a C library that implements cryptographic primitives, X.509 certificate manipulation and the SSL/TLS and DTLS protocols. Its small code footprint makes it suitable for embedded systems.",
   "keywords": [
     "tls", "networking"
@@ -1617,7 +1625,9 @@ could be called on connections when the link has been disconnected. (See also
 `Ethernet.onLinkState(cb)` or `Ethernet.linkState()`.)
 
 Fun links:
-* [Removing Exponential Backoff from TCP | acm sigcomm](http://www.sigcomm.org/node/2736)
+* [Removing Exponential Backoff from TCP](http://ccr.sigcomm.org/online/files/p19-mondal.pdf)
+  * Ref: [[PDF] Removing exponential backoff from TCP](https://www.semanticscholar.org/paper/Removing-exponential-backoff-from-TCP-Mondal-Kuzmanovic/2ab0df78bb0aa95c0ed8f3dc687937ccc64f6785)
+  * Older link: [Removing Exponential Backoff from TCP | acm sigcomm](http://www.sigcomm.org/node/2736)
 * [Exponential backoff](https://en.wikipedia.org/wiki/Exponential_backoff)
 
 ## Notes on ordering and timing
@@ -1689,17 +1699,16 @@ project needs to use the _Entropy_ library instead, set the
 `QNETHERNET_USE_ENTROPY_LIB` macro to `1` so that any internal entropy
 collection doesn't interfere with your project's entropy collection.
 
-The _Entropy_ library does the essentially same things as the internal TRNG
+The _Entropy_ library does essentially the same things as the internal TRNG
 functions, it just requires an additional dependency. This is the reason these
 functions are provided: to remove that dependency.
 
-See the function declarations in _src/security/entropy.h_ if you want to use
-them yourself.
+See the function declarations in _src/qnethernet/security/entropy.h_ if you want
+to use them yourself.
 
 If the target device isn't a Teensy 4 then the _Entropy_ library will be used,
-unless it's not accessible or doesn't exist for the device, in which case
-`std::rand()` and `std::srand()` will be used for random number generation and
-initialization, respectively.
+unless it's not accessible or doesn't exist for the device, in which case an
+instance of `std::minstd_rand` will be used.
 
 ### The `RandomDevice` _UniformRandomBitGenerator_
 
@@ -1710,6 +1719,9 @@ can be accessed by calling its `instance()` static function.
 
 This object works with both the internal entropy functions and with the
 _Entropy_ library.
+
+This is the preferred way to acquire entropy. It is meant to be used with a
+[Random number distribution](https://en.cppreference.com/w/cpp/numeric/random#Random_number_distributions).
 
 ## Configuration macros
 
@@ -1750,7 +1762,7 @@ features, thus saving space.
 
 ### Configuring macros using the Arduino IDE
 
-_[Current as of this writing: Arduino IDE 2.3.2, Teensyduino 1.59]_
+_[Current as of this writing: Arduino IDE 2.3.4, Teensyduino 1.59]_
 
 The Arduino IDE provides a facility to override the build options specified in a
 platform's build configuration file, _platform.txt_. It does this by looking for
@@ -1827,12 +1839,12 @@ will be different, but should be similar, for other platforms):
 * Windows: _%userprofile%\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\{version}_
 
 References:
-1. [Additional compiler options - Programming Questions - Arduino Forum](https://forum.arduino.cc/t/additional-compiler-options/631297)
+1. [Additional compiler options - Programming - Arduino Forum](https://forum.arduino.cc/t/additional-compiler-options/631297)
 2. [Arduino IDE: Where can I pass defines to the compiler? - IDE 1.x - Arduino Forum](https://forum.arduino.cc/t/arduino-ide-where-can-i-pass-defines-to-the-compiler/680845)
-3. [Request for Arduino IDE "extra_flags" support - Teensy Forum](https://forum.pjrc.com/threads/72556-Request-for-Arduino-IDE-quot-extra_flags-quot-support)
+3. [Request for Arduino IDE &quot;extra_flags&quot; support | Teensy Forum](https://forum.pjrc.com/index.php?threads/request-for-arduino-ide-extra_flags-support.72556/)
 4. [Platform specification - Arduino CLI](https://arduino.github.io/arduino-cli/latest/platform-specification/)
 5. This one started it all &rarr; [RawFrameMonitor example seems to be missing something... · Issue #33 · ssilverman/QNEthernet](https://github.com/ssilverman/QNEthernet/issues/33)
-6. [Open the Arduino15 folder - Arduino Help Center](https://support.arduino.cc/hc/en-us/articles/360018448279-Open-the-Arduino15-folder)
+6. [Open the Arduino15 folder &ndash; Arduino Help Center](https://support.arduino.cc/hc/en-us/articles/360018448279-Open-the-Arduino15-folder)
 7. [Enabling Raw Frame Support and Promiscuous · Issue #54 · ssilverman/QNEthernet](https://github.com/ssilverman/QNEthernet/issues/54)
 
 ### Configuring macros using PlatformIO
@@ -2010,7 +2022,7 @@ Input is welcome.
   `Assertion "tcp_slowtmr: TIME-WAIT pcb->state == TIME-WAIT" failed at line 1442 in src/lwip/tcp.c`
   when sending a large amount of data. Either it's an lwIP bug or I'm doing
   something wrong.
-  See: https://lists.gnu.org/archive/html/lwip-users/2010-02/msg00013.html
+  See: [Re: [lwip-users] Assert "tcp_slowtmr" in tcp.c reached](https://lists.gnu.org/archive/html/lwip-users/2010-02/msg00013.html)
 * More examples.
 * Fix reduced frame reception when Ethernet is restarted via
   `end()`/`begin(...)`. This is a vexing one.
@@ -2026,20 +2038,21 @@ Code style for this project mostly follows the
 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 
 Other conventions are adopted from Bjarne Stroustrup's and Herb Sutter's
-[C++ Core Guidelines](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md).
+[C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/).
+([C++ Core Guidelines repo](https://github.com/isocpp/CppCoreGuidelines))
 
 ## References
 
 * [manitou48's original Teensy 4.1 Ethernet code](https://github.com/PaulStoffregen/teensy41_ethernet)
 * [Arduino Ethernet Reference](https://docs.arduino.cc/libraries/ethernet/)
 * [lwIP Home](https://savannah.nongnu.org/projects/lwip/)
-* [Forum _QNEthernet_ announcement thread](https://forum.pjrc.com/threads/68066-New-lwIP-based-Ethernet-library-for-Teensy-4-1/page7)
-* [lwIP testing by manitou](https://forum.pjrc.com/threads/60532-Teensy-4-1-Beta-Test?p=237096&viewfull=1#post237096)
-* [Dan Drown's NTP server and 1588 timestamps](https://forum.pjrc.com/threads/61581-Teensy-4-1-NTP-server)
+* [Forum _QNEthernet_ announcement thread](https://forum.pjrc.com/index.php?threads/new-lwip-based-ethernet-library-for-teensy-4-1.68066/)
+* [lwIP testing by manitou](https://forum.pjrc.com/index.php?threads/teensy-4-1-beta-test.60532/page-5#post-237096)
+* [Dan Drown's NTP server and 1588 timestamps](https://forum.pjrc.com/index.php?threads/teensy-4-1-ntp-server.61581/)
 * [Dan Drown's modifications to Paul's code](https://github.com/ddrown/teensy41_ethernet)
-* [Tino Hernandez's (vjmuzik) FNET-based NativeEthernet library](https://forum.pjrc.com/threads/60857-T4-1-Ethernet-Library)
-* [Juraj Andrássy's Arduino Networking API documentation](https://github.com/JAndrassy/Arduino-Networking-API)
+* [Tino Hernandez's (vjmuzik) FNET-based NativeEthernet library](https://forum.pjrc.com/index.php?threads/t4-1-ethernet-library.60857/)
+* [Juraj Andrássy's Arduino Networking API documentation](https://github.com/Networking-for-Arduino/Arduino-Networking-API)
 
 ---
 
-Copyright (c) 2021-2024 Shawn Silverman
+Copyright (c) 2021-2025 Shawn Silverman
