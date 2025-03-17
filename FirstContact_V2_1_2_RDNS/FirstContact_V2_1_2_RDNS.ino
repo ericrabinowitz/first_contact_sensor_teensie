@@ -832,6 +832,7 @@ void printState(unsigned int on) {
 void publishState(unsigned int on) {
     static unsigned int init = 0;
     static unsigned int previous = 0;
+    bool publishStatus = false;
 
     if ( init == 0 ) {
       previous = on;
@@ -843,10 +844,8 @@ void publishState(unsigned int on) {
       }
     }
     
-    previous = on;
-
     if ( on == 1 )
-      client.publish(
+      publishStatus = client.publish(
          "wled/all/api",
         "{\"on\": true, \
           \"bri\": 255, \
@@ -857,7 +856,7 @@ void publishState(unsigned int on) {
          }" 
       );
     else
-      client.publish(
+      publishStatus = client.publish(
           "wled/all/api",
          "{\"on\": true, \
           \"bri\": 255, \
@@ -872,6 +871,9 @@ void publishState(unsigned int on) {
         "{\"on\": false, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 0}, {\"col\": [0, 255, 0], \"fx\": 00}, {\"col\": [0, 0, 255], \"fx\": 00}]}"
 #endif
       );
+
+    if ( publishStatus == true )
+    	previous = on;
 
     init = 1;
 }
