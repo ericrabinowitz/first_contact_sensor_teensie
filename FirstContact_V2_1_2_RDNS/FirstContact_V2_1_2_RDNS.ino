@@ -243,7 +243,7 @@ AudioConnection          patchCordMOR(mixerRight, 0, audioOut, 1);
 AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
 
 elapsedMillis since_main = 0;
-uint16_t main_period_ms = 100; 
+uint16_t main_period_ms = 150; 
 // ------ Audio Contact Defines - End
 // GUItool: end automatically generated code
 
@@ -280,7 +280,8 @@ IPAddress NETWORK_GATEWAY (192,168,1,20);
 IPAddress NETWORK_DNS     (192,168,1,20);
 IPAddress UDP_LOG_PC_IP   (192,168,1,50);
 #endif
-IPAddress server          (192,168,4,1);
+
+IPAddress server          (192,168,4,1); // Raspberry PI
 
 // End  Ethernet Requirements
 // ------
@@ -399,48 +400,6 @@ int buildDnsPtrQuery(byte* buffer, int buflen, const String &reverseName) {
   buffer[pos++] = 0x00; buffer[pos++] = 0x01; // QCLASS: IN
   return pos;
 }
-
-#if 0
-// Helper function: Parse a PTR record from the DNS response.
-String parsePtrResponse(byte* buffer, int buflen, int queryLength) {
-  int answerStart = queryLength;
-  if (buflen < answerStart + 10) {
-    return "Invalid response";
-  }
-  int rdlength = (buffer[answerStart + 8] << 8) | buffer[answerStart + 9];
-  int rdataStart = answerStart + 10;
-
-  Serial.printf ("rdlength:%d. rdataStart:%d\n",rdlength, rdataStart );
-
-  if (buflen < rdataStart + rdlength) {
-    return "Incomplete response";
-  }
-  String hostname = "";
-  int pos = rdataStart;
-  while (pos < rdataStart + rdlength) {
-    int labelLen = buffer[pos++];
-    if (labelLen == 0) break;
-    Serial.printf ("Buffer:");
-    for (int i = 0; i < labelLen; i++) {
-
-      if (isascii((char)buffer[pos])
-        Serial.printf ("[%c]", (char)buffer[pos]);
-      else
-        Serial.printf ("[%02x]", (char)buffer[pos]);
-
-      hostname += (char)buffer[pos++];
-    }
-    Serial.printf (". end of buffer parse\n");
-
-    if (pos < rdataStart + rdlength && buffer[pos] != 0) {
-      hostname += ".";
-    }
-  }
-  Serial.printf ("-->Hostname:%s<---\n", hostname);
-  return hostname;
-}
-#endif
-
 
 
 String parsePtrResponse(byte* buffer, int buflen, int queryLength) {
@@ -739,7 +698,7 @@ String reverseDnsLookup(IPAddress ip) {
 
 */
 void mqttSubCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
+  Serial.print("\nmqttSubCallback() Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
   for (unsigned int i=0;i<length;i++) {
@@ -748,6 +707,7 @@ void mqttSubCallback(char* topic, byte* payload, unsigned int length) {
   Serial.println();
 }
 
+// MQTTT 
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 
@@ -768,7 +728,7 @@ void reconnect() {
         "{\"on\": true, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, {\"col\": [0, 0, 255], \"fx\": 70}]}"
       );
         // ... and resubscribe
-      //client.subscribe("wled/command");
+      client.subscribe("wled/all/api");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
