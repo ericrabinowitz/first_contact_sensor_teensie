@@ -987,6 +987,87 @@ void displayHostname ( char * hostname )
   display.display();
 }
 
+/*
+ * displayActivityStatus() - display a wandering eye and show any acitivy
+ */
+void displayActivityStatus(  )
+{
+  long unsigned mod;
+
+  #define ACTIVITY_BAR_FRACTIONS 32
+
+  static unsigned int init = 0;
+
+  unsigned long int mills;
+  static unsigned long time;
+  static unsigned long deltaTime = 0;
+  static bool direction = true;
+
+  unsigned int Xposition;
+  static unsigned int Xposition_last = 0;
+
+
+
+  if ( init == 0 ) {
+    time = millis();
+    init = 1;
+  }
+
+  
+  // Handle wrap-around
+  mills = millis();
+  if ( time > mills )
+    time = mills;
+
+  deltaTime = (mills - time) % 1000;
+
+  mod = deltaTime % (1000 / ACTIVITY_BAR_FRACTIONS);
+  if ( mod != 0 )     
+    return;
+
+  unsigned int x_unscaled;
+  unsigned int x_scaled;
+
+  x_unscaled = deltaTime / ACTIVITY_BAR_FRACTIONS; // - 1;
+  x_scaled   = x_unscaled * 128 / ACTIVITY_BAR_FRACTIONS ; 
+
+  if ( direction ) {
+    Xposition = x_scaled; 
+  } 
+  else {
+    Xposition = 124 - x_scaled;
+ }
+
+
+#ifdef ACTIVITY_DEBUG_ENABLE
+  printf ("Direction:%s time:%u delta_t:%u x_unscaled:%u Xpos:%u\n", direction ? "F" : "B", time, deltaTime, x_unscaled,Xposition);
+#endif
+  /* 
+    Clear the activity line 
+  */
+  display.setTextColor(SSD1306_WHITE);
+
+  display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);  // Erase text area
+
+
+  /*
+    Draw a small box on the line position it based on the fraction of a second
+  */
+
+  display.fillRect(Xposition, 30, 10, 10, SSD1306_WHITE);  // Erase text area
+  display.display();
+
+
+  /* Flip the direction */
+  if ( x_unscaled == (ACTIVITY_BAR_FRACTIONS - 1))  {
+    direction = direction ? false : true;
+  }
+
+  Xposition_last = Xposition;
+
+}
+
+
 void displayNetworkStatus( const char string[] )
 {
   //display.setTextSize(2);             // Draw 2X-scale text
@@ -1104,4 +1185,6 @@ void loop()
   client.loop();
 
   audioSenseLoop();
+
+  displayActivityStatus();
 }
