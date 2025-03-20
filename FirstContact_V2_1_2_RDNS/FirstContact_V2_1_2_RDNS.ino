@@ -35,7 +35,6 @@ Networking
   We employed MQTT (aka 'Mosquito') for messaging.
   This software acts as both a MQTT publisher and subscriber for events.
   The MQTT Broker (databasde server) is running on a Raspberry PI on the network.
-  FTP is available for file transfer to the MicroSD card, but we aren't using using it.
 
 Hardware:  
 ---------
@@ -54,19 +53,19 @@ Boards Support:
             Installer For IDE: https://www.pjrc.com/teensy/package_teensy_index.json
             NOTE: I think this also installs the Audio library
 Libraries:
-          QNEthernet v0.30.1
-          PubSubClient MQTT 3.1.1  v2.8
-          FTP_Server_teensy41. v1.2.0
-          ArduinoMqttClient by Arduino. v0.1.8
-          AdaFruit GFX Library v1.11.11
-          AdaFruit BusIO v1.17.0
-          AdaFruit SSD1306 v2.5.13
-          LightMDNS v1.0.5
+          Using library SPI at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SPI 
+          Using library Wire at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Wire 
+          Using library Adafruit GFX Library at version 1.12.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_GFX_Library 
+          Using library Adafruit BusIO at version 1.17.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_BusIO 
+          Using library Adafruit SSD1306 at version 2.5.13 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_SSD1306 
+          Using library Audio at version 1.3 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Audio 
+          Using library SD at version 2.0.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SD 
+          Using library SdFat at version 2.1.2 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SdFat 
+          Using library SerialFlash at version 0.5 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SerialFlash 
+          Using library QNEthernet at version 0.31.0 in folder: /Users/eric/work/FirstContact/libraries/QNEthernet 
+          Using library PubSubClient at version 2.8 in folder: /Users/eric/work/FirstContact/libraries/PubSubClient 
 
-Consider Removing:
-          Ethernet_Generic by Various.  v2.8.1
-          PPOSClient v1.0
-          TeensyView by SparkFun. v1.1.0
+
 
 
 */
@@ -84,12 +83,9 @@ Consider Removing:
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library. 
-// On an arduino UNO:       A4(SDA), A5(SCL)
-// On an arduino MEGA 2560: 20(SDA), 21(SCL)
-// On an arduino LEONARDO:   2(SDA),  3(SCL), ...
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 //#define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-#define SCREEN_ADDRESS 0xBC
+#define SCREEN_ADDRESS 0xBC // NOTE: This value is not documented well and totally confusing when looking at the pcb silkcreen
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
 // OLED DISPLAY
 //
@@ -164,10 +160,6 @@ char file[][40] {
 
 
 void playMusic (const char * song);
-// Use these for the SD+Wiz820 or other adaptors
-//#define SDCARD_CS_PIN    4
-//#define SDCARD_MOSI_PIN  11
-//#define SDCARD_SCK_PIN   13
 //
 // ------ Audio SD Card End
 
@@ -186,8 +178,8 @@ const int f_2 = 20;
 const int f_3 = 20; 
 const int f_4 = 20; 
 
-float thresh = 0.01;
-unsigned int contact = 0;
+float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
+unsigned int contact = 0; //Current state of contacted.   Either 1 or 0
 
 // GUItool: begin automatically generated code
 //AudioSynthWaveformSine   sine2;          //xy=190.99998474121094,122.99998474121094
@@ -256,24 +248,16 @@ uint16_t main_period_ms = 150;
 #include <SPI.h>
 #include <SerialFlash.h>  
 #include <SD.h> 
-#include <SPI.h> 
 #include <QNEthernet.h>
 
 // Create a UDP instance
 EthernetUDP udp;
 const unsigned int DNS_PORT = 53;
 
-#define PASV_RESPONSE_STYLE_NEW       true 
-#define FTP_FILESYST                  FTP_SDFAT2 
-
-// Default 2048 
-#define FTP_BUF_SIZE                  8192 
-
-#define FTP_USER_NAME_LEN             64        // Max permissible and default are 64 
-#define FTP_USER_PWD_LEN             128        // Max permissible and default are 128 
 
 byte mac[] = {  0x92, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-#if 0 // This is replaced with DHCP informatiom.   Use these as static definitions if standalone 
+#if !(USING_DHCP) 
+// This is replaced with DHCP informatiom.   Use these as static definitions if standalone 
 IPAddress NETWORK_IP      (192,168,1,48); //static IP
 IPAddress NETWORK_MASK    (255,255,255,0);
 IPAddress NETWORK_GATEWAY (192,168,1,20);
@@ -286,15 +270,12 @@ IPAddress server          (192,168,4,1); // Raspberry PI
 // End  Ethernet Requirements
 // ------
 // Begin Ethernet Setup
- #define FTP_ACCOUNT       "teensy4x" 
- #define FTP_PASSWORD      "ftp_test" 
 
 
 #include <QNEthernet.h>
 #include <string>
 #include <cstring>
 
-//#include <Dns.h>
 
 using namespace qindesign::network;
 
@@ -303,39 +284,39 @@ stringToCharArray(String str):
 
 
 Explanation and Important Considerations:
-It takes an Arduino String object as input.
-It allocates memory dynamically for a char array using new char[str.length() + 1]. The + 1 is crucial to accommodate the null terminator (\0) required by C-style strings.
-It copies the contents of the String object to the char array using str.toCharArray(charArray, str.length() + 1).
-It returns a char* pointer to the newly created array.
-It now handles empty strings by returning a nullptr.
-It also handles memory allocation failures by returning a nullptr.
-Memory Management:
+          It takes an Arduino String object as input.
+          It allocates memory dynamically for a char array using new char[str.length() + 1]. The + 1 is crucial to accommodate the null terminator (\0) required by C-style strings.
+          It copies the contents of the String object to the char array using str.toCharArray(charArray, str.length() + 1).
+          It returns a char* pointer to the newly created array.
+          It now handles empty strings by returning a nullptr.
+          It also handles memory allocation failures by returning a nullptr.
+          Memory Management:
 
-Crucially, you must delete[] charArray; when you're finished with the char array. Failure to do so will result in a memory leak.
-Set the pointer to nullptr after deleting the memory. This prevents dangling pointer issues.
-The example code demonstrates proper memory management.
-printf() Usage:
+          Crucially, you must delete[] charArray; when you're finished with the char array. Failure to do so will result in a memory leak.
+          Set the pointer to nullptr after deleting the memory. This prevents dangling pointer issues.
+          The example code demonstrates proper memory management.
+          printf() Usage:
 
-The printf() function expects a char* (C-style string) as its %s argument.
-The stringToCharArray() function converts the Arduino String to the required format.
-Error Handling:
+          The printf() function expects a char* (C-style string) as its %s argument.
+          The stringToCharArray() function converts the Arduino String to the required format.
+          Error Handling:
 
-The code now includes checks to handle cases where memory allocation fails.
-It also handles empty strings.
-Alternative (Using c_str()):
+          The code now includes checks to handle cases where memory allocation fails.
+          It also handles empty strings.
+          Alternative (Using c_str()):
 
-For read-only use (where you don't need to modify the resulting char array), you can use the String.c_str() method. This returns a const char* that points to the internal buffer of the String object.
-Important: The c_str() method returns a pointer to internal String data, which may become invalid if the String object is modified or goes out of scope. Therefore, use it immediately or make a copy.
-Example:
-C++
+          For read-only use (where you don't need to modify the resulting char array), you can use the String.c_str() method. This returns a const char* that points to the internal buffer of the String object.
+          Important: The c_str() method returns a pointer to internal String data, which may become invalid if the String object is modified or goes out of scope. Therefore, use it immediately or make a copy.
+          Example:
+          C++
 
-String myString = "Hello, world!";
-printf("String: %s\n", myString.c_str());
-Using c_str() is generally preferred when you don't need to modify the string, as it avoids dynamic memory allocation and deallocation.
-Which method to use:
+          String myString = "Hello, world!";
+          printf("String: %s\n", myString.c_str());
+          Using c_str() is generally preferred when you don't need to modify the string, as it avoids dynamic memory allocation and deallocation.
+          Which method to use:
 
-Use myString.c_str() when you only need to read the string's value and you are sure the string will remain in scope.
-Use stringToCharArray() when you need to modify the string or when you need a separate copy of the string that will persist beyond the scope of the original String object. Remember to free the memory.
+          Use myString.c_str() when you only need to read the string's value and you are sure the string will remain in scope.
+          Use stringToCharArray() when you need to modify the string or when you need a separate copy of the string that will persist beyond the scope of the original String object. Remember to free the memory.
 
 
 */
@@ -358,13 +339,16 @@ char* stringToCharArray(String str) {
 
 
 //////////////////////////////
-// CHANGED: Previously hard-coded as:
-// IPAddress dnsServer(192, 168, 4, 1);
-// Now declare without initialization.
-IPAddress dnsServer;    // <-- DNS server will be obtained from DHCP
 
+/*
+  DNS Server declaration 
+      CHANGED: Previously hard-coded as:
+      IPAddress dnsServer(192, 168, 4, 1);
+      Now declare without initialization.
+      IPAddress dnsServer;   <-- DNS server will be obtained from DHCP
 
-
+*/
+IPAddress dnsServer;
 // Buffer for DNS responses.
 byte responseBuffer[512];
 
@@ -533,35 +517,20 @@ String reverseDnsLookup(IPAddress ip) {
 
  #if USE_QN_ETHERNET 
    Serial.println(F("=========== USE_QN_ETHERNET ===========")); 
+ // Alternate TCP/IP stacks will not be supported with my code
  #elif USE_NATIVE_ETHERNET 
+  #error
    Serial.println(F("======== USE_NATIVE_ETHERNET ========")); 
  #elif USE_ETHERNET_GENERIC 
+   #error
    Serial.println(F("======== USE_ETHERNET_GENERIC ========")); 
- #else 
-   Serial.println(F("========= NO NETWORK TYPE DEFINED ==========")); 
- #endif 
+#else 
+  #error
+    Serial.println(F("========= NO NETWORK TYPE DEFINED ==========")); 
+#endif 
 
 
 
- #if USE_NATIVE_ETHERNET 
-  
-   // start the ethernet connection and the server: 
-   // Use DHCP dynamic IP and random mac 
-   uint16_t index = millis() % NUMBER_OF_MAC; 
-   // Use Static IP 
-   //Ethernet.begin(mac[index], ip); 
-   Ethernet.begin(mac[index]); 
-  
-   Serial.print(F("Using mac index = ")); 
-   Serial.println(index); 
-  
-   Serial.print(F("Connected! IP address: ")); 
-   Serial.println(Ethernet.localIP()); 
-  
- #elif USE_QN_ETHERNET 
-
-
-//  display.print(Ethernet.localIP());
 
  #if USING_DHCP 
 
@@ -613,55 +582,14 @@ String reverseDnsLookup(IPAddress ip) {
       Serial.print("IP Address = "); 
       Serial.println(Ethernet.localIP()); 
 
-
-
-
     } 
   
    // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
    //delay(2000); 
   
-#else 
-  
-   FTP_LOGWARN(F("Default SPI pinout:")); 
-   FTP_LOGWARN1(F("MOSI:"), MOSI); 
-   FTP_LOGWARN1(F("MISO:"), MISO); 
-   FTP_LOGWARN1(F("SCK:"),  SCK); 
-   FTP_LOGWARN1(F("SS:"),   SS); 
-   FTP_LOGWARN(F("=========================")); 
-    
-   // unknown board, do nothing, use default SS = 10 
-   #ifndef USE_THIS_SS_PIN 
-     #define USE_THIS_SS_PIN   10    // For other boards 
-   #endif 
-  
-   #if defined(BOARD_NAME) 
-     FTP_LOGWARN3(F("Board :"), BOARD_NAME, F(", setCsPin:"), USE_THIS_SS_PIN); 
-   #else 
-     FTP_LOGWARN1(F("Unknown board setCsPin:"), USE_THIS_SS_PIN); 
-   #endif 
-  
-   // For other boards, to change if necessary  
-   Ethernet.init (USE_THIS_SS_PIN); 
-  
-   // start the ethernet connection and the server: 
-   // Use DHCP dynamic IP and random mac 
-   uint16_t index = millis() % NUMBER_OF_MAC; 
-   // Use Static IP 
-   //Ethernet.begin(mac[index], ip); 
-   Ethernet.begin(mac[index]); 
-   Ethernet.macAddress(mac);
-   Serial.print("IP Address = "); 
-   Serial.println(Ethernet.localIP()); 
-    
- #endif 
-
 
   if (networkError == true)
     goto networkErrorRetry;
-
-
-  
 
 // DNS Port 
   // Start UDP on a specific local port (use any free port, here 12345)
@@ -690,7 +618,7 @@ String reverseDnsLookup(IPAddress ip) {
 // End Ethernet Setup
 
 // ------
-#include <SPI.h>
+
 #include <PubSubClient.h>
 
 /*
