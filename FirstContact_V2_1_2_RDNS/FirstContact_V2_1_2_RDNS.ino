@@ -180,6 +180,7 @@ const int f_4 = 20;
 
 float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
 unsigned int contact = 0; //Current state of contacted.   Either 1 or 0
+static unsigned long int contactCount = 0; // Cumulative count of contacts
 
 // GUItool: begin automatically generated code
 //AudioSynthWaveformSine   sine2;          //xy=190.99998474121094,122.99998474121094
@@ -266,6 +267,8 @@ IPAddress UDP_LOG_PC_IP   (192,168,1,50);
 #endif
 
 IPAddress server          (192,168,4,1); // Raspberry PI
+
+char * hostname = 0; // This will be filled in by Reverse DNS
 
 // End  Ethernet Requirements
 // ------
@@ -583,10 +586,6 @@ String reverseDnsLookup(IPAddress ip) {
       Serial.println(Ethernet.localIP()); 
 
     } 
-  
-   // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
-   //delay(2000); 
-  
 
   if (networkError == true)
     goto networkErrorRetry;
@@ -594,33 +593,33 @@ String reverseDnsLookup(IPAddress ip) {
 // DNS Port 
   // Start UDP on a specific local port (use any free port, here 12345)
   Serial.println(F("======== Begin UDP ============"));
-  //delay (1000);
+
   udp.begin(12345);
 
   Serial.println(F("======== Reverse DNS Lookup ============"));
 
+  
 
   String Hostname = reverseDnsLookup(Ethernet.localIP());
 
-  //Serial.printf ("Hostname:",reverseDnsLookup(Ethernet.localIP()) );
   Serial.printf ("Hostname:");
   Serial.print (Hostname);
 
   //Serial.println( reverseDnsLookup(Ethernet.localIP()));
 
-  char *hostname = stringToCharArray(Hostname);
+  hostname = stringToCharArray(Hostname);
 
   displayHostname ( hostname);
+
+  /* The data was allocated, but we will not delete it since we may need to print again */
+  /* Remove this commment to delete the allocated string *
   delete[] hostname;
+  */
 
  } 
-
 // End Ethernet Setup
 
-// ------
-
 #include <PubSubClient.h>
-
 /*
    mqttSubCallback() - Receive MQTT Messages from MQTT Broker (Raspbery Pi)
 
@@ -667,6 +666,107 @@ void reconnect() {
   }
 }
 
+void displayTimeCount() {
+  static bool init = false;
+
+  #define STRING_BUFFER_LEN 128
+  char str[STRING_BUFFER_LEN];
+
+
+  long unsigned int startTimeMills = 0;
+  long unsigned int secondsLapse = 0;
+  long unsigned int mills = 0;
+  long unsigned int millsLapse = 0;
+
+  unsigned int count;
+
+  // Initialize buffer;
+
+  for ( count = 0; count< STRING_BUFFER_LEN; ++count)
+    str[count] = 0;
+
+  if ( init == false) { 
+      startTimeMills = millis();
+      init = true;
+      return;
+  }
+
+  mills = millis();
+
+  millsLapse =  mills - startTimeMills;
+
+  // Only update every 1/4 second
+  if ( millsLapse % 100 )
+    return;
+  
+
+  secondsLapse = millsLapse / 1000;
+
+  //display.clearDisplay();
+  display.fillRect(0, 54, 128, 10, SSD1306_BLACK); 
+  //display.display();
+
+  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setTextSize(1); 
+  display.setCursor(0,55);
+  sprintf (str, "%07u    %02u:%02u:%02u", contactCount, \
+        secondsLapse / 3600,
+       (secondsLapse % 3600) / 60,
+       (secondsLapse % 3600) % 60);
+
+  display.printf (str);
+
+  display.display();
+}
+
+
+/*
+  displayState() - Print the contact state to OLED display
+      - This routine is called at high-speed in our main loop
+      - It only publishes changes to state
+*/
+void displayState(unsigned int on) {
+    static unsigned int init = 0;
+    static unsigned int previous = 0;
+    char str[128];
+
+    if ( init == 0 ) {
+      previous = on;
+    }
+
+    if ( init == 1 ) {
+      if ( previous == on ) {
+        return;
+      }
+    }
+    
+    previous = on;
+
+    if ( on == 1 )
+      {
+        ++contactCount;
+
+        // Clear the buffer
+        //display.clearDisplay();
+        display.fillRect(0, 30, 128, 10, SSD1306_BLACK);  
+        display.setTextSize(3);             // Normal 1:1 pixel scale
+        display.setTextColor(SSD1306_WHITE);        // Draw white text
+        display.setCursor(0,30);            
+
+        sprintf (str, "%07u", contactCount);
+        display.printf (str);
+        display.display();
+      } else {
+          //display.clearDisplay();
+          display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
+          display.display();
+          
+        
+      }
+
+  init = 1;
+
+}
 
 /*
   printState() - Print the contact state to the serial console
@@ -894,7 +994,7 @@ void audioSenseProcessSignal() {
   publishState(contact); // MQTT
   playState(contact);    // Audio Music Player
   printState(contact);  // Serial Console
-
+  displayState(contact); // OLED Display
 
 
  #if 0
@@ -1006,16 +1106,20 @@ void displayActivityStatus(  )
   unsigned int Xposition;
   static unsigned int Xposition_last = 0;
 
-
+  // Only display during idle time
+  if ( contact ) {
+    init = 0;
+    return;
+  }
 
   if ( init == 0 ) {
     time = millis();
     init = 1;
   }
 
-  
-  // Handle wrap-around
   mills = millis();
+
+  // Handle wrap-around
   if ( time > mills )
     time = mills;
 
@@ -1038,7 +1142,6 @@ void displayActivityStatus(  )
     Xposition = 124 - x_scaled;
  }
 
-
 #ifdef ACTIVITY_DEBUG_ENABLE
   printf ("Direction:%s time:%u delta_t:%u x_unscaled:%u Xpos:%u\n", direction ? "F" : "B", time, deltaTime, x_unscaled,Xposition);
 #endif
@@ -1048,7 +1151,6 @@ void displayActivityStatus(  )
   display.setTextColor(SSD1306_WHITE);
 
   display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);  
-
 
   /*
     Draw a small box on the line position it based on the fraction of a second
@@ -1065,22 +1167,25 @@ void displayActivityStatus(  )
 
   Xposition_last = Xposition;
 
+#if 0
+  {
+    display.setTextSize(1);             // Normal 1:1 pixel scale
+    display.setCursor(0,55); 
+    display.println(F(__DATE__ "  " __TIME__));
+  }
+#endif
 }
 
 
 void displayNetworkStatus( const char string[] )
 {
-  //display.setTextSize(2);             // Draw 2X-scale text
+  
   display.setTextColor(SSD1306_WHITE);
-  //display.print(F("IP:")); 
-  display.setCursor(0,10);
   display.fillRect(0, 10, 128, 20, SSD1306_BLACK);  // Erase text area
-  //display.printf (".....................");
-  display.display();
+
   display.setCursor(0,10); 
   display.print(string);
   
-  //isplay.print(Ethernet.localIP());
   display.display();
 }
 
@@ -1100,10 +1205,11 @@ void displaySplashScreen(void) {
   display.print(F("IP:")); 
   display.print(Ethernet.localIP());
 
+
+
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,55); 
-
   display.println(F(__DATE__ "  " __TIME__));
  
 
@@ -1186,5 +1292,8 @@ void loop()
 
   audioSenseLoop();
 
+  // During Idle Time, animate something to show we are alive
   displayActivityStatus();
+
+  displayTimeCount();
 }
