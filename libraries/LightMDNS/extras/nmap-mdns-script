@@ -1,1 +1,0 @@
-nmap --script=broadcast-dns-service-discovery
