@@ -1028,7 +1028,7 @@ void displayActivityStatus(  )
   unsigned int x_unscaled;
   unsigned int x_scaled;
 
-  x_unscaled = deltaTime / ACTIVITY_BAR_FRACTIONS; // - 1;
+  x_unscaled = deltaTime / ACTIVITY_BAR_FRACTIONS; 
   x_scaled   = x_unscaled * 128 / ACTIVITY_BAR_FRACTIONS ; 
 
   if ( direction ) {
@@ -1043,18 +1043,18 @@ void displayActivityStatus(  )
   printf ("Direction:%s time:%u delta_t:%u x_unscaled:%u Xpos:%u\n", direction ? "F" : "B", time, deltaTime, x_unscaled,Xposition);
 #endif
   /* 
-    Clear the activity line 
+    Clear the  previous activity block 
   */
   display.setTextColor(SSD1306_WHITE);
 
-  display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);  // Erase text area
+  display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);  
 
 
   /*
     Draw a small box on the line position it based on the fraction of a second
   */
 
-  display.fillRect(Xposition, 30, 10, 10, SSD1306_WHITE);  // Erase text area
+  display.fillRect(Xposition, 30, 10, 10, SSD1306_WHITE);  // New Block
   display.display();
 
 
@@ -1130,12 +1130,12 @@ void displaySetup()
   display.clearDisplay();
 
   // Draw a single pixel in white
-  display.drawPixel(10, 10, SSD1306_WHITE);
+  //display.drawPixel(10, 10, SSD1306_WHITE);
 
   // Show the display buffer on the screen. You MUST call display() after
   // drawing commands to make them visible on screen!
   display.display();
-  delay(750);
+  //delay(750);
 
   displaySplashScreen();
 
