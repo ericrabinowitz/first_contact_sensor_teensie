@@ -135,6 +135,8 @@ char file[][40] {
     "wow.wav",
     "feelsreallygood.wav",
     "feelsgood.wav",
+    "Missing Link Electra dormant with background.wav",
+    "Missing Link Eros dormant.wav",
 };
 #define MAX_FILES 31
 
@@ -145,17 +147,23 @@ char file[][40] {
 #define SONG_NAME_IDLE "disconnected.wav"
 // #define SONG_NAME_CONTACT "connected.wav" - removing this as we'll use an array instead
 #else
-#define SONG_NAME_IDLE "eros_dormant1.wav"
+#define SONG_NAME_IDLE "Missing Link Electra dormant with background.wav"
 // #define SONG_NAME_CONTACT "eros_active1.wav" - removing this as we'll use an array instead
 #endif
 
 // Contact songs array.
 const char* contactSongs[] = {
-  "eros_active1.wav",
-  "venus.wav",
-  "mars.wav",
-  "feelsgood.wav",
-  "wow.wav"
+  "Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav",
+  "Missing Link unSCruz active 2 MarchForth Gospel A.wav",
+  "Missing Link unSCruz active 3 Saint Motel My Type A.wav",
+  "Missing Link unSCruz active 4 Seth Lakeman Lady of the Sea 2.wav",
+  "Missing Link unSCruz active 5 Jacques Greene Another Girl.wav",
+  "Missing Link unSCruz active 6 Chrome Sparks Goddess.wav",
+  "Missing Link unSCruz active 7 Jet Are You Gonna Be.wav",
+  "Missing Link unSCruz active 8 M83 Midnight City Prydz.wav",
+  "Missing Link unSCruz active 9 Flume The Difference.wav",
+  "Missing Link unSCruz active 10 Doldinger Bastian.wav",
+  "Missing Link unSCruz active 11 Yung Bae Straight Up.wav",
 };
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
 
@@ -1342,7 +1350,7 @@ void displaySplashScreen(void) {
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("    1st CONTACT!!!"));
+  display.println(F("    1st CONTACT!!"));
   display.println(F(""));
   display.println(F(""));
 
