@@ -210,7 +210,7 @@ const int f_3 = 20;
 const int f_4 = 20; 
 
 float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
-unsigned int contact = 0; //Current state of contacted.   Either 1 or 0
+bool isLinked = false;      // Current state of contact. Either true or false
 static unsigned long int contactCount = 0; // Cumulative count of contacts
 
 // GUItool: begin automatically generated code
@@ -698,7 +698,7 @@ void reconnect() {
 }
 
 void displayTimeCount() {
-  static bool init = false;
+  static bool isInitialized = false;
 
   #define STRING_BUFFER_LEN 128
   char str[STRING_BUFFER_LEN];
@@ -716,9 +716,9 @@ void displayTimeCount() {
   for ( count = 0; count< STRING_BUFFER_LEN; ++count)
     str[count] = 0;
 
-  if ( init == false) { 
+  if ( !isInitialized ) {
       startTimeMills = millis();
-      init = true;
+      isInitialized = true;
       return;
   }
 
@@ -756,24 +756,24 @@ void displayTimeCount() {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void displayState(unsigned int on) {
-    static unsigned int init = 0;
-    static unsigned int previous = 0;
+void displayState(bool isLinked) {
+    static bool isInitialized = false;
+    static bool previousLinked = false;
     char str[128];
 
-    if ( init == 0 ) {
-      previous = on;
+    if ( !isInitialized ) {
+      previousLinked = isLinked;
     }
 
-    if ( init == 1 ) {
-      if ( previous == on ) {
+    if ( isInitialized ) {
+      if (previousLinked == isLinked) {
         return;
       }
     }
     
-    previous = on;
+    previousLinked = isLinked;
 
-    if ( on == 1 )
+    if ( isLinked )
       {
         ++contactCount;
 
@@ -795,7 +795,7 @@ void displayState(unsigned int on) {
         
       }
 
-  init = 1;
+  isInitialized = true;
 
 }
 
@@ -804,23 +804,23 @@ void displayState(unsigned int on) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void printState(unsigned int on) {
-    static unsigned int init = 0;
-    static unsigned int previous = 0;
+void printState(bool isLinked) {
+    static bool isInitialized = false;
+    static bool previousLinked = false;
 
-    if ( init == 0 ) {
-      previous = on;
+    if ( !isInitialized ) {
+      previousLinked = isLinked;
     }
 
-    if ( init == 1 ) {
-      if ( previous == on ) {
+    if ( isInitialized ) {
+      if (previousLinked == isLinked) {
         return;
       }
     }
     
-    previous = on;
+    previousLinked = isLinked;
 
-    if ( on == 1 )
+    if ( isLinked )
       {
         Serial.print ("CONTACT\n");
       } else {
@@ -839,7 +839,7 @@ void printState(unsigned int on) {
       Serial.print("%   ");
       Serial.print("\n");
 
-  init = 1;
+  isInitialized = true;
 
 }
 
@@ -848,22 +848,22 @@ void printState(unsigned int on) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void publishState(unsigned int on) {
-    static unsigned int init = 0;
-    static unsigned int previous = 0;
+void publishState(bool isLinked) {
+    static bool isInitialized = false;
+    static bool previousLinked = false;
     bool publishStatus = false;
 
-    if ( init == 0 ) {
-      previous = on;
+    if ( !isInitialized ) {
+      previousLinked = isLinked;
     }
 
-    if ( init == 1 ) {
-      if ( previous == on ) {
+    if ( isInitialized ) {
+      if (previousLinked == isLinked) {
         return;
       }
     }
     
-    if ( on == 1 )
+    if ( isLinked )
       publishStatus = client.publish(
          "wled/all/api",
         "{\"on\": true, \
@@ -892,9 +892,9 @@ void publishState(unsigned int on) {
       );
 
     if ( publishStatus == true )
-    	previous = on;
+        previousLinked = isLinked;
 
-    init = 1;
+    isInitialized = true;
 }
 
 // Audio
@@ -1047,17 +1047,17 @@ void audioSenseProcessSignal() {
   ) 
   */
   {
-      contact = 1;
+      isLinked = true;
   }
   else {
-      contact = 0;
+      isLinked = false;
   }
  
 
-  publishState(contact); // MQTT
-  playMusic(contact);    // Audio Music Player
-  printState(contact);  // Serial Console
-  displayState(contact); // OLED Display
+  publishState(isLinked); // MQTT
+  playMusic(isLinked);    // Audio Music Player
+  printState(isLinked);   // Serial Console
+  displayState(isLinked); // OLED Display
 
 
  #if 0
@@ -1151,7 +1151,7 @@ void advanceToNextSong() {
 
 // Helper function to get the current song to play.
 const char* getCurrentSong() {
-  if (contact == 1) {
+  if (isLinked) {
     return contactSongs[currentSongIndex];
   } else {
     return SONG_NAME_IDLE;
@@ -1159,25 +1159,25 @@ const char* getCurrentSong() {
 }
 
 /* Play Audio Based On State */
-void playMusic(unsigned int state)
+void playMusic(bool isLinked)
 {
-  static unsigned int init = 0;
-  static unsigned int previous_state = 0;
-  MusicState musicState = getMusicState(init);
+  static bool isInitialized = false;
+  static bool previousLinked = false;
+  MusicState musicState = getMusicState(isInitialized);
 
-  if (init == 0) {
-    previous_state = state;
-    init = 1;
+  if ( !isInitialized ) {
+    previousLinked = isLinked;
+    isInitialized = true;
   }
 
   // State transition: Connected -> Disconnected.
-  if (previous_state == 1 && state == 0) {
+  if ( previousLinked && !isLinked ) {
     Serial.println("Transition: Connected -> Disconnected");
     pauseMusic();
   }
 
   // State transition: Disconnected -> Connected.
-  else if (previous_state == 0 && state == 1) {
+  else if (!previousLinked && isLinked) {
     Serial.println("Transition: Disconnected -> Connected");
     
     if (musicState == MUSIC_STATE_PAUSED) {
@@ -1206,7 +1206,7 @@ void playMusic(unsigned int state)
       audioShield.volume(PLAYING_AUDIO_VOLUME);
       break;
     case MUSIC_STATE_FINISHED:
-      if (state == 1) {
+      if (isLinked) {
         Serial.println("Song finished. Advancing to next song.");
         advanceToNextSong();
       }
@@ -1229,7 +1229,7 @@ void playMusic(unsigned int state)
     }
   }
 
-  previous_state = state;
+  previousLinked = isLinked;
 }
 // Music Player End
 //
@@ -1251,7 +1251,7 @@ void displayActivityStatus(  )
 
   #define ACTIVITY_BAR_FRACTIONS 32
 
-  static unsigned int init = 0;
+  static bool isInitialized = false;
 
   unsigned long int mills;
   static unsigned long time;
@@ -1262,14 +1262,14 @@ void displayActivityStatus(  )
   static unsigned int Xposition_last = 0;
 
   // Only display during idle time
-  if ( contact ) {
-    init = 0;
+  if ( isLinked ) {
+    isInitialized = false;
     return;
   }
 
-  if ( init == 0 ) {
+  if ( !isInitialized ) {
     time = millis();
-    init = 1;
+    isInitialized = true;
   }
 
   mills = millis();
