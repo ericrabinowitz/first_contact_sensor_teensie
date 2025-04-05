@@ -756,47 +756,31 @@ void displayTimeCount() {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void displayState(bool isLinked) {
-    static bool isInitialized = false;
-    static bool previousLinked = false;
-    char str[128];
+void displayState(bool isInitialized, bool wasLinked, bool isLinked) {
+  char str[128];
 
-    if ( !isInitialized ) {
-      previousLinked = isLinked;
-    }
+  if (isInitialized && wasLinked == isLinked) {
+    return;
+  }
 
-    if ( isInitialized ) {
-      if (previousLinked == isLinked) {
-        return;
-      }
-    }
-    
-    previousLinked = isLinked;
+  if (!isInitialized || isLinked) {
+    ++contactCount;
 
-    if ( isLinked )
-      {
-        ++contactCount;
+    // Clear the buffer
+    //display.clearDisplay();
+    display.fillRect(0, 30, 128, 10, SSD1306_BLACK);  
+    display.setTextSize(3);             // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE);        // Draw white text
+    display.setCursor(0,30);            
 
-        // Clear the buffer
-        //display.clearDisplay();
-        display.fillRect(0, 30, 128, 10, SSD1306_BLACK);  
-        display.setTextSize(3);             // Normal 1:1 pixel scale
-        display.setTextColor(SSD1306_WHITE);        // Draw white text
-        display.setCursor(0,30);            
-
-        sprintf (str, "%07u", contactCount);
-        display.printf (str);
-        display.display();
-      } else {
-          //display.clearDisplay();
-          display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
-          display.display();
-          
-        
-      }
-
-  isInitialized = true;
-
+    sprintf (str, "%07u", contactCount);
+    display.printf (str);
+    display.display();
+  } else {
+    //display.clearDisplay();
+    display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
+    display.display();
+  }
 }
 
 /*
@@ -804,43 +788,27 @@ void displayState(bool isLinked) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void printState(bool isLinked) {
-    static bool isInitialized = false;
-    static bool previousLinked = false;
+void printState(bool isInitialized, bool wasLinked, bool isLinked) {
+  if (isInitialized && wasLinked == isLinked) {
+    return;
+  }
 
-    if ( !isInitialized ) {
-      previousLinked = isLinked;
-    }
+  if (isLinked) {
+    Serial.print ("CONTACT\n");
+  } else {
+    Serial.print ("--OFF---\n");
+  }
 
-    if ( isInitialized ) {
-      if (previousLinked == isLinked) {
-        return;
-      }
-    }
-    
-    previousLinked = isLinked;
-
-    if ( isLinked )
-      {
-        Serial.print ("CONTACT\n");
-      } else {
-        Serial.print ("--OFF---\n");
-      }
-
-    
 
   //uncomment these lines to see how much CPU time
   //the tone detectors and audio library are using
 
-      Serial.print("CPU=");
-      Serial.print(AudioProcessorUsage());
-      Serial.print("%, max=");
-      Serial.print(AudioProcessorUsageMax());
-      Serial.print("%   ");
-      Serial.print("\n");
-
-  isInitialized = true;
-
+    Serial.print("CPU=");
+    Serial.print(AudioProcessorUsage());
+    Serial.print("%, max=");
+    Serial.print(AudioProcessorUsageMax());
+    Serial.print("%   ");
+    Serial.print("\n");
 }
 
 /*
@@ -848,53 +816,41 @@ void printState(bool isLinked) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void publishState(bool isLinked) {
-    static bool isInitialized = false;
-    static bool previousLinked = false;
-    bool publishStatus = false;
+void publishState(bool isInitialized, bool wasLinked, bool isLinked) {
+  static bool publishSucceeded = false;
 
-    if ( !isInitialized ) {
-      previousLinked = isLinked;
-    }
-
-    if ( isInitialized ) {
-      if (previousLinked == isLinked) {
-        return;
-      }
-    }
-    
-    if ( isLinked )
-      publishStatus = client.publish(
-         "wled/all/api",
+  if (publishSucceeded && isInitialized && wasLinked == isLinked) {
+    // No change in state to report.
+    return;
+  }
+  
+  if (isLinked)
+    publishSucceeded = client.publish(
+        "wled/all/api",
+      "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\": \
+      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
+        {\"col\": [0, 255, 255],   \"fx\": 36},   \
+        {\"col\": [128, 128, 255], \"fx\": 36}]   \
+        }" 
+    );
+  else
+    publishSucceeded = client.publish(
+        "wled/all/api",
         "{\"on\": true, \
-          \"bri\": 255, \
-          \"seg\": \
-        [{\"col\": [255, 255, 0],   \"fx\": 36},  \
-         {\"col\": [0, 255, 255],   \"fx\": 36},   \
-         {\"col\": [128, 128, 255], \"fx\": 36}]   \
-         }" 
-      );
-    else
-      publishStatus = client.publish(
-          "wled/all/api",
-         "{\"on\": true, \
-          \"bri\": 255, \
-          \"seg\":  \
-        [{\"col\": [255, 0, 0], \"fx\": 42},    \
-         {\"col\": [0, 255, 0], \"fx\": 42},    \
-         {\"col\": [0, 0, 255], \"fx\": 42}]    \
-         }" 
+        \"bri\": 255, \
+        \"seg\":  \
+      [{\"col\": [255, 0, 0], \"fx\": 42},    \
+        {\"col\": [0, 255, 0], \"fx\": 42},    \
+        {\"col\": [0, 0, 255], \"fx\": 42}]    \
+        }" 
 
 #if 0
         "wled/all/api",
         "{\"on\": false, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 0}, {\"col\": [0, 255, 0], \"fx\": 00}, {\"col\": [0, 0, 255], \"fx\": 00}]}"
 #endif
       );
-
-    if ( publishStatus == true )
-        previousLinked = isLinked;
-
-    isInitialized = true;
 }
 
 // Audio
@@ -1037,32 +993,42 @@ void audioSenseProcessSignal() {
   r1 = right_f_1.read();
   debugPrintAudioSense(l1, r1);
 
-  static bool lastTrackedState = false;
   static unsigned long lastTransitionTime = millis();
+  static bool isInitialized = false;
+  static bool wasLinked = false;
 
-  bool newState = (l1 > thresh || r1 > thresh);
+  bool isLinked = (l1 > thresh || r1 > thresh);
+
+  if (!isInitialized) {
+    wasLinked = isLinked;
+  }
 
   // If state has changed, measure and print transition duration.
-  if (newState != lastTrackedState) {
+  if (!isInitialized | isLinked != wasLinked) {
       unsigned long now = millis();
       unsigned long delta = now - lastTransitionTime;
       Serial.print("Transition from ");
-      Serial.print(lastTrackedState ? "linked" : "unlinked");
+      if (isInitialized) {
+        Serial.print(wasLinked ? "linked" : "unlinked");
+      } else {
+        Serial.print("uninitialized");
+      }
       Serial.print(" to ");
-      Serial.print(newState ? "linked" : "unlinked");
+      Serial.print(isLinked ? "linked" : "unlinked");
       Serial.print(" after ");
       Serial.print(delta);
       Serial.println("ms.");
       lastTransitionTime = now;
-      lastTrackedState = newState;
   }
 
-  isLinked = newState;
+  publishState(isInitialized, wasLinked, isLinked); // MQTT
+  playMusic(isInitialized, wasLinked, isLinked);    // Audio Music Player
+  printState(isInitialized, wasLinked, isLinked);   // Serial Console
+  displayState(isInitialized, wasLinked, isLinked); // OLED Display
 
-  publishState(isLinked); // MQTT
-  playMusic(isLinked);    // Audio Music Player
-  printState(isLinked);   // Serial Console
-  displayState(isLinked); // OLED Display
+  // Update initialized, linked state.
+  isInitialized = true;
+  wasLinked = isLinked;
 }
 
 const float row_threshold = 0.2;
@@ -1147,25 +1113,17 @@ const char* getCurrentSong() {
 }
 
 /* Play Audio Based On State */
-void playMusic(bool isLinked)
-{
-  static bool isInitialized = false;
-  static bool previousLinked = false;
+void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
   MusicState musicState = getMusicState(isInitialized);
 
-  if ( !isInitialized ) {
-    previousLinked = isLinked;
-    isInitialized = true;
-  }
-
   // State transition: Connected -> Disconnected.
-  if ( previousLinked && !isLinked ) {
+  if (wasLinked && !isLinked) {
     Serial.println("Transition: Connected -> Disconnected");
     pauseMusic();
   }
 
   // State transition: Disconnected -> Connected.
-  else if (!previousLinked && isLinked) {
+  else if (!wasLinked && isLinked) {
     Serial.println("Transition: Disconnected -> Connected");
     
     if (musicState == MUSIC_STATE_PAUSED) {
@@ -1218,8 +1176,6 @@ void playMusic(bool isLinked)
       Serial.println(songToPlay);
     }
   }
-
-  previousLinked = isLinked;
 }
 // Music Player End
 //
