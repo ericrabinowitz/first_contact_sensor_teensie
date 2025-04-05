@@ -1209,6 +1209,8 @@ void playMusic(bool isLinked)
       if (isLinked) {
         Serial.println("Song finished. Advancing to next song.");
         advanceToNextSong();
+      } else {
+        Serial.println("Idle song finished. Looping.");
       }
       break;
     default:
