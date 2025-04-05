@@ -1138,6 +1138,14 @@ void playMusic(const char* song, unsigned int state)
 
   // Nothing is playing - start it!
   if (!playSdWav1.isPlaying()) {
+    // If we're in paused state but nothing is playing, the song must have ended
+    // Reset the volume and isPaused flag
+    if (isPaused) {
+      Serial.println("Song ended while paused - resetting volume");
+      audioShield.volume(PLAYING_AUDIO_VOLUME);
+      isPaused = false;
+    }
+
     Serial.print("Starting song: ");
     Serial.println(song);
 
