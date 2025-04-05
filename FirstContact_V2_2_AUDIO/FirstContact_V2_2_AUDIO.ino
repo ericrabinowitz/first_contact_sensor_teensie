@@ -53,17 +53,20 @@ Boards Support:
             Installer For IDE: https://www.pjrc.com/teensy/package_teensy_index.json
             NOTE: I think this also installs the Audio library
 Libraries:
+        - These need to be installed via library manager.
+          Using library Adafruit GFX Library at version 1.12.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_GFX_Library
+          Using library Adafruit BusIO at version 1.17.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_BusIO
+          Using library Adafruit SSD1306 at version 2.5.13 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_SSD1306
+          Using library QNEthernet at version 0.31.0 in folder: /Users/eric/work/FirstContact/libraries/QNEthernet
+          Using library PubSubClient at version 2.8 in folder: /Users/eric/work/FirstContact/libraries/PubSubClient
+        - These should already be installed alongsuide teensyduino. Do not install these libraries.
           Using library SPI at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SPI 
           Using library Wire at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Wire 
-          Using library Adafruit GFX Library at version 1.12.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_GFX_Library 
-          Using library Adafruit BusIO at version 1.17.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_BusIO 
-          Using library Adafruit SSD1306 at version 2.5.13 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_SSD1306 
           Using library Audio at version 1.3 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Audio 
           Using library SD at version 2.0.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SD 
           Using library SdFat at version 2.1.2 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SdFat 
           Using library SerialFlash at version 0.5 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SerialFlash 
-          Using library QNEthernet at version 0.31.0 in folder: /Users/eric/work/FirstContact/libraries/QNEthernet 
-          Using library PubSubClient at version 2.8 in folder: /Users/eric/work/FirstContact/libraries/PubSubClient 
+
 
 
 
@@ -210,7 +213,7 @@ const int f_3 = 20;
 const int f_4 = 20; 
 
 float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
-bool isLinked = false;      // Current state of contact. Either true or false
+//bool isLinked = false;      // Current state of contact. Either true or false
 static unsigned long int contactCount = 0; // Cumulative count of contacts
 
 // GUItool: begin automatically generated code
@@ -985,7 +988,7 @@ void debugPrintAudioSense(float l1, float r1) {
               - Music Player
               - MQTT
 */
-void audioSenseProcessSignal() {
+bool audioSenseProcessSignal() {
   float l1, r1;
 
   // read tone detectors
@@ -1029,15 +1032,16 @@ void audioSenseProcessSignal() {
   // Update initialized, linked state.
   isInitialized = true;
   wasLinked = isLinked;
+  return isLinked;
 }
 
 const float row_threshold = 0.2;
 const float column_threshold = 0.2;
 
-void audioSenseLoop() {
+bool audioSenseLoop() {
 
     sine1.amplitude(1.0);
-    audioSenseProcessSignal();
+    return audioSenseProcessSignal();
 }
 // Contact Sense End
 //
@@ -1104,7 +1108,7 @@ void advanceToNextSong() {
 }
 
 // Helper function to get the current song to play.
-const char* getCurrentSong() {
+const char* getCurrentSong(bool isLinked) {
   if (isLinked) {
     return contactSongs[currentSongIndex];
   } else {
@@ -1125,7 +1129,7 @@ void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
   // State transition: Disconnected -> Connected.
   else if (!wasLinked && isLinked) {
     Serial.println("Transition: Disconnected -> Connected");
-    
+
     if (musicState == MUSIC_STATE_PAUSED) {
       // If we were paused (previous disconnect), resume playback
       Serial.println("Resuming paused music");
@@ -1168,7 +1172,7 @@ void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
   if (!playSdWav1.isPlaying()) {
     // Start the appropriate song.
     Serial.print("Starting song: ");
-    const char* songToPlay = getCurrentSong();
+    const char* songToPlay = getCurrentSong(isLinked);
     Serial.println(songToPlay);
 
     if (!playSdWav1.play(songToPlay)) {
@@ -1191,7 +1195,7 @@ void displayHostname ( char * hostname )
 /*
  * displayActivityStatus() - display a wandering eye and show any acitivy
  */
-void displayActivityStatus(  )
+void displayActivityStatus(bool isLinked)
 {
   long unsigned mod;
 
@@ -1215,7 +1219,6 @@ void displayActivityStatus(  )
 
   if ( !isInitialized ) {
     time = millis();
-    isInitialized = true;
   }
 
   mills = millis();
@@ -1391,10 +1394,10 @@ void loop()
   }
   client.loop();
 
-  audioSenseLoop();
+  bool isLinked = audioSenseLoop();
 
   // During Idle Time, animate something to show we are alive
-  displayActivityStatus();
+  displayActivityStatus(isLinked);
 
   displayTimeCount();
 }
