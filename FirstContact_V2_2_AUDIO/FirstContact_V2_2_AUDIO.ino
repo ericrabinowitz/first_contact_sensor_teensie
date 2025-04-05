@@ -135,6 +135,8 @@ char file[][40] {
     "wow.wav",
     "feelsreallygood.wav",
     "feelsgood.wav",
+    "Missing Link Electra dormant with background.wav",
+    "Missing Link Eros dormant.wav",
 };
 #define MAX_FILES 31
 
@@ -143,11 +145,31 @@ char file[][40] {
 //
 #ifdef TEST_CONNECTION_ENABLE
 #define SONG_NAME_IDLE "disconnected.wav"
-#define SONG_NAME_CONTACT "connected.wav"
+// #define SONG_NAME_CONTACT "connected.wav" - removing this as we'll use an array instead
 #else
-#define SONG_NAME_IDLE "eros_dormant1.wav"
-#define SONG_NAME_CONTACT "eros_active1.wav"
+#define SONG_NAME_IDLE "Missing Link Electra dormant with background.wav"
+// #define SONG_NAME_CONTACT "eros_active1.wav" - removing this as we'll use an array instead
 #endif
+
+// Contact songs array.
+const char* contactSongs[] = {
+  "Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav",
+  "Missing Link unSCruz active 2 MarchForth Gospel A.wav",
+  "Missing Link unSCruz active 3 Saint Motel My Type A.wav",
+  "Missing Link unSCruz active 4 Seth Lakeman Lady of the Sea 2.wav",
+  "Missing Link unSCruz active 5 Jacques Greene Another Girl.wav",
+  "Missing Link unSCruz active 6 Chrome Sparks Goddess.wav",
+  "Missing Link unSCruz active 7 Jet Are You Gonna Be.wav",
+  "Missing Link unSCruz active 8 M83 Midnight City Prydz.wav",
+  "Missing Link unSCruz active 9 Flume The Difference.wav",
+  "Missing Link unSCruz active 10 Doldinger Bastian.wav",
+  "Missing Link unSCruz active 11 Yung Bae Straight Up.wav",
+};
+#define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
+
+// Current song index
+unsigned int currentSongIndex = 0;
+
 
 // Audio Playa Date End
 
@@ -158,8 +180,17 @@ char file[][40] {
 #define SDCARD_MOSI_PIN  11  // not actually used
 #define SDCARD_SCK_PIN   13  // not actually used
 
+// Music player states
+typedef enum {
+  MUSIC_STATE_NOT_STARTED,    // No music has started yet.
+  MUSIC_STATE_PLAYING,        // Music is playing at normal volume.
+  MUSIC_STATE_PAUSED,         // Music is playing but at lower volume.
+  MUSIC_STATE_PAUSE_TIMEOUT,  // Music was paused but timeout occurred.
+  MUSIC_STATE_PAUSE_FINISHED, // Music was paused and finished.
+  MUSIC_STATE_FINISHED        // A song has finished playing.
+} MusicState;
 
-void playMusic (const char * song);
+void playMusic (unsigned int state);
 //
 // ------ Audio SD Card End
 
@@ -179,7 +210,7 @@ const int f_3 = 20;
 const int f_4 = 20; 
 
 float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
-unsigned int contact = 0; //Current state of contacted.   Either 1 or 0
+bool isLinked = false;      // Current state of contact. Either true or false
 static unsigned long int contactCount = 0; // Cumulative count of contacts
 
 // GUItool: begin automatically generated code
@@ -667,7 +698,7 @@ void reconnect() {
 }
 
 void displayTimeCount() {
-  static bool init = false;
+  static bool isInitialized = false;
 
   #define STRING_BUFFER_LEN 128
   char str[STRING_BUFFER_LEN];
@@ -685,9 +716,9 @@ void displayTimeCount() {
   for ( count = 0; count< STRING_BUFFER_LEN; ++count)
     str[count] = 0;
 
-  if ( init == false) { 
+  if ( !isInitialized ) {
       startTimeMills = millis();
-      init = true;
+      isInitialized = true;
       return;
   }
 
@@ -725,24 +756,24 @@ void displayTimeCount() {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void displayState(unsigned int on) {
-    static unsigned int init = 0;
-    static unsigned int previous = 0;
+void displayState(bool isLinked) {
+    static bool isInitialized = false;
+    static bool previousLinked = false;
     char str[128];
 
-    if ( init == 0 ) {
-      previous = on;
+    if ( !isInitialized ) {
+      previousLinked = isLinked;
     }
 
-    if ( init == 1 ) {
-      if ( previous == on ) {
+    if ( isInitialized ) {
+      if (previousLinked == isLinked) {
         return;
       }
     }
     
-    previous = on;
+    previousLinked = isLinked;
 
-    if ( on == 1 )
+    if ( isLinked )
       {
         ++contactCount;
 
@@ -764,7 +795,7 @@ void displayState(unsigned int on) {
         
       }
 
-  init = 1;
+  isInitialized = true;
 
 }
 
@@ -773,23 +804,23 @@ void displayState(unsigned int on) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void printState(unsigned int on) {
-    static unsigned int init = 0;
-    static unsigned int previous = 0;
+void printState(bool isLinked) {
+    static bool isInitialized = false;
+    static bool previousLinked = false;
 
-    if ( init == 0 ) {
-      previous = on;
+    if ( !isInitialized ) {
+      previousLinked = isLinked;
     }
 
-    if ( init == 1 ) {
-      if ( previous == on ) {
+    if ( isInitialized ) {
+      if (previousLinked == isLinked) {
         return;
       }
     }
     
-    previous = on;
+    previousLinked = isLinked;
 
-    if ( on == 1 )
+    if ( isLinked )
       {
         Serial.print ("CONTACT\n");
       } else {
@@ -808,7 +839,7 @@ void printState(unsigned int on) {
       Serial.print("%   ");
       Serial.print("\n");
 
-  init = 1;
+  isInitialized = true;
 
 }
 
@@ -817,22 +848,22 @@ void printState(unsigned int on) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void publishState(unsigned int on) {
-    static unsigned int init = 0;
-    static unsigned int previous = 0;
+void publishState(bool isLinked) {
+    static bool isInitialized = false;
+    static bool previousLinked = false;
     bool publishStatus = false;
 
-    if ( init == 0 ) {
-      previous = on;
+    if ( !isInitialized ) {
+      previousLinked = isLinked;
     }
 
-    if ( init == 1 ) {
-      if ( previous == on ) {
+    if ( isInitialized ) {
+      if (previousLinked == isLinked) {
         return;
       }
     }
     
-    if ( on == 1 )
+    if ( isLinked )
       publishStatus = client.publish(
          "wled/all/api",
         "{\"on\": true, \
@@ -861,18 +892,50 @@ void publishState(unsigned int on) {
       );
 
     if ( publishStatus == true )
-    	previous = on;
+        previousLinked = isLinked;
 
-    init = 1;
+    isInitialized = true;
 }
 
-/* Play Audio Based On State */
-void playState(unsigned int on)
-{
-    if ( on == 1 )
-      playMusic (SONG_NAME_CONTACT, on);
-    else
-      playMusic (SONG_NAME_IDLE, on);
+// Audio
+
+// Whether audio is 'paused' i.e. low volume.
+bool isPaused = false;
+
+// Volume
+#define PLAYING_AUDIO_VOLUME 0.75
+#define PAUSED_AUDIO_VOLUME 0.4
+
+// Define pause timeout duration in milliseconds
+#define PAUSE_TIMEOUT_MS 2000 // 2 seconds pause timeout
+
+// Variable to track when pausing started
+unsigned long pauseStartTime = 0;
+
+// Helper function to determine the current state of music playback
+MusicState getMusicState(unsigned int init) {
+  if (init == 0) {
+    return MUSIC_STATE_NOT_STARTED;
+  }
+  if (isPaused) {
+    // Check if pause has timed out
+    if (millis() - pauseStartTime > PAUSE_TIMEOUT_MS) {
+      Serial.println("Music paused timeout.");
+      return MUSIC_STATE_PAUSE_TIMEOUT;
+    } else if (!playSdWav1.isPlaying()) {
+      // If music is paused but not playing it ended while paused.
+      // Treat it as timed out.
+      Serial.println("Music ended while paused.");
+      return MUSIC_STATE_PAUSE_FINISHED;
+    }
+    return MUSIC_STATE_PAUSED;
+  }
+
+  if (!playSdWav1.isPlaying()) {
+    return MUSIC_STATE_FINISHED;
+  }
+  
+  return MUSIC_STATE_PLAYING;
 }
 
 
@@ -886,7 +949,7 @@ void audioSenseSetup() {
 
   // Enable the audio shield and set the output volume.
   audioShield.enable();
-  audioShield.volume(0.75);
+  audioShield.volume(PLAYING_AUDIO_VOLUME);
 
     // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
@@ -984,17 +1047,17 @@ void audioSenseProcessSignal() {
   ) 
   */
   {
-      contact = 1;
+      isLinked = true;
   }
   else {
-      contact = 0;
+      isLinked = false;
   }
  
 
-  publishState(contact); // MQTT
-  playState(contact);    // Audio Music Player
-  printState(contact);  // Serial Console
-  displayState(contact); // OLED Display
+  publishState(isLinked); // MQTT
+  playMusic(isLinked);    // Audio Music Player
+  printState(isLinked);   // Serial Console
+  displayState(isLinked); // OLED Display
 
 
  #if 0
@@ -1049,32 +1112,126 @@ void audioMusicSetup() {
   // delay(1000); XXX 1
 }
 
-void playMusic (const char * song, unsigned int state) 
+void pauseMusic ( )
 {
-  static unsigned int init = 0;
-  static unsigned int previous_state = 0;
+  if (!isPaused && playSdWav1.isPlaying()) {
+    // Set volume to zero (mute) but keep playing
+    audioShield.volume(PAUSED_AUDIO_VOLUME);
 
-  if ( init == 0 ) {
-      previous_state = state;
+    isPaused = true;
+    pauseStartTime = millis(); // Record when pausing started
+    Serial.println("Music paused (volume minimized)");
   }
+}
 
-  if ((playSdWav1.isPlaying() ==true) && (previous_state == state))
-  {
-    return;
+void resumeMusic() {
+  if (isPaused && playSdWav1.isPlaying()) {
+    // Restore volume
+    audioShield.volume(PLAYING_AUDIO_VOLUME);
+
+    isPaused = false;
+    Serial.println("Music resumed (volume restored)");
+  } else {
+    Serial.println("Music is not paused or not playing");
   }
+}
 
-  if ( previous_state != state ) {
+void stopMusic() {
+  if (playSdWav1.isPlaying()) {
     playSdWav1.stop();
   }
+}
 
-  previous_state = state;
+void advanceToNextSong() {
+  // Advance to next song
+  currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
+  Serial.print("Next song will be: ");
+  Serial.println(contactSongs[currentSongIndex]);
+}
 
-  if (playSdWav1.play(song) == false) {
-    Serial.println("Error playing ");
-    Serial.println(song);
+// Helper function to get the current song to play.
+const char* getCurrentSong() {
+  if (isLinked) {
+    return contactSongs[currentSongIndex];
+  } else {
+    return SONG_NAME_IDLE;
+  }
+}
+
+/* Play Audio Based On State */
+void playMusic(bool isLinked)
+{
+  static bool isInitialized = false;
+  static bool previousLinked = false;
+  MusicState musicState = getMusicState(isInitialized);
+
+  if ( !isInitialized ) {
+    previousLinked = isLinked;
+    isInitialized = true;
   }
 
-  init = 1;
+  // State transition: Connected -> Disconnected.
+  if ( previousLinked && !isLinked ) {
+    Serial.println("Transition: Connected -> Disconnected");
+    pauseMusic();
+  }
+
+  // State transition: Disconnected -> Connected.
+  else if (!previousLinked && isLinked) {
+    Serial.println("Transition: Disconnected -> Connected");
+    
+    if (musicState == MUSIC_STATE_PAUSED) {
+      // If we were paused (previous disconnect), resume playback
+      Serial.println("Resuming paused music");
+      resumeMusic();
+    } else if (musicState == MUSIC_STATE_PLAYING) {
+      // If we weren't paused, stop any currently playing song.
+      // This is expected to be the idle song.
+      Serial.println("Stopping current song to play contact song");
+      stopMusic();
+    }
+  }
+  
+  // Handle pause timeout and finished states.
+  switch (musicState) {
+    case MUSIC_STATE_PAUSE_TIMEOUT:
+    case MUSIC_STATE_PAUSE_FINISHED:
+      Serial.println("Pause timed out. Stopping song to switch to dormant.");
+      stopMusic();
+      advanceToNextSong();
+      
+      // Reset isPaused since we're stopping the song
+      isPaused = false;
+      // Also reset the volume to the default
+      audioShield.volume(PLAYING_AUDIO_VOLUME);
+      break;
+    case MUSIC_STATE_FINISHED:
+      if (isLinked) {
+        Serial.println("Song finished. Advancing to next song.");
+        advanceToNextSong();
+      } else {
+        Serial.println("Idle song finished. Looping.");
+      }
+      break;
+    default:
+      // No action needed for other states
+      break;
+  }
+
+  // Nothing is playing - figure out what to play next
+  if (!playSdWav1.isPlaying()) {
+    // Start the appropriate song.
+    Serial.print("Starting song: ");
+    const char* songToPlay = getCurrentSong();
+    Serial.println(songToPlay);
+
+    if (!playSdWav1.play(songToPlay)) {
+      Serial.print("Error playing: ");
+      Serial.println(songToPlay);
+    }
+  }
+
+  previousLinked = isLinked;
 }
 // Music Player End
 //
@@ -1096,7 +1253,7 @@ void displayActivityStatus(  )
 
   #define ACTIVITY_BAR_FRACTIONS 32
 
-  static unsigned int init = 0;
+  static bool isInitialized = false;
 
   unsigned long int mills;
   static unsigned long time;
@@ -1107,14 +1264,14 @@ void displayActivityStatus(  )
   static unsigned int Xposition_last = 0;
 
   // Only display during idle time
-  if ( contact ) {
-    init = 0;
+  if ( isLinked ) {
+    isInitialized = false;
     return;
   }
 
-  if ( init == 0 ) {
+  if ( !isInitialized ) {
     time = millis();
-    init = 1;
+    isInitialized = true;
   }
 
   mills = millis();
@@ -1195,7 +1352,7 @@ void displaySplashScreen(void) {
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("    1st CONTACT!"));
+  display.println(F("    1st CONTACT!!"));
   display.println(F(""));
   display.println(F(""));
 
