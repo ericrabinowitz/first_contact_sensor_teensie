@@ -984,24 +984,8 @@ void audioSenseSetup() {
   AudioInterrupts();    // enable, both tones will start together
 }
 
-
-/*
-  audioSenseProcessSignal() - 
-          - Read the audio line-in
-          - perform a tone-detection
-          - Report contact/no-contact to:
-              - Music Player
-              - MQTT
-*/
-void audioSenseProcessSignal() {
-  float l1, r1;
-  //uint8_t led1_val, led2_val;
-
-  // read tone detectors
-  l1 = left_f_1.read();
-  r1 = right_f_1.read();
-
-/*
+void debugPrintAudioSense(float l1, float r1) {
+  /*
   float l1, l2, l3, l4, r1, r2, r3, r4;
   // read all seven tone detectors
   l1 = left_f_1.read();
@@ -1014,67 +998,71 @@ void audioSenseProcessSignal() {
   r3 = right_f_3.read();
   r4 = right_f_4.read();
 */
-#ifdef DEBUG_PRINT
-  // print the raw data, for troubleshooting
-  //Serial.print("tones: ");
-  Serial.print(l1);
-  Serial.print(", ");
-  Serial.print(l2);
-  Serial.print(", ");
-  Serial.print(l3);
-  Serial.print(", ");
-  Serial.print(l4);
-  Serial.print(",   ");
-  Serial.print(r1);
-  Serial.print(", ");
-  Serial.print(r2);
-  Serial.print(", ");
-  Serial.print(r3);
-  Serial.print(", ");
-  Serial.print(r4);
-  Serial.print("\n");
-#endif
+    #ifdef DEBUG_PRINT
+    // print the raw data, for troubleshooting
+    //Serial.print("tones: ");
+    Serial.print(l1);
+    Serial.print(", ");
+    Serial.print(l2);
+    Serial.print(", ");
+    Serial.print(l3);
+    Serial.print(", ");
+    Serial.print(l4);
+    Serial.print(",   ");
+    Serial.print(r1);
+    Serial.print(", ");
+    Serial.print(r2);
+    Serial.print(", ");
+    Serial.print(r3);
+    Serial.print(", ");
+    Serial.print(r4);
+    Serial.print("\n");
+    #endif
+    }
 
-  if (
-    l1 > thresh ||   r1 > thresh
-  )
-  /*
-    l2 > thresh ||
-    l3 > thresh ||
-    r1 > thresh ||
-    r2 > thresh ||
-    l3 > thresh 
-  ) 
-  */
-  {
-      isLinked = true;
+
+/*
+  audioSenseProcessSignal() - 
+          - Read the audio line-in
+          - perform a tone-detection
+          - Report contact/no-contact to:
+              - Music Player
+              - MQTT
+*/
+void audioSenseProcessSignal() {
+  float l1, r1;
+
+  // read tone detectors
+  l1 = left_f_1.read();
+  r1 = right_f_1.read();
+  debugPrintAudioSense(l1, r1);
+
+  static bool lastTrackedState = false;
+  static unsigned long lastTransitionTime = millis();
+
+  bool newState = (l1 > thresh || r1 > thresh);
+
+  // If state has changed, measure and print transition duration.
+  if (newState != lastTrackedState) {
+      unsigned long now = millis();
+      unsigned long delta = now - lastTransitionTime;
+      Serial.print("Transition from ");
+      Serial.print(lastTrackedState ? "linked" : "unlinked");
+      Serial.print(" to ");
+      Serial.print(newState ? "linked" : "unlinked");
+      Serial.print(" after ");
+      Serial.print(delta);
+      Serial.println("ms.");
+      lastTransitionTime = now;
+      lastTrackedState = newState;
   }
-  else {
-      isLinked = false;
-  }
- 
+
+  isLinked = newState;
 
   publishState(isLinked); // MQTT
   playMusic(isLinked);    // Audio Music Player
   printState(isLinked);   // Serial Console
   displayState(isLinked); // OLED Display
-
-
- #if 0
-  if (signal_num == 1) {
-    led1_val = (r1 > thresh) ? 1 : 0;
-  }
-  
-  if (signal_num == 2) {
-    led2_val = (r2 > thresh) ? 1 : 0;
-  }
-
-
-  //analogWrite(LED1_PIN, (1-r1)*255); // write result to LED
-  //analogWrite(LED2_PIN, (1-l4)*255); // write result to LED
-  //analogWrite(LED3_PIN, (1-c3)*255); // write result to LED 
-
-#endif
 }
 
 const float row_threshold = 0.2;
