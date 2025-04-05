@@ -1010,14 +1010,14 @@ bool audioSenseProcessSignal() {
   if (!isInitialized | isLinked != wasLinked) {
       unsigned long now = millis();
       unsigned long delta = now - lastTransitionTime;
-      Serial.print("Transition from ");
+      Serial.print("Transition: ");
       if (isInitialized) {
-        Serial.print(wasLinked ? "linked" : "unlinked");
+        Serial.print(wasLinked ? "Linked" : "Unlinked");
       } else {
-        Serial.print("uninitialized");
+        Serial.print("Uninitialized");
       }
       Serial.print(" to ");
-      Serial.print(isLinked ? "linked" : "unlinked");
+      Serial.print(isLinked ? "Linked" : "Unlinked");
       Serial.print(" after ");
       Serial.print(delta);
       Serial.println("ms.");
@@ -1122,14 +1122,11 @@ void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
 
   // State transition: Connected -> Disconnected.
   if (wasLinked && !isLinked) {
-    Serial.println("Transition: Connected -> Disconnected");
     pauseMusic();
   }
 
   // State transition: Disconnected -> Connected.
   else if (!wasLinked && isLinked) {
-    Serial.println("Transition: Disconnected -> Connected");
-
     if (musicState == MUSIC_STATE_PAUSED) {
       // If we were paused (previous disconnect), resume playback
       Serial.println("Resuming paused music");
