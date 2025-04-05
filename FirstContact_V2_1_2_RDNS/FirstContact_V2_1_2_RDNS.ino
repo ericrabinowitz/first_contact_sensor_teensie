@@ -149,7 +149,7 @@ char file[][40] {
 // #define SONG_NAME_CONTACT "eros_active1.wav" - removing this as we'll use an array instead
 #endif
 
-// Contact songs array - add your desired songs here
+// Contact songs array.
 const char* contactSongs[] = {
   "eros_active1.wav",
   "venus.wav",
@@ -161,6 +161,11 @@ const char* contactSongs[] = {
 
 // Current song index
 unsigned int currentSongIndex = 0;
+
+// Volume
+#define PLAYING_AUDIO_VOLUME 0.75
+#define PAUSED_AUDIO_VOLUME 0.4
+
 
 // Audio Playa Date End
 
@@ -247,6 +252,11 @@ AudioConnection          patchCordMOL(mixerLeft, 0, audioOut, 0);
 AudioConnection          patchCordMOR(mixerRight, 0, audioOut, 1);
 
 AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
+
+
+// Whether audio is 'paused' i.e. low volume.
+bool isPaused = false;
+
 
 elapsedMillis since_main = 0;
 uint16_t main_period_ms = 150; 
@@ -900,7 +910,7 @@ void audioSenseSetup() {
 
   // Enable the audio shield and set the output volume.
   audioShield.enable();
-  audioShield.volume(0.75);
+  audioShield.volume(PLAYING_AUDIO_VOLUME);
 
     // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
@@ -1063,41 +1073,81 @@ void audioMusicSetup() {
   // delay(1000); XXX 1
 }
 
-void playMusic (const char * song, unsigned int state) 
+void pauseMusic ( )
+{
+  if (!isPaused && playSdWav1.isPlaying()) {
+    // Set volume to zero (mute) but keep playing
+    audioShield.volume(PAUSED_AUDIO_VOLUME);
+
+    isPaused = true;
+    Serial.println("Music paused (volume minimized)");
+  }
+}
+
+void resumeMusic() {
+  if (isPaused && playSdWav1.isPlaying()) {
+    // Restore volume
+    audioShield.volume(PLAYING_AUDIO_VOLUME);
+
+    isPaused = false;
+    Serial.println("Music resumed (volume restored)");
+  }
+}
+
+
+
+void playMusic(const char* song, unsigned int state)
 {
   static unsigned int init = 0;
   static unsigned int previous_state = 0;
 
-  if ( init == 0 ) {
-      previous_state = state;
+  if (init == 0) {
+    previous_state = state;
+    init = 1;
   }
 
-  if ((playSdWav1.isPlaying() == true) && (previous_state == state))
-  {
-    return;
+  // State transition: Connected -> Disconnected
+  if (previous_state == 1 && state == 0) {
+    Serial.println("Transition: Connected -> Disconnected");
+
+    // Pause the contact song and remember we're in a paused state
+    pauseMusic();
+
+    // Advance to next song for future connection
+    // currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
+    // Serial.print("Next song will be: ");
+    // Serial.println(contactSongs[currentSongIndex]);
   }
 
-  if ( previous_state != state ) {
-    playSdWav1.stop();
-    if (previous_state == 1) {
-      // We've just disconnected, move to next song
-      currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
-      Serial.print("Next song will be: ");
-      Serial.println(contactSongs[currentSongIndex]);
+  // State transition: Disconnected -> Connected
+  else if (previous_state == 0 && state == 1) {
+    Serial.println("Transition: Disconnected -> Connected");
+
+    if (isPaused) {
+      // If we were paused (previous disconnect), resume playback
+      Serial.println("Resuming paused music");
+      resumeMusic();
+    } else {
+      // If we weren't paused, stop any currently playing song
+      if (playSdWav1.isPlaying()) {
+        Serial.println("Stopping current song to play contact song");
+        playSdWav1.stop();
+      }
+    }
+  }
+
+  // Nothing is playing - start it!
+  if (!playSdWav1.isPlaying()) {
+    Serial.print("Starting song: ");
+    Serial.println(song);
+
+    if (!playSdWav1.play(song)) {
+      Serial.print("Error playing: ");
+      Serial.println(song);
     }
   }
 
   previous_state = state;
-
-  if (playSdWav1.play(song) == false) {
-    Serial.println("Error playing ");
-    Serial.println(song);
-  } else if (previous_state == 0) {
-    Serial.print("Playing song: ");
-    Serial.println(song);
-  }
-
-  init = 1;
 }
 // Music Player End
 //
