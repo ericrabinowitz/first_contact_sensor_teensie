@@ -143,11 +143,24 @@ char file[][40] {
 //
 #ifdef TEST_CONNECTION_ENABLE
 #define SONG_NAME_IDLE "disconnected.wav"
-#define SONG_NAME_CONTACT "connected.wav"
+// #define SONG_NAME_CONTACT "connected.wav" - removing this as we'll use an array instead
 #else
 #define SONG_NAME_IDLE "eros_dormant1.wav"
-#define SONG_NAME_CONTACT "eros_active1.wav"
+// #define SONG_NAME_CONTACT "eros_active1.wav" - removing this as we'll use an array instead
 #endif
+
+// Contact songs array - add your desired songs here
+const char* contactSongs[] = {
+  "eros_active1.wav",
+  "venus.wav",
+  "mars.wav",
+  "feelsgood.wav",
+  "wow.wav"
+};
+#define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
+
+// Current song index
+unsigned int currentSongIndex = 0;
 
 // Audio Playa Date End
 
@@ -869,10 +882,11 @@ void publishState(unsigned int on) {
 /* Play Audio Based On State */
 void playState(unsigned int on)
 {
-    if ( on == 1 )
-      playMusic (SONG_NAME_CONTACT, on);
-    else
-      playMusic (SONG_NAME_IDLE, on);
+    if (on == 1) {
+      playMusic(contactSongs[currentSongIndex], on);
+    } else {
+      playMusic(SONG_NAME_IDLE, on);
+    }
 }
 
 
@@ -1058,19 +1072,28 @@ void playMusic (const char * song, unsigned int state)
       previous_state = state;
   }
 
-  if ((playSdWav1.isPlaying() ==true) && (previous_state == state))
+  if ((playSdWav1.isPlaying() == true) && (previous_state == state))
   {
     return;
   }
 
   if ( previous_state != state ) {
     playSdWav1.stop();
+    if (previous_state == 1) {
+      // We've just disconnected, move to next song
+      currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
+      Serial.print("Next song will be: ");
+      Serial.println(contactSongs[currentSongIndex]);
+    }
   }
 
   previous_state = state;
 
   if (playSdWav1.play(song) == false) {
     Serial.println("Error playing ");
+    Serial.println(song);
+  } else if (previous_state == 0) {
+    Serial.print("Playing song: ");
     Serial.println(song);
   }
 
@@ -1195,7 +1218,7 @@ void displaySplashScreen(void) {
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("    1st CONTACT!"));
+  display.println(F("    1st CONTACT!!!"));
   display.println(F(""));
   display.println(F(""));
 
