@@ -162,10 +162,6 @@ const char* contactSongs[] = {
 // Current song index
 unsigned int currentSongIndex = 0;
 
-// Volume
-#define PLAYING_AUDIO_VOLUME 0.75
-#define PAUSED_AUDIO_VOLUME 0.4
-
 
 // Audio Playa Date End
 
@@ -176,6 +172,13 @@ unsigned int currentSongIndex = 0;
 #define SDCARD_MOSI_PIN  11  // not actually used
 #define SDCARD_SCK_PIN   13  // not actually used
 
+// Music player states
+typedef enum {
+  MUSIC_STATE_PLAYING,      // Music is playing at normal volume
+  MUSIC_STATE_PAUSED,       // Music is playing but at lower volume
+  MUSIC_STATE_PAUSE_TIMEOUT, // Music was paused but timeout occurred
+  MUSIC_STATE_STOPPED       // No music is playing
+} MusicState;
 
 void playMusic (const char * song);
 //
@@ -252,11 +255,6 @@ AudioConnection          patchCordMOL(mixerLeft, 0, audioOut, 0);
 AudioConnection          patchCordMOR(mixerRight, 0, audioOut, 1);
 
 AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
-
-
-// Whether audio is 'paused' i.e. low volume.
-bool isPaused = false;
-
 
 elapsedMillis since_main = 0;
 uint16_t main_period_ms = 150; 
@@ -889,6 +887,39 @@ void publishState(unsigned int on) {
     init = 1;
 }
 
+// Audio
+
+// Whether audio is 'paused' i.e. low volume.
+bool isPaused = false;
+
+// Volume
+#define PLAYING_AUDIO_VOLUME 0.75
+#define PAUSED_AUDIO_VOLUME 0.4
+
+// Define pause timeout duration in milliseconds
+#define PAUSE_TIMEOUT_MS 2000 // 2 seconds pause timeout
+
+// Variable to track when pausing started
+unsigned long pauseStartTime = 0;
+
+// Helper function to determine the current state of music playback
+MusicState getMusicState() {
+  if (!playSdWav1.isPlaying()) {
+    return MUSIC_STATE_STOPPED;
+  }
+  
+  if (isPaused) {
+    // Check if pause has timed out
+    if (millis() - pauseStartTime > PAUSE_TIMEOUT_MS) {
+      return MUSIC_STATE_PAUSE_TIMEOUT;
+    }
+    return MUSIC_STATE_PAUSED;
+  }
+  
+  return MUSIC_STATE_PLAYING;
+}
+
+
 /* Play Audio Based On State */
 void playState(unsigned int on)
 {
@@ -1080,6 +1111,7 @@ void pauseMusic ( )
     audioShield.volume(PAUSED_AUDIO_VOLUME);
 
     isPaused = true;
+    pauseStartTime = millis(); // Record when pausing started
     Serial.println("Music paused (volume minimized)");
   }
 }
@@ -1100,6 +1132,7 @@ void playMusic(const char* song, unsigned int state)
 {
   static unsigned int init = 0;
   static unsigned int previous_state = 0;
+  MusicState musicState = getMusicState();
 
   if (init == 0) {
     previous_state = state;
@@ -1112,28 +1145,52 @@ void playMusic(const char* song, unsigned int state)
 
     // Pause the contact song and remember we're in a paused state
     pauseMusic();
-
-    // Advance to next song for future connection
-    // currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
-    // Serial.print("Next song will be: ");
-    // Serial.println(contactSongs[currentSongIndex]);
   }
 
   // State transition: Disconnected -> Connected
   else if (previous_state == 0 && state == 1) {
     Serial.println("Transition: Disconnected -> Connected");
-
-    if (isPaused) {
-      // If we were paused (previous disconnect), resume playback
-      Serial.println("Resuming paused music");
-      resumeMusic();
-    } else {
-      // If we weren't paused, stop any currently playing song
-      if (playSdWav1.isPlaying()) {
-        Serial.println("Stopping current song to play contact song");
-        playSdWav1.stop();
-      }
+    
+    switch (musicState) {
+      case MUSIC_STATE_PAUSED:
+        // If we were paused (previous disconnect), resume playback
+        Serial.println("Resuming paused music");
+        resumeMusic();
+        break;
+        
+      case MUSIC_STATE_PAUSE_TIMEOUT:
+        // If pause timed out, advance to next song
+        currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
+        Serial.print("Pause timed out. Next song will be: ");
+        Serial.println(contactSongs[currentSongIndex]);
+        
+        // Stop current song to start the new one
+        if (playSdWav1.isPlaying()) {
+          playSdWav1.stop();
+        }
+        break;
+        
+      default:
+        // If we weren't paused, stop any currently playing song
+        if (playSdWav1.isPlaying()) {
+          Serial.println("Stopping current song to play contact song");
+          playSdWav1.stop();
+        }
+        break;
     }
+  }
+  
+  // Handle pause timeout during disconnected state
+  if (state == 0 && musicState == MUSIC_STATE_PAUSE_TIMEOUT) {
+    Serial.println("Pause timed out while disconnected. Stopping song to switch to dormant.");
+    if (playSdWav1.isPlaying()) {
+      playSdWav1.stop();
+    }
+    
+    // Reset isPaused since we're stopping the song
+    isPaused = false;
+    // Also reset the volume to the default
+    audioShield.volume(PLAYING_AUDIO_VOLUME);
   }
 
   // Nothing is playing - start it!
@@ -1147,11 +1204,19 @@ void playMusic(const char* song, unsigned int state)
     }
 
     Serial.print("Starting song: ");
-    Serial.println(song);
-
-    if (!playSdWav1.play(song)) {
-      Serial.print("Error playing: ");
-      Serial.println(song);
+    
+    if (state == 1) {
+      Serial.println(contactSongs[currentSongIndex]);
+      if (!playSdWav1.play(contactSongs[currentSongIndex])) {
+        Serial.print("Error playing: ");
+        Serial.println(contactSongs[currentSongIndex]);
+      }
+    } else {
+      Serial.println(song); // This will be SONG_NAME_IDLE
+      if (!playSdWav1.play(song)) {
+        Serial.print("Error playing: ");
+        Serial.println(song);
+      }
     }
   }
 
