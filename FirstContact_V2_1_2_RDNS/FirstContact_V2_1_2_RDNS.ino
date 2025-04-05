@@ -1128,6 +1128,12 @@ void resumeMusic() {
   }
 }
 
+void stopMusic() {
+  if (playSdWav1.isPlaying()) {
+    playSdWav1.stop();
+  }
+}
+
 void advanceToNextSong() {
   // Advance to next song
   currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
@@ -1170,11 +1176,11 @@ void playMusic(unsigned int state)
       // If we were paused (previous disconnect), resume playback
       Serial.println("Resuming paused music");
       resumeMusic();
-    } else if (playSdWav1.isPlaying()) {
+    } else if (musicState == MUSIC_STATE_PLAYING) {
       // If we weren't paused, stop any currently playing song.
       // This is expected to be the idle song.
       Serial.println("Stopping current song to play contact song");
-      playSdWav1.stop();
+      stopMusic();
     }
   }
   
@@ -1183,9 +1189,7 @@ void playMusic(unsigned int state)
     case MUSIC_STATE_PAUSE_TIMEOUT:
     case MUSIC_STATE_PAUSE_FINISHED:
       Serial.println("Pause timed out. Stopping song to switch to dormant.");
-      if (playSdWav1.isPlaying()) {
-        playSdWav1.stop();
-      }
+      stopMusic();
       advanceToNextSong();
       
       // Reset isPaused since we're stopping the song
