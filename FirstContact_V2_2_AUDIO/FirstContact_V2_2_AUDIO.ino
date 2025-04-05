@@ -990,49 +990,45 @@ void debugPrintAudioSense(float l1, float r1) {
 */
 bool audioSenseProcessSignal() {
   float l1, r1;
-
-  // read tone detectors
   l1 = left_f_1.read();
   r1 = right_f_1.read();
   debugPrintAudioSense(l1, r1);
 
-  static unsigned long lastTransitionTime = millis();
+  // Buffer state changes over 100ms
+  static bool stableIsLinked = false;
+  static unsigned long bufferStartTime = 0; // Renamed from pendingStartTime
+  static bool buffering = false;
+
+  bool candidateIsLinked = (l1 > thresh || r1 > thresh);
+
+  if (candidateIsLinked != stableIsLinked) {
+    if (!buffering) {
+      bufferStartTime = millis(); // Updated variable name
+      buffering = true;
+    } else if (millis() - bufferStartTime >= 100) { // Updated variable name
+      Serial.print("Buffered Transition: ");
+      Serial.print(stableIsLinked ? "Linked" : "Unlinked");
+      Serial.print(" to ");
+      Serial.print(candidateIsLinked ? "Linked" : "Unlinked");
+      Serial.println(" after buffering 100ms.");
+      stableIsLinked = candidateIsLinked;
+      buffering = false;
+    }
+  } else {
+    buffering = false;
+  }
+
+  // Propagate the stable state downstream.
   static bool isInitialized = false;
   static bool wasLinked = false;
+  publishState(isInitialized, wasLinked, stableIsLinked);
+  playMusic(isInitialized, wasLinked, stableIsLinked);
+  printState(isInitialized, wasLinked, stableIsLinked);
+  displayState(isInitialized, wasLinked, stableIsLinked);
 
-  bool isLinked = (l1 > thresh || r1 > thresh);
-
-  if (!isInitialized) {
-    wasLinked = isLinked;
-  }
-
-  // If state has changed, measure and print transition duration.
-  if (!isInitialized | isLinked != wasLinked) {
-      unsigned long now = millis();
-      unsigned long delta = now - lastTransitionTime;
-      Serial.print("Transition: ");
-      if (isInitialized) {
-        Serial.print(wasLinked ? "Linked" : "Unlinked");
-      } else {
-        Serial.print("Uninitialized");
-      }
-      Serial.print(" to ");
-      Serial.print(isLinked ? "Linked" : "Unlinked");
-      Serial.print(" after ");
-      Serial.print(delta);
-      Serial.println("ms.");
-      lastTransitionTime = now;
-  }
-
-  publishState(isInitialized, wasLinked, isLinked); // MQTT
-  playMusic(isInitialized, wasLinked, isLinked);    // Audio Music Player
-  printState(isInitialized, wasLinked, isLinked);   // Serial Console
-  displayState(isInitialized, wasLinked, isLinked); // OLED Display
-
-  // Update initialized, linked state.
   isInitialized = true;
-  wasLinked = isLinked;
-  return isLinked;
+  wasLinked = stableIsLinked;
+  return stableIsLinked;
 }
 
 const float row_threshold = 0.2;
