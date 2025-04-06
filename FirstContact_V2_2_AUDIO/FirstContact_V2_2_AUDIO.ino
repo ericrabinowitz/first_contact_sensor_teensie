@@ -979,44 +979,59 @@ void debugPrintAudioSense(float l1, float r1) {
     #endif
     }
 
+#define TRANSITION_BUFFER_MS 100
 
-/*
-  audioSenseProcessSignal() - 
-          - Read the audio line-in
-          - perform a tone-detection
-          - Report contact/no-contact to:
-              - Music Player
-              - MQTT
-*/
+void printTransition(bool buffering, bool stableIsLinked, bool candidateIsLinked) {
+  if (buffering) {
+    Serial.print("Pending Transition: ");
+  } else {
+    Serial.print("Transition: ");
+  }
+  Serial.print(stableIsLinked ? "Linked" : "Unlinked");
+  Serial.print(" to ");
+  Serial.print(candidateIsLinked ? "Linked" : "Unlinked");
+  if (buffering) {
+    Serial.println(" while buffering...");
+  } else {
+    Serial.print(" after buffering for ");
+    Serial.print(TRANSITION_BUFFER_MS);
+    Serial.println("ms.");
+  }
+}
+
+// Get the isLinked state, buffering over ~100ms for stable readings.
+bool getStableIsLinked(float l1, float r1) {
+  static bool stableIsLinked = false;
+  static unsigned long bufferStartTime = 0;
+  static bool buffering = false;
+  bool candidateIsLinked = (l1 > thresh || r1 > thresh);
+  if (candidateIsLinked != stableIsLinked) {
+    if (!buffering) {
+      bufferStartTime = millis();
+      buffering = true;
+    } else if (millis() - bufferStartTime >= TRANSITION_BUFFER_MS) {
+      // Finished buffering. Finalize the transition to the new state.
+      stableIsLinked = candidateIsLinked;
+      buffering = false;
+    } else {
+      // Still buffering. Do not change stableIsLinked.
+    }
+    printTransition(buffering, stableIsLinked, candidateIsLinked);
+  } else {
+    buffering = false;
+  }
+  return stableIsLinked;
+}
+
+// Update audioSenseProcessSignal to use the new getBufferedIsLinked helper.
 bool audioSenseProcessSignal() {
   float l1, r1;
   l1 = left_f_1.read();
   r1 = right_f_1.read();
   debugPrintAudioSense(l1, r1);
 
-  // Buffer state changes over 100ms
-  static bool stableIsLinked = false;
-  static unsigned long bufferStartTime = 0; // Renamed from pendingStartTime
-  static bool buffering = false;
-
-  bool candidateIsLinked = (l1 > thresh || r1 > thresh);
-
-  if (candidateIsLinked != stableIsLinked) {
-    if (!buffering) {
-      bufferStartTime = millis(); // Updated variable name
-      buffering = true;
-    } else if (millis() - bufferStartTime >= 100) { // Updated variable name
-      Serial.print("Buffered Transition: ");
-      Serial.print(stableIsLinked ? "Linked" : "Unlinked");
-      Serial.print(" to ");
-      Serial.print(candidateIsLinked ? "Linked" : "Unlinked");
-      Serial.println(" after buffering 100ms.");
-      stableIsLinked = candidateIsLinked;
-      buffering = false;
-    }
-  } else {
-    buffering = false;
-  }
+  // Use helper to determine the buffered isLinked state.
+  bool stableIsLinked = getStableIsLinked(l1, r1);
 
   // Propagate the stable state downstream.
   static bool isInitialized = false;
