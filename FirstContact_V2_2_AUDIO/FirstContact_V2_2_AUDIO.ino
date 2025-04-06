@@ -53,17 +53,20 @@ Boards Support:
             Installer For IDE: https://www.pjrc.com/teensy/package_teensy_index.json
             NOTE: I think this also installs the Audio library
 Libraries:
+        - These need to be installed via library manager.
+          Using library Adafruit GFX Library at version 1.12.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_GFX_Library
+          Using library Adafruit BusIO at version 1.17.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_BusIO
+          Using library Adafruit SSD1306 at version 2.5.13 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_SSD1306
+          Using library QNEthernet at version 0.31.0 in folder: /Users/eric/work/FirstContact/libraries/QNEthernet
+          Using library PubSubClient at version 2.8 in folder: /Users/eric/work/FirstContact/libraries/PubSubClient
+        - These should already be installed alongsuide teensyduino. Do not install these libraries.
           Using library SPI at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SPI 
           Using library Wire at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Wire 
-          Using library Adafruit GFX Library at version 1.12.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_GFX_Library 
-          Using library Adafruit BusIO at version 1.17.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_BusIO 
-          Using library Adafruit SSD1306 at version 2.5.13 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_SSD1306 
           Using library Audio at version 1.3 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Audio 
           Using library SD at version 2.0.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SD 
           Using library SdFat at version 2.1.2 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SdFat 
           Using library SerialFlash at version 0.5 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SerialFlash 
-          Using library QNEthernet at version 0.31.0 in folder: /Users/eric/work/FirstContact/libraries/QNEthernet 
-          Using library PubSubClient at version 2.8 in folder: /Users/eric/work/FirstContact/libraries/PubSubClient 
+
 
 
 
@@ -210,7 +213,7 @@ const int f_3 = 20;
 const int f_4 = 20; 
 
 float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
-bool isLinked = false;      // Current state of contact. Either true or false
+//bool isLinked = false;      // Current state of contact. Either true or false
 static unsigned long int contactCount = 0; // Cumulative count of contacts
 
 // GUItool: begin automatically generated code
@@ -756,47 +759,31 @@ void displayTimeCount() {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void displayState(bool isLinked) {
-    static bool isInitialized = false;
-    static bool previousLinked = false;
-    char str[128];
+void displayState(bool isInitialized, bool wasLinked, bool isLinked) {
+  char str[128];
 
-    if ( !isInitialized ) {
-      previousLinked = isLinked;
-    }
+  if (isInitialized && wasLinked == isLinked) {
+    return;
+  }
 
-    if ( isInitialized ) {
-      if (previousLinked == isLinked) {
-        return;
-      }
-    }
-    
-    previousLinked = isLinked;
+  if (!isInitialized || isLinked) {
+    ++contactCount;
 
-    if ( isLinked )
-      {
-        ++contactCount;
+    // Clear the buffer
+    //display.clearDisplay();
+    display.fillRect(0, 30, 128, 10, SSD1306_BLACK);  
+    display.setTextSize(3);             // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE);        // Draw white text
+    display.setCursor(0,30);            
 
-        // Clear the buffer
-        //display.clearDisplay();
-        display.fillRect(0, 30, 128, 10, SSD1306_BLACK);  
-        display.setTextSize(3);             // Normal 1:1 pixel scale
-        display.setTextColor(SSD1306_WHITE);        // Draw white text
-        display.setCursor(0,30);            
-
-        sprintf (str, "%07u", contactCount);
-        display.printf (str);
-        display.display();
-      } else {
-          //display.clearDisplay();
-          display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
-          display.display();
-          
-        
-      }
-
-  isInitialized = true;
-
+    sprintf (str, "%07u", contactCount);
+    display.printf (str);
+    display.display();
+  } else {
+    //display.clearDisplay();
+    display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
+    display.display();
+  }
 }
 
 /*
@@ -804,43 +791,27 @@ void displayState(bool isLinked) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void printState(bool isLinked) {
-    static bool isInitialized = false;
-    static bool previousLinked = false;
+void printState(bool isInitialized, bool wasLinked, bool isLinked) {
+  if (isInitialized && wasLinked == isLinked) {
+    return;
+  }
 
-    if ( !isInitialized ) {
-      previousLinked = isLinked;
-    }
+  if (isLinked) {
+    Serial.print ("CONTACT\n");
+  } else {
+    Serial.print ("--OFF---\n");
+  }
 
-    if ( isInitialized ) {
-      if (previousLinked == isLinked) {
-        return;
-      }
-    }
-    
-    previousLinked = isLinked;
-
-    if ( isLinked )
-      {
-        Serial.print ("CONTACT\n");
-      } else {
-        Serial.print ("--OFF---\n");
-      }
-
-    
 
   //uncomment these lines to see how much CPU time
   //the tone detectors and audio library are using
 
-      Serial.print("CPU=");
-      Serial.print(AudioProcessorUsage());
-      Serial.print("%, max=");
-      Serial.print(AudioProcessorUsageMax());
-      Serial.print("%   ");
-      Serial.print("\n");
-
-  isInitialized = true;
-
+    Serial.print("CPU=");
+    Serial.print(AudioProcessorUsage());
+    Serial.print("%, max=");
+    Serial.print(AudioProcessorUsageMax());
+    Serial.print("%   ");
+    Serial.print("\n");
 }
 
 /*
@@ -848,53 +819,41 @@ void printState(bool isLinked) {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void publishState(bool isLinked) {
-    static bool isInitialized = false;
-    static bool previousLinked = false;
-    bool publishStatus = false;
+void publishState(bool isInitialized, bool wasLinked, bool isLinked) {
+  static bool publishSucceeded = false;
 
-    if ( !isInitialized ) {
-      previousLinked = isLinked;
-    }
-
-    if ( isInitialized ) {
-      if (previousLinked == isLinked) {
-        return;
-      }
-    }
-    
-    if ( isLinked )
-      publishStatus = client.publish(
-         "wled/all/api",
+  if (publishSucceeded && isInitialized && wasLinked == isLinked) {
+    // No change in state to report.
+    return;
+  }
+  
+  if (isLinked)
+    publishSucceeded = client.publish(
+        "wled/all/api",
+      "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\": \
+      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
+        {\"col\": [0, 255, 255],   \"fx\": 36},   \
+        {\"col\": [128, 128, 255], \"fx\": 36}]   \
+        }" 
+    );
+  else
+    publishSucceeded = client.publish(
+        "wled/all/api",
         "{\"on\": true, \
-          \"bri\": 255, \
-          \"seg\": \
-        [{\"col\": [255, 255, 0],   \"fx\": 36},  \
-         {\"col\": [0, 255, 255],   \"fx\": 36},   \
-         {\"col\": [128, 128, 255], \"fx\": 36}]   \
-         }" 
-      );
-    else
-      publishStatus = client.publish(
-          "wled/all/api",
-         "{\"on\": true, \
-          \"bri\": 255, \
-          \"seg\":  \
-        [{\"col\": [255, 0, 0], \"fx\": 42},    \
-         {\"col\": [0, 255, 0], \"fx\": 42},    \
-         {\"col\": [0, 0, 255], \"fx\": 42}]    \
-         }" 
+        \"bri\": 255, \
+        \"seg\":  \
+      [{\"col\": [255, 0, 0], \"fx\": 42},    \
+        {\"col\": [0, 255, 0], \"fx\": 42},    \
+        {\"col\": [0, 0, 255], \"fx\": 42}]    \
+        }" 
 
 #if 0
         "wled/all/api",
         "{\"on\": false, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 0}, {\"col\": [0, 255, 0], \"fx\": 00}, {\"col\": [0, 0, 255], \"fx\": 00}]}"
 #endif
       );
-
-    if ( publishStatus == true )
-        previousLinked = isLinked;
-
-    isInitialized = true;
 }
 
 // Audio
@@ -984,24 +943,8 @@ void audioSenseSetup() {
   AudioInterrupts();    // enable, both tones will start together
 }
 
-
-/*
-  audioSenseProcessSignal() - 
-          - Read the audio line-in
-          - perform a tone-detection
-          - Report contact/no-contact to:
-              - Music Player
-              - MQTT
-*/
-void audioSenseProcessSignal() {
-  float l1, r1;
-  //uint8_t led1_val, led2_val;
-
-  // read tone detectors
-  l1 = left_f_1.read();
-  r1 = right_f_1.read();
-
-/*
+void debugPrintAudioSense(float l1, float r1) {
+  /*
   float l1, l2, l3, l4, r1, r2, r3, r4;
   // read all seven tone detectors
   l1 = left_f_1.read();
@@ -1014,76 +957,111 @@ void audioSenseProcessSignal() {
   r3 = right_f_3.read();
   r4 = right_f_4.read();
 */
-#ifdef DEBUG_PRINT
-  // print the raw data, for troubleshooting
-  //Serial.print("tones: ");
-  Serial.print(l1);
-  Serial.print(", ");
-  Serial.print(l2);
-  Serial.print(", ");
-  Serial.print(l3);
-  Serial.print(", ");
-  Serial.print(l4);
-  Serial.print(",   ");
-  Serial.print(r1);
-  Serial.print(", ");
-  Serial.print(r2);
-  Serial.print(", ");
-  Serial.print(r3);
-  Serial.print(", ");
-  Serial.print(r4);
-  Serial.print("\n");
-#endif
+    #ifdef DEBUG_PRINT
+    // print the raw data, for troubleshooting
+    //Serial.print("tones: ");
+    Serial.print(l1);
+    Serial.print(", ");
+    Serial.print(l2);
+    Serial.print(", ");
+    Serial.print(l3);
+    Serial.print(", ");
+    Serial.print(l4);
+    Serial.print(",   ");
+    Serial.print(r1);
+    Serial.print(", ");
+    Serial.print(r2);
+    Serial.print(", ");
+    Serial.print(r3);
+    Serial.print(", ");
+    Serial.print(r4);
+    Serial.print("\n");
+    #endif
+    }
 
-  if (
-    l1 > thresh ||   r1 > thresh
-  )
-  /*
-    l2 > thresh ||
-    l3 > thresh ||
-    r1 > thresh ||
-    r2 > thresh ||
-    l3 > thresh 
-  ) 
-  */
-  {
-      isLinked = true;
+#define TRANSITION_BUFFER_MS 100
+
+void printTransition(bool buffering, bool stableIsLinked, bool candidateIsLinked) {
+  if (buffering) {
+    Serial.print("Pending Transition: ");
+  } else {
+    Serial.print("Transition: ");
   }
-  else {
-      isLinked = false;
+  Serial.print(stableIsLinked ? "Linked" : "Unlinked");
+  Serial.print(" to ");
+  Serial.print(candidateIsLinked ? "Linked" : "Unlinked");
+  if (buffering) {
+    Serial.println(" while buffering...");
+  } else {
+    Serial.print(" after buffering for ");
+    Serial.print(TRANSITION_BUFFER_MS);
+    Serial.println("ms.");
   }
- 
+}
 
-  publishState(isLinked); // MQTT
-  playMusic(isLinked);    // Audio Music Player
-  printState(isLinked);   // Serial Console
-  displayState(isLinked); // OLED Display
+// Get the isLinked state, buffering over ~100ms for stable readings.
+bool getStableIsLinked(float l1, float r1) {
+  static bool stableIsLinked = false;
+  static unsigned long bufferStartTime = 0;
+  static bool buffering = false;
+  bool candidateIsLinked = (l1 > thresh || r1 > thresh);
 
-
- #if 0
-  if (signal_num == 1) {
-    led1_val = (r1 > thresh) ? 1 : 0;
+  if (!stableIsLinked && candidateIsLinked ) {
+    // Immediate transition to Linked for quick contact latency.
+    printTransition(buffering, stableIsLinked, candidateIsLinked);
+    stableIsLinked = true;
+    buffering = false;
+  } else if (stableIsLinked && !candidateIsLinked) {
+    // Buffer transition to Unlinked to mitigate flakiness.
+    if (!buffering) {
+      buffering = true;
+      bufferStartTime = millis();
+      printTransition(buffering, stableIsLinked, candidateIsLinked);
+    } else if (millis() - bufferStartTime >= TRANSITION_BUFFER_MS) {
+      // Finished buffering. Finalize the transition to the new state.
+      buffering = false;
+      printTransition(buffering, stableIsLinked, candidateIsLinked);
+      stableIsLinked = candidateIsLinked;
+    } else {
+      // Still buffering. Do not change stableIsLinked.
+    }
+  } else {
+    // If stable and candidate are the same, do nothing and stop buffering.
+    buffering = false;
   }
-  
-  if (signal_num == 2) {
-    led2_val = (r2 > thresh) ? 1 : 0;
-  }
+  return stableIsLinked;
+}
 
+// Update audioSenseProcessSignal to use the new getBufferedIsLinked helper.
+bool audioSenseProcessSignal() {
+  float l1, r1;
+  l1 = left_f_1.read();
+  r1 = right_f_1.read();
+  debugPrintAudioSense(l1, r1);
 
-  //analogWrite(LED1_PIN, (1-r1)*255); // write result to LED
-  //analogWrite(LED2_PIN, (1-l4)*255); // write result to LED
-  //analogWrite(LED3_PIN, (1-c3)*255); // write result to LED 
+  // Use helper to determine the buffered isLinked state.
+  bool stableIsLinked = getStableIsLinked(l1, r1);
 
-#endif
+  // Propagate the stable state downstream.
+  static bool isInitialized = false;
+  static bool wasLinked = false;
+  publishState(isInitialized, wasLinked, stableIsLinked);
+  playMusic(isInitialized, wasLinked, stableIsLinked);
+  printState(isInitialized, wasLinked, stableIsLinked);
+  displayState(isInitialized, wasLinked, stableIsLinked);
+
+  isInitialized = true;
+  wasLinked = stableIsLinked;
+  return stableIsLinked;
 }
 
 const float row_threshold = 0.2;
 const float column_threshold = 0.2;
 
-void audioSenseLoop() {
+bool audioSenseLoop() {
 
     sine1.amplitude(1.0);
-    audioSenseProcessSignal();
+    return audioSenseProcessSignal();
 }
 // Contact Sense End
 //
@@ -1150,7 +1128,7 @@ void advanceToNextSong() {
 }
 
 // Helper function to get the current song to play.
-const char* getCurrentSong() {
+const char* getCurrentSong(bool isLinked) {
   if (isLinked) {
     return contactSongs[currentSongIndex];
   } else {
@@ -1159,27 +1137,16 @@ const char* getCurrentSong() {
 }
 
 /* Play Audio Based On State */
-void playMusic(bool isLinked)
-{
-  static bool isInitialized = false;
-  static bool previousLinked = false;
+void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
   MusicState musicState = getMusicState(isInitialized);
 
-  if ( !isInitialized ) {
-    previousLinked = isLinked;
-    isInitialized = true;
-  }
-
   // State transition: Connected -> Disconnected.
-  if ( previousLinked && !isLinked ) {
-    Serial.println("Transition: Connected -> Disconnected");
+  if (wasLinked && !isLinked) {
     pauseMusic();
   }
 
   // State transition: Disconnected -> Connected.
-  else if (!previousLinked && isLinked) {
-    Serial.println("Transition: Disconnected -> Connected");
-    
+  else if (!wasLinked && isLinked) {
     if (musicState == MUSIC_STATE_PAUSED) {
       // If we were paused (previous disconnect), resume playback
       Serial.println("Resuming paused music");
@@ -1222,7 +1189,7 @@ void playMusic(bool isLinked)
   if (!playSdWav1.isPlaying()) {
     // Start the appropriate song.
     Serial.print("Starting song: ");
-    const char* songToPlay = getCurrentSong();
+    const char* songToPlay = getCurrentSong(isLinked);
     Serial.println(songToPlay);
 
     if (!playSdWav1.play(songToPlay)) {
@@ -1230,8 +1197,6 @@ void playMusic(bool isLinked)
       Serial.println(songToPlay);
     }
   }
-
-  previousLinked = isLinked;
 }
 // Music Player End
 //
@@ -1247,7 +1212,7 @@ void displayHostname ( char * hostname )
 /*
  * displayActivityStatus() - display a wandering eye and show any acitivy
  */
-void displayActivityStatus(  )
+void displayActivityStatus(bool isLinked)
 {
   long unsigned mod;
 
@@ -1271,7 +1236,6 @@ void displayActivityStatus(  )
 
   if ( !isInitialized ) {
     time = millis();
-    isInitialized = true;
   }
 
   mills = millis();
@@ -1447,10 +1411,10 @@ void loop()
   }
   client.loop();
 
-  audioSenseLoop();
+  bool isLinked = audioSenseLoop();
 
   // During Idle Time, animate something to show we are alive
-  displayActivityStatus();
+  displayActivityStatus(isLinked);
 
   displayTimeCount();
 }
