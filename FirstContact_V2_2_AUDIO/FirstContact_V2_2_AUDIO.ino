@@ -1005,18 +1005,20 @@ bool getStableIsLinked(float l1, float r1) {
   static unsigned long bufferStartTime = 0;
   static bool buffering = false;
   bool candidateIsLinked = (l1 > thresh || r1 > thresh);
+
   if (candidateIsLinked != stableIsLinked) {
     if (!buffering) {
-      bufferStartTime = millis();
       buffering = true;
+      bufferStartTime = millis();
+      printTransition(buffering, stableIsLinked, candidateIsLinked);
     } else if (millis() - bufferStartTime >= TRANSITION_BUFFER_MS) {
       // Finished buffering. Finalize the transition to the new state.
-      stableIsLinked = candidateIsLinked;
       buffering = false;
+      printTransition(buffering, stableIsLinked, candidateIsLinked);
+      stableIsLinked = candidateIsLinked;
     } else {
       // Still buffering. Do not change stableIsLinked.
     }
-    printTransition(buffering, stableIsLinked, candidateIsLinked);
   } else {
     buffering = false;
   }
