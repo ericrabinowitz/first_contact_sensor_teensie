@@ -1006,7 +1006,13 @@ bool getStableIsLinked(float l1, float r1) {
   static bool buffering = false;
   bool candidateIsLinked = (l1 > thresh || r1 > thresh);
 
-  if (candidateIsLinked != stableIsLinked) {
+  if (!stableIsLinked && candidateIsLinked ) {
+    // Immediate transition to Linked for quick contact latency.
+    printTransition(buffering, stableIsLinked, candidateIsLinked);
+    stableIsLinked = true;
+    buffering = false;
+  } else if (stableIsLinked && !candidateIsLinked) {
+    // Buffer transition to Unlinked to mitigate flakiness.
     if (!buffering) {
       buffering = true;
       bufferStartTime = millis();
@@ -1020,6 +1026,7 @@ bool getStableIsLinked(float l1, float r1) {
       // Still buffering. Do not change stableIsLinked.
     }
   } else {
+    // If stable and candidate are the same, do nothing and stop buffering.
     buffering = false;
   }
   return stableIsLinked;
