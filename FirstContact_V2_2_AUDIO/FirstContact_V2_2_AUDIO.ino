@@ -167,6 +167,7 @@ const char* contactSongs[] = {
   "Missing Link unSCruz active 9 Flume The Difference.wav",
   "Missing Link unSCruz active 10 Doldinger Bastian.wav",
   "Missing Link unSCruz active 11 Yung Bae Straight Up.wav",
+  "Missing Link unSCruz active 12 Purple Disco All My Life.wav"
 };
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
 
@@ -213,7 +214,6 @@ const int f_3 = 20;
 const int f_4 = 20; 
 
 float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
-//bool isLinked = false;      // Current state of contact. Either true or false
 static unsigned long int contactCount = 0; // Cumulative count of contacts
 
 // GUItool: begin automatically generated code
