@@ -1040,19 +1040,19 @@ bool audioSenseProcessSignal() {
   debugPrintAudioSense(l1, r1);
 
   // Use helper to determine the buffered isLinked state.
-  bool stableIsLinked = getStableIsLinked(l1, r1);
+  bool isLinked = getStableIsLinked(l1, r1);
 
   // Propagate the stable state downstream.
   static bool isInitialized = false;
   static bool wasLinked = false;
-  publishState(isInitialized, wasLinked, stableIsLinked);
-  playMusic(isInitialized, wasLinked, stableIsLinked);
-  printState(isInitialized, wasLinked, stableIsLinked);
-  displayState(isInitialized, wasLinked, stableIsLinked);
+  publishState(isInitialized, wasLinked, isLinked);
+  playMusic(isInitialized, wasLinked, isLinked);
+  printState(isInitialized, wasLinked, isLinked);
+  displayState(isInitialized, wasLinked, isLinked);
 
   isInitialized = true;
-  wasLinked = stableIsLinked;
-  return stableIsLinked;
+  wasLinked = isLinked;
+  return isLinked;
 }
 
 const float row_threshold = 0.2;
