@@ -766,7 +766,7 @@ void displayState(bool isInitialized, bool wasLinked, bool isLinked) {
     return;
   }
 
-  if (!isInitialized || isLinked) {
+  if (isLinked) {
     ++contactCount;
 
     // Clear the buffer
