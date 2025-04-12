@@ -1236,6 +1236,7 @@ void displayActivityStatus(bool isLinked)
 
   if ( !isInitialized ) {
     time = millis();
+    isInitialized = true;
   }
 
   mills = millis();
