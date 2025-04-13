@@ -5,5 +5,9 @@
         "Perc",
         "Remi",
         "WLED"
-    ]
+    ],
+    "files.associations": {
+        "ostream": "cpp",
+        "print": "cpp"
+    }
 }
