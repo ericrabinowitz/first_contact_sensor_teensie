@@ -265,419 +265,7 @@ uint16_t main_period_ms = 150;
 // ------ Audio Contact Defines - End
 // GUItool: end automatically generated code
 
-// ------
-// ------
-// Begin Ethernet Requirements
-#include "defines.h"
-
-#include <QNEthernet.h>
-#include <SD.h>
-#include <SPI.h>
-#include <SerialFlash.h>
-
-// Create a UDP instance
-EthernetUDP udp;
-const unsigned int DNS_PORT = 53;
-
-byte mac[] = {0x92, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
-#if !(USING_DHCP)
-// This is replaced with DHCP informatiom.   Use these as static definitions if standalone
-IPAddress NETWORK_IP(192, 168, 1, 48); //static IP
-IPAddress NETWORK_MASK(255, 255, 255, 0);
-IPAddress NETWORK_GATEWAY(192, 168, 1, 20);
-IPAddress NETWORK_DNS(192, 168, 1, 20);
-IPAddress UDP_LOG_PC_IP(192, 168, 1, 50);
-#endif
-
-IPAddress server(192, 168, 4, 1); // Raspberry PI
-
-char *hostname = 0; // This will be filled in by Reverse DNS
-
-// End  Ethernet Requirements
-// ------
-// Begin Ethernet Setup
-
-#include <QNEthernet.h>
-#include <cstring>
-#include <string>
-
-using namespace qindesign::network;
-
-/*
-stringToCharArray(String str):
-
-
-Explanation and Important Considerations:
-          It takes an Arduino String object as input.
-          It allocates memory dynamically for a char array using new char[str.length() + 1]. The + 1 is crucial to accommodate the null terminator (\0) required by C-style strings.
-          It copies the contents of the String object to the char array using str.toCharArray(charArray, str.length() + 1).
-          It returns a char* pointer to the newly created array.
-          It now handles empty strings by returning a nullptr.
-          It also handles memory allocation failures by returning a nullptr.
-          Memory Management:
-
-          Crucially, you must delete[] charArray; when you're finished with the char array. Failure to do so will result in a memory leak.
-          Set the pointer to nullptr after deleting the memory. This prevents dangling pointer issues.
-          The example code demonstrates proper memory management.
-          printf() Usage:
-
-          The printf() function expects a char* (C-style string) as its %s argument.
-          The stringToCharArray() function converts the Arduino String to the required format.
-          Error Handling:
-
-          The code now includes checks to handle cases where memory allocation fails.
-          It also handles empty strings.
-          Alternative (Using c_str()):
-
-          For read-only use (where you don't need to modify the resulting char array), you can use the String.c_str() method. This returns a const char* that points to the internal buffer of the String object.
-          Important: The c_str() method returns a pointer to internal String data, which may become invalid if the String object is modified or goes out of scope. Therefore, use it immediately or make a copy.
-          Example:
-          C++
-
-          String myString = "Hello, world!";
-          printf("String: %s\n", myString.c_str());
-          Using c_str() is generally preferred when you don't need to modify the string, as it avoids dynamic memory allocation and deallocation.
-          Which method to use:
-
-          Use myString.c_str() when you only need to read the string's value and you are sure the string will remain in scope.
-          Use stringToCharArray() when you need to modify the string or when you need a separate copy of the string that will persist beyond the scope of the original String object. Remember to free the memory.
-
-
-*/
-
-char *stringToCharArray(String str) {
-  if (str.length() == 0) {
-    return nullptr; // Return nullptr for empty strings
-  }
-
-  char *charArray =
-      new char[str.length() + 1]; // Allocate memory for the char array
-  if (charArray == nullptr) {
-    return nullptr; // Handle memory allocation failure
-  }
-
-  str.toCharArray(charArray,
-                  str.length() + 1); // Copy the String to the char array
-  return charArray;
-}
-
-//////////////////////////////
-
-/*
-  DNS Server declaration 
-      CHANGED: Previously hard-coded as:
-      IPAddress dnsServer(192, 168, 4, 1);
-      Now declare without initialization.
-      IPAddress dnsServer;   <-- DNS server will be obtained from DHCP
-
-*/
-IPAddress dnsServer;
-// Buffer for DNS responses.
-byte responseBuffer[512];
-
-// Helper function: Build a DNS PTR query packet for a given reverse name.
-int buildDnsPtrQuery(byte *buffer, int buflen, const String &reverseName) {
-  uint16_t id = random(0, 65535);
-  buffer[0] = (id >> 8) & 0xFF;
-  buffer[1] = id & 0xFF;
-  buffer[2] = 0x01; // Recursion desired
-  buffer[3] = 0x00;
-  buffer[4] = 0x00;
-  buffer[5] = 0x01; // QDCOUNT = 1
-  buffer[6] = buffer[7] = buffer[8] = buffer[9] = buffer[10] = buffer[11] = 0;
-  int pos = 12;
-  int start = 0;
-  while (true) {
-    int dotIndex = reverseName.indexOf('.', start);
-    String label;
-    if (dotIndex == -1) {
-      label = reverseName.substring(start);
-    } else {
-      label = reverseName.substring(start, dotIndex);
-    }
-    int labelLen = label.length();
-    buffer[pos++] = labelLen;
-    for (int i = 0; i < labelLen; i++) {
-      buffer[pos++] = label.charAt(i);
-    }
-    if (dotIndex == -1)
-      break;
-    start = dotIndex + 1;
-  }
-  buffer[pos++] = 0x00; // Terminate QNAME
-  buffer[pos++] = 0x00;
-  buffer[pos++] = 0x0c; // QTYPE: PTR
-  buffer[pos++] = 0x00;
-  buffer[pos++] = 0x01; // QCLASS: IN
-  return pos;
-}
-
-String parsePtrResponse(byte *buffer, int buflen, int queryLength) {
-  String result = "";
-  int offset = queryLength + 12; // Skip header and query
-
-  while (offset < buflen) {
-    if ((buffer[offset] & 0xC0) == 0xC0) { // Check for pointer
-      int pointerOffset = ((buffer[offset] & 0x3F) << 8) | buffer[offset + 1];
-      offset += 2;
-      int tempOffset = pointerOffset;
-      while (tempOffset < buflen) {
-        int length = buffer[tempOffset];
-        if (length == 0) {
-          break;
-        }
-        for (int i = 1; i <= length; i++) {
-          result += (char)buffer[tempOffset + i];
-        }
-        tempOffset += length + 1;
-        if (buffer[tempOffset] != 0) {
-          result += ".";
-        }
-      }
-      break; // PTR record found and parsed
-    } else {
-      int length = buffer[offset];
-      if (length == 0) {
-        break; // End of name
-      }
-      for (int i = 1; i <= length; i++) {
-        result += (char)buffer[offset + i];
-      }
-      offset += length + 1;
-      if (buffer[offset] != 0 && (buffer[offset] & 0xC0) != 0xC0) {
-        result += ".";
-      }
-    }
-  }
-
-  return result;
-}
-
-// Example usage within an Arduino sketch:
-/*
-void setup() {
-  Serial.begin(115200);
-  Ethernet.begin(mac, ip); // Replace mac and ip with your values
-
-  // ... (DNS query and response handling) ...
-
-  // Example buffer (replace with your actual DNS response buffer)
-  byte buffer[] = {
-    0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x07, 0x69, 0x6E, 0x2D, 0x61, 0x64, 0x64, 0x72, 0x04, 0x61, 0x72, 0x70, 0x61, 0x00,
-    0x00, 0x0C, 0x00, 0x01, 0xC0, 0x0C, 0x00, 0x0C, 0x00, 0x01, 0x00, 0x00, 0x0E, 0x10,
-    0x00, 0x04, 0xC0, 0x10
-  };
-
-  int buflen = sizeof(buffer);
-  int queryLength = 23; //Adjust to your query length.
-
-  String ptrName = parsePtrResponse(buffer, buflen, queryLength);
-  Serial.print("PTR Name: ");
-  Serial.println(ptrName);
-}
-
-void loop() {
-  // ...
-}
-*/
-
-// Function to perform a reverse DNS lookup for a given IP address.
-String reverseDnsLookup(IPAddress ip) {
-  String reverseName = String(ip[3]) + "." + String(ip[2]) + "." +
-                       String(ip[1]) + "." + String(ip[0]) + ".in-addr.arpa";
-
-  //Serial.print("Performing reverse lookup for: ");
-  //Serial.println(reverseName);
-  byte queryBuffer[512];
-  int queryLength =
-      buildDnsPtrQuery(queryBuffer, sizeof(queryBuffer), reverseName);
-
-  dnsServer = Ethernet.dnsServerIP();
-
-  //
-  String dnsServerString = String(dnsServer[0]) + "." + String(dnsServer[1]) +
-                           "." + String(dnsServer[2]) + "." +
-                           String(dnsServer[3]);
-
-  //Serial.print("DNS Server:"); Serial.print(dnsServerString); Serial.printf(" Port:%d\n", DNS_PORT);
-  // Use the DNS server obtained from DHCP.
-  udp.beginPacket(dnsServer, DNS_PORT);
-  udp.write(queryBuffer, queryLength);
-  udp.endPacket();
-
-  unsigned long startTime = millis();
-  while (millis() - startTime < 2000) { // 2-second timeout
-    int packetSize = udp.parsePacket();
-    if (packetSize > 0) {
-      int len = udp.read(responseBuffer, sizeof(responseBuffer));
-
-      /*
-      Serial.print("Received response of length: ");
-      Serial.println(len);
-      */
-      String hostname = parsePtrResponse(responseBuffer, len, queryLength);
-      /*
-      Serial.printf ("\(");
-      for ( int n = 0; n < len; ++n)
-        Serial.printf ("%c", responseBuffer[n]);
-      Serial.printf ("\n");
-      Serial.printf ("HOSTNAME(%s)\n", hostname );
-      */
-      return hostname;
-    }
-  }
-  return String("Timeout");
-}
-
-//////////////////////////////
-
-void initEthernet() {
-
-networkErrorRetry: // Entry point if we fail to initialize network
-
-  bool networkError;
-
-  networkError = false;
-
-#if USE_QN_ETHERNET
-  Serial.println(F("=========== USE_QN_ETHERNET ==========="));
-// Alternate TCP/IP stacks will not be supported with my code
-#elif USE_NATIVE_ETHERNET
-#error
-  Serial.println(F("======== USE_NATIVE_ETHERNET ========"));
-#elif USE_ETHERNET_GENERIC
-#error
-  Serial.println(F("======== USE_ETHERNET_GENERIC ========"));
-#else
-#error
-  Serial.println(F("========= NO NETWORK TYPE DEFINED =========="));
-#endif
-
-#if USING_DHCP
-
-  // Start the Ethernet connection, using DHCP
-  Serial.print("Initialize Ethernet using DHCP => ");
-  displayNetworkStatus("DHCP Waiting...");
-
-  Ethernet.begin();
-  // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize:
-  // delay(1000);  XXX 3
-#else
-  // Start the Ethernet connection, using static IP
-  Serial.print("Initialize Ethernet using STATIC IP => ");
-  displayNetworkStatus("Static IP:" F(NETWORK_IP));
-  Ethernet.begin(NETWORK_IP, NETWORK_MASK, NETWORK_GATEWAY, NETWORK_DNS);
-#endif
-
-  if (!Ethernet.waitForLocalIP(5000)) {
-    networkError = true;
-
-    Serial.println("Failed to configure Ethernet");
-    displayNetworkStatus("** Network Failed **");
-
-    if (!Ethernet.linkStatus()) {
-      displayNetworkStatus("CHECK ETHERNET CABLE");
-      Serial.println("Ethernet cable is not connected.");
-      delay(5000);
-    }
-  } else {
-    networkError = false;
-
-    //char text[128];
-    //sprintf (text, "IP:%s", Ethernet.localIP() );
-    //displayNetworkStatus ( Ethernet.localIP().printTo() );
-
-    IPAddress ipAddress =
-        Ethernet.localIP(); // Assuming Ethernet.localIP() returns an IP address
-
-    // Convert IP address to char* (C-string)
-    char
-        ipString[128]; // Enough space for an IPv4 address in dot-decimal format
-
-    sprintf(ipString, "IP:%d.%d.%d.%d", ipAddress[0], ipAddress[1],
-            ipAddress[2], ipAddress[3]);
-
-    displayNetworkStatus(ipString);
-
-    Serial.print("IP Address = ");
-    Serial.println(Ethernet.localIP());
-  }
-
-  if (networkError == true)
-    goto networkErrorRetry;
-
-  // DNS Port
-  // Start UDP on a specific local port (use any free port, here 12345)
-  Serial.println(F("======== Begin UDP ============"));
-
-  udp.begin(12345);
-
-  Serial.println(F("======== Reverse DNS Lookup ============"));
-
-  String Hostname = reverseDnsLookup(Ethernet.localIP());
-
-  Serial.printf("Hostname:");
-  Serial.print(Hostname);
-
-  //Serial.println( reverseDnsLookup(Ethernet.localIP()));
-
-  hostname = stringToCharArray(Hostname);
-
-  displayHostname(hostname);
-
-  /* The data was allocated, but we will not delete it since we may need to print again */
-  /* Remove this commment to delete the allocated string *
-  delete[] hostname;
-  */
-}
-// End Ethernet Setup
-
-#include <PubSubClient.h>
-/*
-   mqttSubCallback() - Receive MQTT Messages from MQTT Broker (Raspbery Pi)
-
-*/
-void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
-  Serial.print("\nmqttSubCallback() Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (unsigned int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-}
-
-// MQTTT
-EthernetClient ethClient;
-PubSubClient client(ethClient);
-
-void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect("ArduinoClient")) {
-      Serial.println("connected");
-      // Once connected, publish an announcement...
-      //client.publish("wled/dee","hello world");
-
-      Serial.println("Sending ON");
-      client.publish("wled/all/api",
-                     "{\"on\": true, \"bri\": 255, \"seg\": [{\"col\": [255, "
-                     "0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, "
-                     "{\"col\": [0, 0, 255], \"fx\": 70}]}");
-      // ... and resubscribe
-      client.subscribe("wled/all/api");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
+#include "Networking.h"
 
 void displayTimeCount() {
   static bool isInitialized = false;
@@ -888,8 +476,8 @@ void audioSenseSetup() {
   left_f_3.frequency(f_3,  sample_time_ms*f_3/1000);
   left_f_4.frequency(f_4,  sample_time_ms*f_4/1000);
   */
-  right_f_1.frequency(f_1, sample_time_ms * f_1 /
-                               1000); // assuming the calcs get optomized out
+  // Assuming the calcs get optimized out.
+  right_f_1.frequency(f_1, sample_time_ms * f_1 / 1000);
   /*
   right_f_2.frequency(f_2, sample_time_ms*f_2/1000);
   right_f_3.frequency(f_3, sample_time_ms*f_3/1000);
@@ -1284,7 +872,7 @@ void displaySplashScreen(void) {
   //display.setTextSize(2);             // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
   display.print(F("IP:"));
-  display.print(Ethernet.localIP());
+  display.print(getLocalIp());
 
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
@@ -1329,44 +917,45 @@ void displaySetup() {
 }
 
 void setup() {
-
+  // Display Setup
   displaySetup();
 
   Serial.printf("_______FIRST CONTACT_______ ");
   Serial.printf("%s %sd \n", __DATE__, __TIME__);
 
-  Serial.printf("_______Init Ethernet_______\n");
   // TCP/IP Setup
+  Serial.printf("_______Init Ethernet_______\n");
   initEthernet();
 
   // MQTT Setup
   Serial.printf("_______Init MQTT Publisher_______\n");
-  client.setServer(server, 1883);
-  client.setCallback(mqttSubCallback);
+  initMqtt();
 
   // Allow the hardware to sort itself out
   // delay(1500); XXX
 
   Serial.printf("_______Audio Memory Init________\n");
-  AudioMemory(
-      22); // NOTE this number is simply a guess.   Working: 12 for Sens, 8 for Wav Player + margin
+  // NOTE this number is simply a guess.
+  // Working: 12 for Sens, 8 for Wav Player + margin.
+  AudioMemory(22);
 
+  // Audio Sense Setup
   Serial.printf("_______Audio Sense Init________\n");
   audioSenseSetup();
 
+  // Audio Music Setup
   Serial.printf("_______Audio Music Init________\n");
   audioMusicSetup();
 }
 
 void loop() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
+  // Make sure we're connected to MQTT broker.
+  mqttLoop();
 
+  // Sense contact and update the state.
   bool isLinked = audioSenseLoop();
 
-  // During Idle Time, animate something to show we are alive
+  // During Idle Time, animate something to show we are alive.
   displayActivityStatus(isLinked);
 
   displayTimeCount();
