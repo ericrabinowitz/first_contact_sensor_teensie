@@ -68,51 +68,9 @@ Libraries:
           Using library SerialFlash at version 0.5 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SerialFlash 
 */
 
-#include <SPI.h>
-#include <Wire.h>
-
-#include "AudioSense.h" // moved sensing and audio code
-#include "Display.h"    // Added new Display module
+#include "AudioSense.h"
+#include "Display.h"
 #include "Networking.h"
-
-unsigned long int contactCount = 0; // Cumulative count of contacts
-
-/*
-  publishState() - Publish via MQTT if we are on(Connected) or off
-      - This routine is called at high-speed in our main loop
-      - It only publishes changes to state
-*/
-void publishState(bool isInitialized, bool wasLinked, bool isLinked) {
-  static bool publishSucceeded = false;
-
-  if (publishSucceeded && isInitialized && wasLinked == isLinked) {
-    // No change in state to report.
-    return;
-  }
-
-  if (isLinked)
-    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\": \
-      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
-        {\"col\": [0, 255, 255],   \"fx\": 36},   \
-        {\"col\": [128, 128, 255], \"fx\": 36}]   \
-        }");
-  else
-    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\":  \
-      [{\"col\": [255, 0, 0], \"fx\": 42},    \
-        {\"col\": [0, 255, 0], \"fx\": 42},    \
-        {\"col\": [0, 0, 255], \"fx\": 42}]    \
-        }"
-
-#if 0
-        "wled/all/api",
-        "{\"on\": false, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 0}, {\"col\": [0, 255, 0], \"fx\": 00}, {\"col\": [0, 0, 255], \"fx\": 00}]}"
-#endif
-    );
-}
 
 void setup() {
   // Display Setup

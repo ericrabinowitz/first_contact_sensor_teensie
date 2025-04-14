@@ -3,6 +3,11 @@
 // Create the OLED display object using Wire2 (as in original code).
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
 
+// Cumulative count of contacts.
+// NOTE: Briefly un-linking and re-contacting has different behavior under the
+// hood, though still counts as a new contact for this counter.
+unsigned long int contactCount = 0;
+
 void displayTimeCount() {
   static bool isInitialized = false;
 
