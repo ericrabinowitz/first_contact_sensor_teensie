@@ -53,13 +53,13 @@ Boards Support:
             Installer For IDE: https://www.pjrc.com/teensy/package_teensy_index.json
             NOTE: I think this also installs the Audio library
 Libraries:
-        - These need to be installed via library manager.
+        - These need to be installed via library manager:
           Using library Adafruit GFX Library at version 1.12.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_GFX_Library
           Using library Adafruit BusIO at version 1.17.0 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_BusIO
           Using library Adafruit SSD1306 at version 2.5.13 in folder: /Users/eric/work/FirstContact/libraries/Adafruit_SSD1306
           Using library QNEthernet at version 0.31.0 in folder: /Users/eric/work/FirstContact/libraries/QNEthernet
           Using library PubSubClient at version 2.8 in folder: /Users/eric/work/FirstContact/libraries/PubSubClient
-        - These should already be installed alongsuide teensyduino. Do not install these libraries.
+        - These should already be installed alongsuide teensyduino. Do not install these libraries:
           Using library SPI at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SPI 
           Using library Wire at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Wire 
           Using library Audio at version 1.3 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Audio 
@@ -75,38 +75,36 @@ Libraries:
 
 //
 // OLED DISPLAY
-#include <SPI.h>
-#include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <SPI.h>
+#include <Wire.h>
 
 #define DISPLAY_ENABLED 1
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-// The pins for I2C are defined by the Wire-library. 
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+// The pins for I2C are defined by the Wire-library.
+#define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 //#define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-#define SCREEN_ADDRESS 0xBC // NOTE: This value is not documented well and totally confusing when looking at the pcb silkcreen
+#define SCREEN_ADDRESS                                                         \
+  0xBC // NOTE: This value is not documented well and totally confusing when looking at the pcb silkcreen
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
 // OLED DISPLAY
 //
 
-
-
 // ------ Audio Includes - Start
 #include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <SD.h>
+#include <SPI.h>
 #include <SerialFlash.h>
+#include <Wire.h>
 // ------ Audio Includes - End
-
 
 /* I Added these files to the MicroSd Card */
 
-char file[][40] {
+char file[][40]{
     "Formant Squish2.wav",
     "fire.wav",
     "venus.wav",
@@ -143,7 +141,6 @@ char file[][40] {
 };
 #define MAX_FILES 31
 
-
 // Audio Files used for Contact and Idle States
 //
 #ifdef TEST_CONNECTION_ENABLE
@@ -155,34 +152,32 @@ char file[][40] {
 #endif
 
 // Contact songs array.
-const char* contactSongs[] = {
-  "Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav",
-  "Missing Link unSCruz active 2 MarchForth Gospel A.wav",
-  "Missing Link unSCruz active 3 Saint Motel My Type A.wav",
-  "Missing Link unSCruz active 4 Seth Lakeman Lady of the Sea 2.wav",
-  "Missing Link unSCruz active 5 Jacques Greene Another Girl.wav",
-  "Missing Link unSCruz active 6 Chrome Sparks Goddess.wav",
-  "Missing Link unSCruz active 7 Jet Are You Gonna Be.wav",
-  "Missing Link unSCruz active 8 M83 Midnight City Prydz.wav",
-  "Missing Link unSCruz active 9 Flume The Difference.wav",
-  "Missing Link unSCruz active 10 Doldinger Bastian.wav",
-  "Missing Link unSCruz active 11 Yung Bae Straight Up.wav",
-  "Missing Link unSCruz active 12 Purple Disco All My Life.wav"
-};
+const char *contactSongs[] = {
+    "Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav",
+    "Missing Link unSCruz active 2 MarchForth Gospel A.wav",
+    "Missing Link unSCruz active 3 Saint Motel My Type A.wav",
+    "Missing Link unSCruz active 4 Seth Lakeman Lady of the Sea 2.wav",
+    "Missing Link unSCruz active 5 Jacques Greene Another Girl.wav",
+    "Missing Link unSCruz active 6 Chrome Sparks Goddess.wav",
+    "Missing Link unSCruz active 7 Jet Are You Gonna Be.wav",
+    "Missing Link unSCruz active 8 M83 Midnight City Prydz.wav",
+    "Missing Link unSCruz active 9 Flume The Difference.wav",
+    "Missing Link unSCruz active 10 Doldinger Bastian.wav",
+    "Missing Link unSCruz active 11 Yung Bae Straight Up.wav",
+    "Missing Link unSCruz active 12 Purple Disco All My Life.wav"};
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
 
 // Current song index
 unsigned int currentSongIndex = 0;
-
 
 // Audio Playa Date End
 
 // ------ Audio SD Card Start
 //
 // Use these with the Teensy 3.5 & 3.6 & 4.1 SD card
-#define SDCARD_CS_PIN    BUILTIN_SDCARD
-#define SDCARD_MOSI_PIN  11  // not actually used
-#define SDCARD_SCK_PIN   13  // not actually used
+#define SDCARD_CS_PIN BUILTIN_SDCARD
+#define SDCARD_MOSI_PIN 11 // not actually used
+#define SDCARD_SCK_PIN 13  // not actually used
 
 // Music player states
 typedef enum {
@@ -194,32 +189,30 @@ typedef enum {
   MUSIC_STATE_FINISHED        // A song has finished playing.
 } MusicState;
 
-void playMusic (unsigned int state);
+void playMusic(unsigned int state);
 //
 // ------ Audio SD Card End
-
-
 
 // ------ Audio Contact Defines - Start
 #define LED1_PIN 3
 #define LED2_PIN 4
 #define LED3_PIN 5
 
-
-// 
+//
 // Frequencies to Transmit and listen for through hands (f_1 and f_2 are the tx frequencies)
-const int f_1 = 20; 
-const int f_2 = 20; 
-const int f_3 = 20; 
-const int f_4 = 20; 
+const int f_1 = 20;
+const int f_2 = 20;
+const int f_3 = 20;
+const int f_4 = 20;
 
-float thresh = 0.01;      // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
+float thresh =
+    0.01; // This is the tone dection sensitivity.  Currently dset for maximum sensitivity.  Edit with caution and experimentation.
 static unsigned long int contactCount = 0; // Cumulative count of contacts
 
 // GUItool: begin automatically generated code
 //AudioSynthWaveformSine   sine2;          //xy=190.99998474121094,122.99998474121094
-AudioInputI2S            audioIn;        //xy=192.99998474121094,369
-AudioSynthWaveformSine   sine1;          //xy=207.99998474121094,60.99998474121094
+AudioInputI2S audioIn;        //xy=192.99998474121094,369
+AudioSynthWaveformSine sine1; //xy=207.99998474121094,60.99998474121094
 
 /*
 AudioAnalyzeToneDetect   right_f_4; //xy=466.20001220703125,575.2000122070312
@@ -230,29 +223,28 @@ AudioAnalyzeToneDetect   left_f_4;           //xy=474,384
 AudioAnalyzeToneDetect   left_f_3;           //xy=475,348
 AudioAnalyzeToneDetect   left_f_2;           //xy=477,313
 */
-AudioAnalyzeToneDetect   right_f_1;        //xy=472,464
-AudioAnalyzeToneDetect   left_f_1;           //xy=483,276
-AudioOutputI2S           audioOut;       //xy=711,92.99998474121094
-AudioMixer4              mixerRight;
-AudioMixer4              mixerLeft;
+AudioAnalyzeToneDetect right_f_1; //xy=472,464
+AudioAnalyzeToneDetect left_f_1;  //xy=483,276
+AudioOutputI2S audioOut;          //xy=711,92.99998474121094
+AudioMixer4 mixerRight;
+AudioMixer4 mixerLeft;
 
-AudioConnection          patchCordM1L(sine1, 0, mixerLeft, 0);
+AudioConnection patchCordM1L(sine1, 0, mixerLeft, 0);
 //AudioConnection          patchCordM1R(sine1, 0, mixerRight, 0);
-
 
 //AudioConnection          patchCordM2L(sine2, 0, mixerLeft, 1);
 //AudioConnection          patchCordM2R(sine2, 0, mixerRight, 1);
 
 //
 // Audio Player
-AudioPlaySdWav           playSdWav1;
-AudioConnection          patchCord11(playSdWav1, 0, mixerLeft, 2);
-AudioConnection          patchCord12(playSdWav1, 1, mixerRight, 2);
+AudioPlaySdWav playSdWav1;
+AudioConnection patchCord11(playSdWav1, 0, mixerLeft, 2);
+AudioConnection patchCord12(playSdWav1, 1, mixerRight, 2);
 // Audio Player
 //
 
-AudioConnection          patchCord2(audioIn, 0, left_f_1, 0);
-AudioConnection          patchCord6(audioIn, 1, right_f_1, 0);
+AudioConnection patchCord2(audioIn, 0, left_f_1, 0);
+AudioConnection patchCord6(audioIn, 1, right_f_1, 0);
 /*
 AudioConnection          patchCord3(audioIn, 0, left_f_2, 0);
 AudioConnection          patchCord4(audioIn, 0, left_f_3, 0);
@@ -263,56 +255,51 @@ AudioConnection          patchCord8(audioIn, 1, right_f_3, 0);
 AudioConnection          patchCord9(audioIn, 1, right_f_4, 0);
 */
 
+AudioConnection patchCordMOL(mixerLeft, 0, audioOut, 0);
+AudioConnection patchCordMOR(mixerRight, 0, audioOut, 1);
 
-AudioConnection          patchCordMOL(mixerLeft, 0, audioOut, 0);
-AudioConnection          patchCordMOR(mixerRight, 0, audioOut, 1);
-
-AudioControlSGTL5000     audioShield;    //xy=709,177.99998474121094
+AudioControlSGTL5000 audioShield; //xy=709,177.99998474121094
 
 elapsedMillis since_main = 0;
-uint16_t main_period_ms = 150; 
+uint16_t main_period_ms = 150;
 // ------ Audio Contact Defines - End
 // GUItool: end automatically generated code
-
 
 // ------
 // ------
 // Begin Ethernet Requirements
-#include "defines.h" 
+#include "defines.h"
 
-#include <SPI.h>
-#include <SerialFlash.h>  
-#include <SD.h> 
 #include <QNEthernet.h>
+#include <SD.h>
+#include <SPI.h>
+#include <SerialFlash.h>
 
 // Create a UDP instance
 EthernetUDP udp;
 const unsigned int DNS_PORT = 53;
 
-
-byte mac[] = {  0x92, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-#if !(USING_DHCP) 
-// This is replaced with DHCP informatiom.   Use these as static definitions if standalone 
-IPAddress NETWORK_IP      (192,168,1,48); //static IP
-IPAddress NETWORK_MASK    (255,255,255,0);
-IPAddress NETWORK_GATEWAY (192,168,1,20);
-IPAddress NETWORK_DNS     (192,168,1,20);
-IPAddress UDP_LOG_PC_IP   (192,168,1,50);
+byte mac[] = {0x92, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+#if !(USING_DHCP)
+// This is replaced with DHCP informatiom.   Use these as static definitions if standalone
+IPAddress NETWORK_IP(192, 168, 1, 48); //static IP
+IPAddress NETWORK_MASK(255, 255, 255, 0);
+IPAddress NETWORK_GATEWAY(192, 168, 1, 20);
+IPAddress NETWORK_DNS(192, 168, 1, 20);
+IPAddress UDP_LOG_PC_IP(192, 168, 1, 50);
 #endif
 
-IPAddress server          (192,168,4,1); // Raspberry PI
+IPAddress server(192, 168, 4, 1); // Raspberry PI
 
-char * hostname = 0; // This will be filled in by Reverse DNS
+char *hostname = 0; // This will be filled in by Reverse DNS
 
 // End  Ethernet Requirements
 // ------
 // Begin Ethernet Setup
 
-
 #include <QNEthernet.h>
-#include <string>
 #include <cstring>
-
+#include <string>
 
 using namespace qindesign::network;
 
@@ -358,22 +345,21 @@ Explanation and Important Considerations:
 
 */
 
-char* stringToCharArray(String str) {
+char *stringToCharArray(String str) {
   if (str.length() == 0) {
     return nullptr; // Return nullptr for empty strings
   }
 
-  char* charArray = new char[str.length() + 1]; // Allocate memory for the char array
+  char *charArray =
+      new char[str.length() + 1]; // Allocate memory for the char array
   if (charArray == nullptr) {
     return nullptr; // Handle memory allocation failure
   }
 
-  str.toCharArray(charArray, str.length() + 1); // Copy the String to the char array
+  str.toCharArray(charArray,
+                  str.length() + 1); // Copy the String to the char array
   return charArray;
 }
-
-
-
 
 //////////////////////////////
 
@@ -390,13 +376,14 @@ IPAddress dnsServer;
 byte responseBuffer[512];
 
 // Helper function: Build a DNS PTR query packet for a given reverse name.
-int buildDnsPtrQuery(byte* buffer, int buflen, const String &reverseName) {
+int buildDnsPtrQuery(byte *buffer, int buflen, const String &reverseName) {
   uint16_t id = random(0, 65535);
   buffer[0] = (id >> 8) & 0xFF;
   buffer[1] = id & 0xFF;
   buffer[2] = 0x01; // Recursion desired
   buffer[3] = 0x00;
-  buffer[4] = 0x00; buffer[5] = 0x01; // QDCOUNT = 1
+  buffer[4] = 0x00;
+  buffer[5] = 0x01; // QDCOUNT = 1
   buffer[6] = buffer[7] = buffer[8] = buffer[9] = buffer[10] = buffer[11] = 0;
   int pos = 12;
   int start = 0;
@@ -413,17 +400,19 @@ int buildDnsPtrQuery(byte* buffer, int buflen, const String &reverseName) {
     for (int i = 0; i < labelLen; i++) {
       buffer[pos++] = label.charAt(i);
     }
-    if (dotIndex == -1) break;
+    if (dotIndex == -1)
+      break;
     start = dotIndex + 1;
   }
   buffer[pos++] = 0x00; // Terminate QNAME
-  buffer[pos++] = 0x00; buffer[pos++] = 0x0c; // QTYPE: PTR
-  buffer[pos++] = 0x00; buffer[pos++] = 0x01; // QCLASS: IN
+  buffer[pos++] = 0x00;
+  buffer[pos++] = 0x0c; // QTYPE: PTR
+  buffer[pos++] = 0x00;
+  buffer[pos++] = 0x01; // QCLASS: IN
   return pos;
 }
 
-
-String parsePtrResponse(byte* buffer, int buflen, int queryLength) {
+String parsePtrResponse(byte *buffer, int buflen, int queryLength) {
   String result = "";
   int offset = queryLength + 12; // Skip header and query
 
@@ -455,7 +444,7 @@ String parsePtrResponse(byte* buffer, int buflen, int queryLength) {
         result += (char)buffer[offset + i];
       }
       offset += length + 1;
-      if (buffer[offset] != 0 && (buffer[offset] & 0xC0) != 0xC0 ) {
+      if (buffer[offset] != 0 && (buffer[offset] & 0xC0) != 0xC0) {
         result += ".";
       }
     }
@@ -496,26 +485,27 @@ void loop() {
 // Function to perform a reverse DNS lookup for a given IP address.
 String reverseDnsLookup(IPAddress ip) {
   String reverseName = String(ip[3]) + "." + String(ip[2]) + "." +
-                      String(ip[1]) + "." + String(ip[0]) + ".in-addr.arpa";
-                      
+                       String(ip[1]) + "." + String(ip[0]) + ".in-addr.arpa";
+
   //Serial.print("Performing reverse lookup for: ");
   //Serial.println(reverseName);
   byte queryBuffer[512];
-  int queryLength = buildDnsPtrQuery(queryBuffer, sizeof(queryBuffer), reverseName);
-  
+  int queryLength =
+      buildDnsPtrQuery(queryBuffer, sizeof(queryBuffer), reverseName);
 
   dnsServer = Ethernet.dnsServerIP();
 
   //
-  String dnsServerString = String(dnsServer[0]) + "." + String(dnsServer[1]) + "." +
-                      String(dnsServer[2]) + "." + String(dnsServer[3]);
+  String dnsServerString = String(dnsServer[0]) + "." + String(dnsServer[1]) +
+                           "." + String(dnsServer[2]) + "." +
+                           String(dnsServer[3]);
 
   //Serial.print("DNS Server:"); Serial.print(dnsServerString); Serial.printf(" Port:%d\n", DNS_PORT);
   // Use the DNS server obtained from DHCP.
   udp.beginPacket(dnsServer, DNS_PORT);
   udp.write(queryBuffer, queryLength);
   udp.endPacket();
-  
+
   unsigned long startTime = millis();
   while (millis() - startTime < 2000) { // 2-second timeout
     int packetSize = udp.parsePacket();
@@ -542,89 +532,82 @@ String reverseDnsLookup(IPAddress ip) {
 
 //////////////////////////////
 
+void initEthernet() {
 
- void initEthernet() 
- { 
+networkErrorRetry: // Entry point if we fail to initialize network
 
-  networkErrorRetry: // Entry point if we fail to initialize network
+  bool networkError;
 
-   bool networkError;
-   
-   networkError = false;
+  networkError = false;
 
- #if USE_QN_ETHERNET 
-   Serial.println(F("=========== USE_QN_ETHERNET ===========")); 
- // Alternate TCP/IP stacks will not be supported with my code
- #elif USE_NATIVE_ETHERNET 
-  #error
-   Serial.println(F("======== USE_NATIVE_ETHERNET ========")); 
- #elif USE_ETHERNET_GENERIC 
-   #error
-   Serial.println(F("======== USE_ETHERNET_GENERIC ========")); 
-#else 
-  #error
-    Serial.println(F("========= NO NETWORK TYPE DEFINED ==========")); 
-#endif 
+#if USE_QN_ETHERNET
+  Serial.println(F("=========== USE_QN_ETHERNET ==========="));
+// Alternate TCP/IP stacks will not be supported with my code
+#elif USE_NATIVE_ETHERNET
+#error
+  Serial.println(F("======== USE_NATIVE_ETHERNET ========"));
+#elif USE_ETHERNET_GENERIC
+#error
+  Serial.println(F("======== USE_ETHERNET_GENERIC ========"));
+#else
+#error
+  Serial.println(F("========= NO NETWORK TYPE DEFINED =========="));
+#endif
 
+#if USING_DHCP
 
+  // Start the Ethernet connection, using DHCP
+  Serial.print("Initialize Ethernet using DHCP => ");
+  displayNetworkStatus("DHCP Waiting...");
 
+  Ethernet.begin();
+  // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize:
+  // delay(1000);  XXX 3
+#else
+  // Start the Ethernet connection, using static IP
+  Serial.print("Initialize Ethernet using STATIC IP => ");
+  displayNetworkStatus("Static IP:" F(NETWORK_IP));
+  Ethernet.begin(NETWORK_IP, NETWORK_MASK, NETWORK_GATEWAY, NETWORK_DNS);
+#endif
 
- #if USING_DHCP 
+  if (!Ethernet.waitForLocalIP(5000)) {
+    networkError = true;
 
-   // Start the Ethernet connection, using DHCP 
-   Serial.print("Initialize Ethernet using DHCP => "); 
-   displayNetworkStatus( "DHCP Waiting...");
+    Serial.println("Failed to configure Ethernet");
+    displayNetworkStatus("** Network Failed **");
 
-   Ethernet.begin(); 
-   // give the Ethernet shield minimum 1 sec for DHCP and 2 secs for staticP to initialize: 
-   // delay(1000);  XXX 3 
- #else 
-   // Start the Ethernet connection, using static IP 
-   Serial.print("Initialize Ethernet using STATIC IP => "); 
-   displayNetworkStatus( "Static IP:" F(NETWORK_IP));
-   Ethernet.begin(NETWORK_IP, NETWORK_MASK, NETWORK_GATEWAY, NETWORK_DNS);  
- #endif 
-  
-   if (!Ethernet.waitForLocalIP(5000)) 
-   { 
-     networkError = true;
+    if (!Ethernet.linkStatus()) {
+      displayNetworkStatus("CHECK ETHERNET CABLE");
+      Serial.println("Ethernet cable is not connected.");
+      delay(5000);
+    }
+  } else {
+    networkError = false;
 
-     Serial.println("Failed to configure Ethernet"); 
-     displayNetworkStatus( "** Network Failed **");
-  
-     if (!Ethernet.linkStatus()) 
-     { 
-       displayNetworkStatus( "CHECK ETHERNET CABLE" );
-       Serial.println("Ethernet cable is not connected."); 
-       delay(5000);
-     } 
-   } 
-   else 
-   { 
-      networkError = false;
+    //char text[128];
+    //sprintf (text, "IP:%s", Ethernet.localIP() );
+    //displayNetworkStatus ( Ethernet.localIP().printTo() );
 
-      //char text[128];
-      //sprintf (text, "IP:%s", Ethernet.localIP() );
-      //displayNetworkStatus ( Ethernet.localIP().printTo() );
+    IPAddress ipAddress =
+        Ethernet.localIP(); // Assuming Ethernet.localIP() returns an IP address
 
-      IPAddress ipAddress = Ethernet.localIP(); // Assuming Ethernet.localIP() returns an IP address
+    // Convert IP address to char* (C-string)
+    char
+        ipString[128]; // Enough space for an IPv4 address in dot-decimal format
 
-      // Convert IP address to char* (C-string)
-      char ipString[128];  // Enough space for an IPv4 address in dot-decimal format
+    sprintf(ipString, "IP:%d.%d.%d.%d", ipAddress[0], ipAddress[1],
+            ipAddress[2], ipAddress[3]);
 
-      sprintf(ipString, "IP:%d.%d.%d.%d", ipAddress[0], ipAddress[1], ipAddress[2], ipAddress[3]);
+    displayNetworkStatus(ipString);
 
-      displayNetworkStatus(ipString);
-
-      Serial.print("IP Address = "); 
-      Serial.println(Ethernet.localIP()); 
-
-    } 
+    Serial.print("IP Address = ");
+    Serial.println(Ethernet.localIP());
+  }
 
   if (networkError == true)
     goto networkErrorRetry;
 
-// DNS Port 
+  // DNS Port
   // Start UDP on a specific local port (use any free port, here 12345)
   Serial.println(F("======== Begin UDP ============"));
 
@@ -632,25 +615,22 @@ String reverseDnsLookup(IPAddress ip) {
 
   Serial.println(F("======== Reverse DNS Lookup ============"));
 
-  
-
   String Hostname = reverseDnsLookup(Ethernet.localIP());
 
-  Serial.printf ("Hostname:");
-  Serial.print (Hostname);
+  Serial.printf("Hostname:");
+  Serial.print(Hostname);
 
   //Serial.println( reverseDnsLookup(Ethernet.localIP()));
 
   hostname = stringToCharArray(Hostname);
 
-  displayHostname ( hostname);
+  displayHostname(hostname);
 
   /* The data was allocated, but we will not delete it since we may need to print again */
   /* Remove this commment to delete the allocated string *
   delete[] hostname;
   */
-
- } 
+}
 // End Ethernet Setup
 
 #include <PubSubClient.h>
@@ -658,17 +638,17 @@ String reverseDnsLookup(IPAddress ip) {
    mqttSubCallback() - Receive MQTT Messages from MQTT Broker (Raspbery Pi)
 
 */
-void mqttSubCallback(char* topic, byte* payload, unsigned int length) {
+void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
   Serial.print("\nmqttSubCallback() Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  for (unsigned int i=0;i<length;i++) {
+  for (unsigned int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
 }
 
-// MQTTT 
+// MQTTT
 EthernetClient ethClient;
 PubSubClient client(ethClient);
 
@@ -682,13 +662,12 @@ void reconnect() {
       // Once connected, publish an announcement...
       //client.publish("wled/dee","hello world");
 
-
       Serial.println("Sending ON");
-      client.publish(
-        "wled/all/api",
-        "{\"on\": true, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, {\"col\": [0, 0, 255], \"fx\": 70}]}"
-      );
-        // ... and resubscribe
+      client.publish("wled/all/api",
+                     "{\"on\": true, \"bri\": 255, \"seg\": [{\"col\": [255, "
+                     "0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, "
+                     "{\"col\": [0, 0, 255], \"fx\": 70}]}");
+      // ... and resubscribe
       client.subscribe("wled/all/api");
     } else {
       Serial.print("failed, rc=");
@@ -703,9 +682,8 @@ void reconnect() {
 void displayTimeCount() {
   static bool isInitialized = false;
 
-  #define STRING_BUFFER_LEN 128
+#define STRING_BUFFER_LEN 128
   char str[STRING_BUFFER_LEN];
-
 
   long unsigned int startTimeMills = 0;
   long unsigned int secondsLapse = 0;
@@ -716,43 +694,39 @@ void displayTimeCount() {
 
   // Initialize buffer;
 
-  for ( count = 0; count< STRING_BUFFER_LEN; ++count)
+  for (count = 0; count < STRING_BUFFER_LEN; ++count)
     str[count] = 0;
 
-  if ( !isInitialized ) {
-      startTimeMills = millis();
-      isInitialized = true;
-      return;
+  if (!isInitialized) {
+    startTimeMills = millis();
+    isInitialized = true;
+    return;
   }
 
   mills = millis();
 
-  millsLapse =  mills - startTimeMills;
+  millsLapse = mills - startTimeMills;
 
   // Only update every 1/4 second
-  if ( millsLapse % 100 )
+  if (millsLapse % 100)
     return;
-  
 
   secondsLapse = millsLapse / 1000;
 
   //display.clearDisplay();
-  display.fillRect(0, 54, 128, 10, SSD1306_BLACK); 
+  display.fillRect(0, 54, 128, 10, SSD1306_BLACK);
   //display.display();
 
-  display.setTextColor(SSD1306_WHITE);        // Draw white text
-  display.setTextSize(1); 
-  display.setCursor(0,55);
-  sprintf (str, "%07u    %02u:%02u:%02u", contactCount, \
-        secondsLapse / 3600,
-       (secondsLapse % 3600) / 60,
-       (secondsLapse % 3600) % 60);
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setTextSize(1);
+  display.setCursor(0, 55);
+  sprintf(str, "%07u    %02u:%02u:%02u", contactCount, secondsLapse / 3600,
+          (secondsLapse % 3600) / 60, (secondsLapse % 3600) % 60);
 
-  display.printf (str);
+  display.printf(str);
 
   display.display();
 }
-
 
 /*
   displayState() - Print the contact state to OLED display
@@ -771,13 +745,13 @@ void displayState(bool isInitialized, bool wasLinked, bool isLinked) {
 
     // Clear the buffer
     //display.clearDisplay();
-    display.fillRect(0, 30, 128, 10, SSD1306_BLACK);  
-    display.setTextSize(3);             // Normal 1:1 pixel scale
-    display.setTextColor(SSD1306_WHITE);        // Draw white text
-    display.setCursor(0,30);            
+    display.fillRect(0, 30, 128, 10, SSD1306_BLACK);
+    display.setTextSize(3);              // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE); // Draw white text
+    display.setCursor(0, 30);
 
-    sprintf (str, "%07u", contactCount);
-    display.printf (str);
+    sprintf(str, "%07u", contactCount);
+    display.printf(str);
     display.display();
   } else {
     //display.clearDisplay();
@@ -797,21 +771,20 @@ void printState(bool isInitialized, bool wasLinked, bool isLinked) {
   }
 
   if (isLinked) {
-    Serial.print ("CONTACT\n");
+    Serial.print("CONTACT\n");
   } else {
-    Serial.print ("--OFF---\n");
+    Serial.print("--OFF---\n");
   }
-
 
   //uncomment these lines to see how much CPU time
   //the tone detectors and audio library are using
 
-    Serial.print("CPU=");
-    Serial.print(AudioProcessorUsage());
-    Serial.print("%, max=");
-    Serial.print(AudioProcessorUsageMax());
-    Serial.print("%   ");
-    Serial.print("\n");
+  Serial.print("CPU=");
+  Serial.print(AudioProcessorUsage());
+  Serial.print("%, max=");
+  Serial.print(AudioProcessorUsageMax());
+  Serial.print("%   ");
+  Serial.print("\n");
 }
 
 /*
@@ -826,34 +799,29 @@ void publishState(bool isInitialized, bool wasLinked, bool isLinked) {
     // No change in state to report.
     return;
   }
-  
+
   if (isLinked)
-    publishSucceeded = client.publish(
-        "wled/all/api",
-      "{\"on\": true, \
+    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
         \"bri\": 255, \
         \"seg\": \
       [{\"col\": [255, 255, 0],   \"fx\": 36},  \
         {\"col\": [0, 255, 255],   \"fx\": 36},   \
         {\"col\": [128, 128, 255], \"fx\": 36}]   \
-        }" 
-    );
+        }");
   else
-    publishSucceeded = client.publish(
-        "wled/all/api",
-        "{\"on\": true, \
+    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
         \"bri\": 255, \
         \"seg\":  \
       [{\"col\": [255, 0, 0], \"fx\": 42},    \
         {\"col\": [0, 255, 0], \"fx\": 42},    \
         {\"col\": [0, 0, 255], \"fx\": 42}]    \
-        }" 
+        }"
 
 #if 0
         "wled/all/api",
         "{\"on\": false, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 0}, {\"col\": [0, 255, 0], \"fx\": 00}, {\"col\": [0, 0, 255], \"fx\": 00}]}"
 #endif
-      );
+    );
 }
 
 // Audio
@@ -893,11 +861,9 @@ MusicState getMusicState(unsigned int init) {
   if (!playSdWav1.isPlaying()) {
     return MUSIC_STATE_FINISHED;
   }
-  
+
   return MUSIC_STATE_PLAYING;
 }
-
-
 
 // Contact Sense Start
 //
@@ -910,19 +876,20 @@ void audioSenseSetup() {
   audioShield.enable();
   audioShield.volume(PLAYING_AUDIO_VOLUME);
 
-    // Configure the tone detectors with the frequency and number
+  // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
   // times of approx 30 ms.  Longer times are more precise.
-  
-  const int sample_time_ms = main_period_ms/2;
 
-  left_f_1.frequency(f_1,  sample_time_ms*f_1/1000);  //(1209, 36);
+  const int sample_time_ms = main_period_ms / 2;
+
+  left_f_1.frequency(f_1, sample_time_ms * f_1 / 1000); //(1209, 36);
   /*
   left_f_2.frequency(f_2,  sample_time_ms*f_2/1000);
   left_f_3.frequency(f_3,  sample_time_ms*f_3/1000);
   left_f_4.frequency(f_4,  sample_time_ms*f_4/1000);
   */
-  right_f_1.frequency(f_1, sample_time_ms*f_1/1000);  // assuming the calcs get optomized out
+  right_f_1.frequency(f_1, sample_time_ms * f_1 /
+                               1000); // assuming the calcs get optomized out
   /*
   right_f_2.frequency(f_2, sample_time_ms*f_2/1000);
   right_f_3.frequency(f_3, sample_time_ms*f_3/1000);
@@ -940,7 +907,7 @@ void audioSenseSetup() {
   sine2.frequency(f_4); // right
   sine2.amplitude(1.0);
   */
-  AudioInterrupts();    // enable, both tones will start together
+  AudioInterrupts(); // enable, both tones will start together
 }
 
 void debugPrintAudioSense(float l1, float r1) {
@@ -957,31 +924,32 @@ void debugPrintAudioSense(float l1, float r1) {
   r3 = right_f_3.read();
   r4 = right_f_4.read();
 */
-    #ifdef DEBUG_PRINT
-    // print the raw data, for troubleshooting
-    //Serial.print("tones: ");
-    Serial.print(l1);
-    Serial.print(", ");
-    Serial.print(l2);
-    Serial.print(", ");
-    Serial.print(l3);
-    Serial.print(", ");
-    Serial.print(l4);
-    Serial.print(",   ");
-    Serial.print(r1);
-    Serial.print(", ");
-    Serial.print(r2);
-    Serial.print(", ");
-    Serial.print(r3);
-    Serial.print(", ");
-    Serial.print(r4);
-    Serial.print("\n");
-    #endif
-    }
+#ifdef DEBUG_PRINT
+  // print the raw data, for troubleshooting
+  //Serial.print("tones: ");
+  Serial.print(l1);
+  Serial.print(", ");
+  Serial.print(l2);
+  Serial.print(", ");
+  Serial.print(l3);
+  Serial.print(", ");
+  Serial.print(l4);
+  Serial.print(",   ");
+  Serial.print(r1);
+  Serial.print(", ");
+  Serial.print(r2);
+  Serial.print(", ");
+  Serial.print(r3);
+  Serial.print(", ");
+  Serial.print(r4);
+  Serial.print("\n");
+#endif
+}
 
 #define TRANSITION_BUFFER_MS 100
 
-void printTransition(bool buffering, bool stableIsLinked, bool candidateIsLinked) {
+void printTransition(bool buffering, bool stableIsLinked,
+                     bool candidateIsLinked) {
   if (buffering) {
     Serial.print("Pending Transition: ");
   } else {
@@ -1006,7 +974,7 @@ bool getStableIsLinked(float l1, float r1) {
   static bool buffering = false;
   bool candidateIsLinked = (l1 > thresh || r1 > thresh);
 
-  if (!stableIsLinked && candidateIsLinked ) {
+  if (!stableIsLinked && candidateIsLinked) {
     // Immediate transition to Linked for quick contact latency.
     printTransition(buffering, stableIsLinked, candidateIsLinked);
     stableIsLinked = true;
@@ -1059,13 +1027,11 @@ const float row_threshold = 0.2;
 const float column_threshold = 0.2;
 
 bool audioSenseLoop() {
-
-    sine1.amplitude(1.0);
-    return audioSenseProcessSignal();
+  sine1.amplitude(1.0);
+  return audioSenseProcessSignal();
 }
 // Contact Sense End
 //
-
 
 //
 // Music Player Start
@@ -1076,7 +1042,7 @@ void audioMusicSetup() {
   //audioShield.volume(0.5);
 
   //
-  // Setup the SPI driver for MicroSd Card 
+  // Setup the SPI driver for MicroSd Card
   // Our project uses the on board MicroSd, NOT the AudioShield's MicroSd slot
   //
   SPI.setMOSI(SDCARD_MOSI_PIN);
@@ -1090,8 +1056,7 @@ void audioMusicSetup() {
   // delay(1000); XXX 1
 }
 
-void pauseMusic ( )
-{
+void pauseMusic() {
   if (!isPaused && playSdWav1.isPlaying()) {
     // Set volume to zero (mute) but keep playing
     audioShield.volume(PAUSED_AUDIO_VOLUME);
@@ -1128,7 +1093,7 @@ void advanceToNextSong() {
 }
 
 // Helper function to get the current song to play.
-const char* getCurrentSong(bool isLinked) {
+const char *getCurrentSong(bool isLinked) {
   if (isLinked) {
     return contactSongs[currentSongIndex];
   } else {
@@ -1158,38 +1123,38 @@ void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
       stopMusic();
     }
   }
-  
+
   // Handle pause timeout and finished states.
   switch (musicState) {
-    case MUSIC_STATE_PAUSE_TIMEOUT:
-    case MUSIC_STATE_PAUSE_FINISHED:
-      Serial.println("Pause timed out. Stopping song to switch to dormant.");
-      stopMusic();
+  case MUSIC_STATE_PAUSE_TIMEOUT:
+  case MUSIC_STATE_PAUSE_FINISHED:
+    Serial.println("Pause timed out. Stopping song to switch to dormant.");
+    stopMusic();
+    advanceToNextSong();
+
+    // Reset isPaused since we're stopping the song
+    isPaused = false;
+    // Also reset the volume to the default
+    audioShield.volume(PLAYING_AUDIO_VOLUME);
+    break;
+  case MUSIC_STATE_FINISHED:
+    if (isLinked) {
+      Serial.println("Song finished. Advancing to next song.");
       advanceToNextSong();
-      
-      // Reset isPaused since we're stopping the song
-      isPaused = false;
-      // Also reset the volume to the default
-      audioShield.volume(PLAYING_AUDIO_VOLUME);
-      break;
-    case MUSIC_STATE_FINISHED:
-      if (isLinked) {
-        Serial.println("Song finished. Advancing to next song.");
-        advanceToNextSong();
-      } else {
-        Serial.println("Idle song finished. Looping.");
-      }
-      break;
-    default:
-      // No action needed for other states
-      break;
+    } else {
+      Serial.println("Idle song finished. Looping.");
+    }
+    break;
+  default:
+    // No action needed for other states
+    break;
   }
 
   // Nothing is playing - figure out what to play next
   if (!playSdWav1.isPlaying()) {
     // Start the appropriate song.
     Serial.print("Starting song: ");
-    const char* songToPlay = getCurrentSong(isLinked);
+    const char *songToPlay = getCurrentSong(isLinked);
     Serial.println(songToPlay);
 
     if (!playSdWav1.play(songToPlay)) {
@@ -1201,9 +1166,8 @@ void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
 // Music Player End
 //
 
-void displayHostname ( char * hostname )
-{
-  display.setCursor(0,20);  
+void displayHostname(char *hostname) {
+  display.setCursor(0, 20);
   display.print("name:");
   display.print(hostname);
   display.display();
@@ -1212,11 +1176,10 @@ void displayHostname ( char * hostname )
 /*
  * displayActivityStatus() - display a wandering eye and show any acitivy
  */
-void displayActivityStatus(bool isLinked)
-{
+void displayActivityStatus(bool isLinked) {
   long unsigned mod;
 
-  #define ACTIVITY_BAR_FRACTIONS 32
+#define ACTIVITY_BAR_FRACTIONS 32
 
   static bool isInitialized = false;
 
@@ -1229,12 +1192,12 @@ void displayActivityStatus(bool isLinked)
   static unsigned int Xposition_last = 0;
 
   // Only display during idle time
-  if ( isLinked ) {
+  if (isLinked) {
     isInitialized = false;
     return;
   }
 
-  if ( !isInitialized ) {
+  if (!isInitialized) {
     time = millis();
     isInitialized = true;
   }
@@ -1242,48 +1205,47 @@ void displayActivityStatus(bool isLinked)
   mills = millis();
 
   // Handle wrap-around
-  if ( time > mills )
+  if (time > mills)
     time = mills;
 
   deltaTime = (mills - time) % 1000;
 
   mod = deltaTime % (1000 / ACTIVITY_BAR_FRACTIONS);
-  if ( mod != 0 )     
+  if (mod != 0)
     return;
 
   unsigned int x_unscaled;
   unsigned int x_scaled;
 
-  x_unscaled = deltaTime / ACTIVITY_BAR_FRACTIONS; 
-  x_scaled   = x_unscaled * 128 / ACTIVITY_BAR_FRACTIONS ; 
+  x_unscaled = deltaTime / ACTIVITY_BAR_FRACTIONS;
+  x_scaled = x_unscaled * 128 / ACTIVITY_BAR_FRACTIONS;
 
-  if ( direction ) {
-    Xposition = x_scaled; 
-  } 
-  else {
+  if (direction) {
+    Xposition = x_scaled;
+  } else {
     Xposition = 124 - x_scaled;
- }
+  }
 
 #ifdef ACTIVITY_DEBUG_ENABLE
-  printf ("Direction:%s time:%u delta_t:%u x_unscaled:%u Xpos:%u\n", direction ? "F" : "B", time, deltaTime, x_unscaled,Xposition);
+  printf("Direction:%s time:%u delta_t:%u x_unscaled:%u Xpos:%u\n",
+         direction ? "F" : "B", time, deltaTime, x_unscaled, Xposition);
 #endif
   /* 
     Clear the  previous activity block 
   */
   display.setTextColor(SSD1306_WHITE);
 
-  display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);  
+  display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);
 
   /*
     Draw a small box on the line position it based on the fraction of a second
   */
 
-  display.fillRect(Xposition, 30, 10, 10, SSD1306_WHITE);  // New Block
+  display.fillRect(Xposition, 30, 10, 10, SSD1306_WHITE); // New Block
   display.display();
 
-
   /* Flip the direction */
-  if ( x_unscaled == (ACTIVITY_BAR_FRACTIONS - 1))  {
+  if (x_unscaled == (ACTIVITY_BAR_FRACTIONS - 1)) {
     direction = direction ? false : true;
   }
 
@@ -1298,53 +1260,46 @@ void displayActivityStatus(bool isLinked)
 #endif
 }
 
-
-void displayNetworkStatus( const char string[] )
-{
-  
+void displayNetworkStatus(const char string[]) {
   display.setTextColor(SSD1306_WHITE);
-  display.fillRect(0, 10, 128, 20, SSD1306_BLACK);  // Erase text area
+  display.fillRect(0, 10, 128, 20, SSD1306_BLACK); // Erase text area
 
-  display.setCursor(0,10); 
+  display.setCursor(0, 10);
   display.print(string);
-  
+
   display.display();
 }
 
 void displaySplashScreen(void) {
   display.clearDisplay();
 
-  display.setTextSize(1);             // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE);        // Draw white text
-  display.setCursor(0,0);             // Start at top-left corner
+  display.setTextSize(1);              // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setCursor(0, 0);             // Start at top-left corner
   display.println(F("    1st CONTACT!!"));
   display.println(F(""));
   display.println(F(""));
 
-  display.setCursor(0,10); 
+  display.setCursor(0, 10);
   //display.setTextSize(2);             // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
-  display.print(F("IP:")); 
+  display.print(F("IP:"));
   display.print(Ethernet.localIP());
 
-
-
-  display.setTextSize(1);             // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE);        // Draw white text
-  display.setCursor(0,55); 
+  display.setTextSize(1);              // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setCursor(0, 55);
   display.println(F(__DATE__ "  " __TIME__));
- 
 
   display.display();
   //delay(2000); XXX
 }
 
-void displaySetup()
-{
+void displaySetup() {
   Wire2.begin();
 
-   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
     //for(;;); // Don't proceed, loop forever
   }
@@ -1373,15 +1328,12 @@ void displaySetup()
   // display.display(). These examples demonstrate both approaches...
 }
 
-void setup()
-{
-  
+void setup() {
+
   displaySetup();
 
   Serial.printf("_______FIRST CONTACT_______ ");
   Serial.printf("%s %sd \n", __DATE__, __TIME__);
-
-  
 
   Serial.printf("_______Init Ethernet_______\n");
   // TCP/IP Setup
@@ -1396,17 +1348,17 @@ void setup()
   // delay(1500); XXX
 
   Serial.printf("_______Audio Memory Init________\n");
-  AudioMemory(22); // NOTE this number is simply a guess.   Working: 12 for Sens, 8 for Wav Player + margin
+  AudioMemory(
+      22); // NOTE this number is simply a guess.   Working: 12 for Sens, 8 for Wav Player + margin
 
   Serial.printf("_______Audio Sense Init________\n");
-  audioSenseSetup(); 
+  audioSenseSetup();
 
   Serial.printf("_______Audio Music Init________\n");
   audioMusicSetup();
 }
 
-void loop()
-{
+void loop() {
   if (!client.connected()) {
     reconnect();
   }
