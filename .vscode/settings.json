@@ -5,5 +5,12 @@
         "Perc",
         "Remi",
         "WLED"
-    ]
+    ],
+    "files.associations": {
+        "ostream": "cpp",
+        "print": "cpp"
+    },
+    "editor.formatOnSave": true,
+    "C_Cpp.clang_format_style": "file",
+    "clang-format.executable": "/opt/homebrew/bin/clang-format",
 }
