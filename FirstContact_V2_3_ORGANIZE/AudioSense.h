@@ -7,11 +7,20 @@ AudioSense: The contact sensing and audio mixing logic.
 
 #include <Audio.h>
 
+// Bundle the state booleans in a struct.
+struct ContactState {
+  bool isInitialized;
+  bool wasLinked;
+  bool isLinked;
+  // Helper method returning whether the state changed.
+  bool isChanged() const { return isLinked != wasLinked; }
+};
+
 // Prototypes for the contact sensing code.
 void audioSenseSetup();
 bool audioSenseLoop();
-bool getStableIsLinked();
-void printState(bool isInitialized, bool wasLinked, bool isLinked);
+ContactState getContactState();
+void printState(const ContactState &state);
 void audioMusicSetup();
 
 // Make playSdWav1 addressable from other files.

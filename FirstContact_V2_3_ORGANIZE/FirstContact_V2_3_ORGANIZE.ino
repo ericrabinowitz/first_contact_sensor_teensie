@@ -101,20 +101,16 @@ void setup() {
 }
 
 bool audioSenseLoop() {
-  // Use helper to determine the buffered isLinked state.
-  bool isLinked = getStableIsLinked();
+  // Retrieve the current contact state.
+  ContactState state = getContactState();
 
-  // Propagate the stable state downstream.
-  static bool isInitialized = false;
-  static bool wasLinked = false;
-  publishState(isInitialized, wasLinked, isLinked);
-  playMusic(isInitialized, wasLinked, isLinked);
-  printState(isInitialized, wasLinked, isLinked);
-  displayState(isInitialized, wasLinked, isLinked);
+  // Propagate the state downstream.
+  publishState(state.isInitialized, state.wasLinked, state.isLinked);
+  playMusic(state.isInitialized, state.wasLinked, state.isLinked);
+  printState(state);
+  displayState(state.isInitialized, state.wasLinked, state.isLinked);
 
-  isInitialized = true;
-  wasLinked = isLinked;
-  return isLinked;
+  return state.isLinked;
 }
 
 void loop() {

@@ -218,6 +218,24 @@ bool getStableIsLinked() {
   return stableIsLinked;
 }
 
+// Static state variables.
+bool isInitialized = false;
+bool wasLinked = false;
+
+// This function wraps getStableIsLinked() and returns all state info.
+ContactState getContactState() {
+  ContactState state;
+  state.isLinked = getStableIsLinked();
+  state.isInitialized = isInitialized;
+  state.wasLinked = wasLinked;
+
+  // Update our persistent state for next call.
+  isInitialized = true;
+  wasLinked = state.isLinked;
+
+  return state;
+}
+
 // Contact Sense End
 //
 
@@ -226,19 +244,17 @@ bool getStableIsLinked() {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void printState(bool isInitialized, bool wasLinked, bool isLinked) {
-  if (isInitialized && wasLinked == isLinked) {
+
+// Modify printState to accept the struct.
+void printState(const ContactState &state) {
+  if (state.isInitialized && state.wasLinked == state.isLinked) {
     return;
   }
-
-  if (isLinked) {
-    Serial.print("CONTACT\n");
+  if (state.isLinked) {
+    Serial.println("CONTACT");
   } else {
-    Serial.print("--OFF---\n");
+    Serial.println("--OFF---");
   }
-
-  //uncomment these lines to see how much CPU time
-  //the tone detectors and audio library are using
 
   Serial.print("CPU=");
   Serial.print(AudioProcessorUsage());
