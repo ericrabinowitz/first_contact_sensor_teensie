@@ -69,7 +69,7 @@ void displayTimeCount() {
 void displayState(ContactState state) {
   char str[128];
 
-  if (state.isInitialized && !state.isChanged()) {
+  if (state.isUnchanged()) {
     return;
   }
 

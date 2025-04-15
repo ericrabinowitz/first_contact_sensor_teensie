@@ -13,7 +13,7 @@ struct ContactState {
   bool wasLinked;
   bool isLinked;
   // Helper method returning whether the state changed.
-  bool isChanged() const { return isLinked != wasLinked; }
+  bool isUnchanged() const { return isInitialized && isLinked == wasLinked; }
 };
 
 // Prototypes for the contact sensing code.

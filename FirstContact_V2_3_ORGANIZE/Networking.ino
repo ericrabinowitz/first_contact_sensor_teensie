@@ -301,7 +301,7 @@ void initMqtt() {
 void publishState(ContactState state) {
   static bool publishSucceeded = false;
 
-  if (publishSucceeded && state.isInitialized && !state.isChanged()) {
+  if (publishSucceeded && state.isUnchanged()) {
     // No change in state to report.
     return;
   }
