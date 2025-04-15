@@ -5,6 +5,7 @@ Display: Printing to the small OLED display on the teensy.
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+#include "AudioSense.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
@@ -30,7 +31,7 @@ void displaySplashScreen();
 void displayHostname(char *hostname);
 void displayNetworkStatus(const char *status);
 void displayTimeCount();
-void displayState(bool isInitialized, bool wasLinked, bool isLinked);
+void displayState(ContactState state);
 void displayActivityStatus(bool isLinked);
 
 #endif // DISPLAY_H

@@ -105,10 +105,10 @@ bool audioSenseLoop() {
   ContactState state = getContactState();
 
   // Propagate the state downstream.
-  publishState(state.isInitialized, state.wasLinked, state.isLinked);
-  playMusic(state.isInitialized, state.wasLinked, state.isLinked);
+  publishState(state);
+  playMusic(state);
   printState(state);
-  displayState(state.isInitialized, state.wasLinked, state.isLinked);
+  displayState(state);
 
   return state.isLinked;
 }

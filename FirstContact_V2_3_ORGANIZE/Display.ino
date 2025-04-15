@@ -66,28 +66,23 @@ void displayTimeCount() {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void displayState(bool isInitialized, bool wasLinked, bool isLinked) {
+void displayState(ContactState state) {
   char str[128];
 
-  if (isInitialized && wasLinked == isLinked) {
+  if (state.isInitialized && !state.isChanged()) {
     return;
   }
 
-  if (isLinked) {
+  if (state.isLinked) {
     ++contactCount;
-
-    // Clear the buffer
-    //display.clearDisplay();
     display.fillRect(0, 30, 128, 10, SSD1306_BLACK);
     display.setTextSize(3);              // Normal 1:1 pixel scale
     display.setTextColor(SSD1306_WHITE); // Draw white text
     display.setCursor(0, 30);
-
     sprintf(str, "%07lu", contactCount);
     display.printf(str);
     display.display();
   } else {
-    //display.clearDisplay();
     display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
     display.display();
   }

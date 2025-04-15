@@ -5,6 +5,7 @@ MusicPlayer: Logic for playing songs.
 #ifndef MUSIC_PLAYER_H
 #define MUSIC_PLAYER_H
 
+#include "AudioSense.h"
 #include <Audio.h>
 
 typedef enum {
@@ -24,6 +25,6 @@ void resumeMusic();
 void stopMusic();
 void advanceToNextSong();
 const char *getCurrentSong(bool isLinked);
-void playMusic(bool isInitialized, bool wasLinked, bool isLinked);
+void playMusic(ContactState state);
 
 #endif // MUSIC_PLAYER_H

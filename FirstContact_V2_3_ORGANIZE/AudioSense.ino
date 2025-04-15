@@ -247,7 +247,7 @@ ContactState getContactState() {
 
 // Modify printState to accept the struct.
 void printState(const ContactState &state) {
-  if (state.isInitialized && state.wasLinked == state.isLinked) {
+  if (state.isInitialized && !state.isChanged()) {
     return;
   }
   if (state.isLinked) {

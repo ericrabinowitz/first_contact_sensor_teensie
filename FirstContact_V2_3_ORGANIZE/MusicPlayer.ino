@@ -152,16 +152,15 @@ MusicState getMusicState(bool isInitialized) {
 }
 
 /* Play Audio Based On State */
-void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
-  MusicState musicState = getMusicState(isInitialized);
+void playMusic(ContactState state) {
+  MusicState musicState = getMusicState(state.isInitialized);
 
   // State transition: Connected -> Disconnected.
-  if (wasLinked && !isLinked) {
+  if (state.wasLinked && !state.isLinked) {
     pauseMusic();
   }
-
   // State transition: Disconnected -> Connected.
-  else if (!wasLinked && isLinked) {
+  else if (!state.wasLinked && state.isLinked) {
     if (musicState == MUSIC_STATE_PAUSED) {
       // If we were paused (previous disconnect), resume playback
       Serial.println("Resuming paused music");
@@ -188,7 +187,7 @@ void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
     audioShield.volume(PLAYING_AUDIO_VOLUME);
     break;
   case MUSIC_STATE_FINISHED:
-    if (isLinked) {
+    if (state.isLinked) {
       Serial.println("Song finished. Advancing to next song.");
       advanceToNextSong();
     } else {
@@ -200,13 +199,12 @@ void playMusic(bool isInitialized, bool wasLinked, bool isLinked) {
     break;
   }
 
-  // Nothing is playing - figure out what to play next
+  // Nothing is playing - start the appropriate song.
   if (!playSdWav1.isPlaying()) {
     // Start the appropriate song.
     Serial.print("Starting song: ");
-    const char *songToPlay = getCurrentSong(isLinked);
+    const char *songToPlay = getCurrentSong(state.isLinked);
     Serial.println(songToPlay);
-
     if (!playSdWav1.play(songToPlay)) {
       Serial.print("Error playing: ");
       Serial.println(songToPlay);

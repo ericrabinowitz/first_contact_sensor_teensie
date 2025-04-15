@@ -298,15 +298,15 @@ void initMqtt() {
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
-void publishState(bool isInitialized, bool wasLinked, bool isLinked) {
+void publishState(ContactState state) {
   static bool publishSucceeded = false;
 
-  if (publishSucceeded && isInitialized && wasLinked == isLinked) {
+  if (publishSucceeded && state.isInitialized && !state.isChanged()) {
     // No change in state to report.
     return;
   }
 
-  if (isLinked)
+  if (state.isLinked)
     publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
         \"bri\": 255, \
         \"seg\": \
