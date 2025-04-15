@@ -100,28 +100,24 @@ void setup() {
   musicPlayerSetup();
 }
 
-bool audioSenseLoop() {
-  // Retrieve the current contact state.
-  ContactState state = getContactState();
-
-  // Propagate the state downstream.
-  publishState(state);
-  playMusic(state);
-  printState(state);
-  displayState(state);
-
-  return state.isLinked;
-}
-
 void loop() {
   // Make sure we're connected to MQTT broker.
   mqttLoop();
 
-  // Sense contact and update the state.
-  bool isLinked = audioSenseLoop();
+  // Retrieve the current contact state.
+  ContactState state = getContactState();
 
-  // During Idle Time, animate something to show we are alive.
-  displayActivityStatus(isLinked);
+  // Publish the state to the MQTT broker to update LEDs.
+  publishState(state);
+  // Update the music if the state changed or current song has ended.
+  playMusic(state);
+  // Print any changed state to the serial console for debugging.
+  printState(state);
 
+  // Update the display with the current state.
+  displayState(state);
+  // During idle time, animate something to show we are alive.
+  displayActivityStatus(state.isLinked);
+  // Update the count and time at the bottom of the display.
   displayTimeCount();
 }
