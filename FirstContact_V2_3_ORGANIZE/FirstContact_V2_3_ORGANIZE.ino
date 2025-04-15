@@ -4,7 +4,7 @@
 FIRST CONTACT ART PROJECT 
 Contact Sensor and Music Player - Eric Linn Rabinowitz. 415-336-6938
 
-This code is the contact sensor + Music Player that runs in each sculpture.
+This code is the main function of the contact sensor + Music Player that runs in each sculpture.
 
 Details:
 ========

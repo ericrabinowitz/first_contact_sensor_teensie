@@ -1,3 +1,7 @@
+/*
+Networking: The ethernet, DNS, and MQTT WLED messaging logic.
+*/
+
 #include "Networking.h"
 #include "defines.h"
 

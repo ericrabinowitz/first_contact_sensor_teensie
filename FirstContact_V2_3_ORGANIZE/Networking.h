@@ -1,3 +1,7 @@
+/*
+Networking: The ethernet, DNS, and MQTT WLED messaging logic.
+*/
+
 #ifndef NETWORKING_H
 #define NETWORKING_H
 

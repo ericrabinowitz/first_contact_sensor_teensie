@@ -1,3 +1,7 @@
+/*
+Display: Printing to the small OLED display on the teensy.
+*/
+
 #include "Display.h"
 
 // Create the OLED display object using Wire2 (as in original code).

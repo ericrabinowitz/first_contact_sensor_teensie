@@ -1,3 +1,7 @@
+/*
+MusicPlayer: Logic for playing songs.
+*/
+
 #ifndef MUSIC_PLAYER_H
 #define MUSIC_PLAYER_H
 

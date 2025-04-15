@@ -1,3 +1,7 @@
+/*
+AudioSense: The contact sensing and audio mixing logic.
+*/
+
 #include <Adafruit_SSD1306.h>
 #include <Audio.h>
 

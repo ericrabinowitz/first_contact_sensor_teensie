@@ -1,3 +1,7 @@
+/*
+Display: Printing to the small OLED display on the teensy.
+*/
+
 #ifndef DISPLAY_H
 #define DISPLAY_H
 

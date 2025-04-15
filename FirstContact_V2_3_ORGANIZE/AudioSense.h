@@ -1,3 +1,7 @@
+/*
+AudioSense: The contact sensing and audio mixing logic.
+*/
+
 #ifndef AUDIO_SENSE_H
 #define AUDIO_SENSE_H
 

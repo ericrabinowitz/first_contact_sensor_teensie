@@ -1,3 +1,7 @@
+/*
+MusicPlayer: Logic for playing songs.
+*/
+
 #include "AudioSense.h"
 #include "MusicPlayer.h"
 #include <SD.h>
