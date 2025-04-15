@@ -2,7 +2,9 @@
 
 2/1/2025
 FIRST CONTACT ART PROJECT 
-Contact Sensor and Music Player - Eric Linn Rabinowitz. 415-336-6938
+Contact Sensor and Music Player
+- Eric Linn Rabinowitz. 415-336-6938
+- Alex Degtiar. 510-859-3058
 
 This code is the main function of the contact sensor + Music Player that runs in each sculpture.
 
@@ -66,6 +68,18 @@ Libraries:
           Using library SD at version 2.0.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SD 
           Using library SdFat at version 2.1.2 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SdFat 
           Using library SerialFlash at version 0.5 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SerialFlash 
+
+Testing:
+---------
+To test the code, you need to have a Teensy 4.1 board with an Audio Shield and a MicroSD card
+loaded with the audio files from Jamie in #sound.
+
+You need to wire a raspberry pi to the Teensy board using a CAT-5 ethernet cable, directly or through a switch.
+The Raspberry Pi needs to be running a recent image with dnsmasq and the Mosquitto MQTT broker configured:
+  Search for rp_server.tgz image in #software.
+
+If you don't have the real hands handy, you can short the corresponding pins on the teensy box to simulate contact.
+I found it helpful to wire one of the buttons to the two pin contacts for convenience.
 */
 
 #include "AudioSense.h"
