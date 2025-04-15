@@ -70,6 +70,7 @@ Libraries:
 
 #include "AudioSense.h"
 #include "Display.h"
+#include "MusicPlayer.h"
 #include "Networking.h"
 
 void setup() {
@@ -94,9 +95,9 @@ void setup() {
   Serial.printf("_______Audio Memory/Sense Init________\n");
   audioSenseSetup();
 
-  // Audio Music Setup
+  // Music Player Setup
   Serial.printf("_______Audio Music Init________\n");
-  audioMusicSetup();
+  musicPlayerSetup();
 }
 
 bool audioSenseLoop() {

@@ -49,7 +49,7 @@ void displayTimeCount() {
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setTextSize(1);
   display.setCursor(0, 55);
-  sprintf(str, "%07u    %02u:%02u:%02u", contactCount, secondsLapse / 3600,
+  sprintf(str, "%07lu    %02lu:%02lu:%02lu", contactCount, secondsLapse / 3600,
           (secondsLapse % 3600) / 60, (secondsLapse % 3600) % 60);
 
   display.printf(str);
@@ -79,7 +79,7 @@ void displayState(bool isInitialized, bool wasLinked, bool isLinked) {
     display.setTextColor(SSD1306_WHITE); // Draw white text
     display.setCursor(0, 30);
 
-    sprintf(str, "%07u", contactCount);
+    sprintf(str, "%07lu", contactCount);
     display.printf(str);
     display.display();
   } else {
