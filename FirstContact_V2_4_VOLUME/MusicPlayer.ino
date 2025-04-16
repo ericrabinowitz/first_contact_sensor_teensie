@@ -73,9 +73,6 @@ void musicPlayerSetup() {
 
 void pauseMusic() {
   if (!isPaused && playSdWav1.isPlaying()) {
-    // Set volume to zero (mute) but keep playing
-    setMusicVolume(FADE_MUSIC_INIT_VOLUME);
-
     isPaused = true;
     pauseStartTime = millis(); // Record when pausing started
     Serial.println("Music paused (volume minimized)");
@@ -155,8 +152,16 @@ void updateFadedVolume(bool isLinked) {
       fraction = 1.0;
     float newVolume = FADE_MUSIC_INIT_VOLUME * (1.0 - fraction);
     setMusicVolume(newVolume);
-    Serial.print("Fading volume to ");
-    Serial.println(newVolume);
+
+    // Print the volume only if it has changed significantly.
+    // This is to avoid flooding the serial output with too many messages.
+    static int lastSigVolume = -1;
+    int currentSig = (int)(newVolume * 10);
+    if (currentSig != lastSigVolume) {
+      lastSigVolume = currentSig;
+      Serial.print("Fading volume to ");
+      Serial.println(newVolume);
+    }
   }
 }
 
@@ -229,4 +234,3 @@ void setMusicVolume(float volume) {
   // Adjust the gain on the music output mixer channel (channel 2)
   mixerMusicOutput.gain(2, volume);
 }
-// Music Player End
