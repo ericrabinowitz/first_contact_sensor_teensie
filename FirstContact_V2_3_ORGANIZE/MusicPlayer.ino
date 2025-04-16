@@ -46,14 +46,13 @@ const char *contactSongs[] = {
 
 // Current song index
 unsigned int currentSongIndex = 0;
-//AudioPlaySdWav playSdWav1;
 
 bool isPaused;
 unsigned long pauseStartTime;
 
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
-#define PLAYING_AUDIO_VOLUME 0.75
-#define PAUSED_AUDIO_VOLUME 0.4
+#define PLAYING_MUSIC_VOLUME 0.75
+#define PAUSED_MUSIC_VOLUME 0.1
 #define PAUSE_TIMEOUT_MS 2000
 
 //
@@ -73,14 +72,6 @@ AudioConnection patchCordMOR(mixerMusicOutput, 0, audioOut, 1);
 // Music Player Start
 
 void musicPlayerSetup() {
-  // Audio connections require memory to work.  For more
-  // detailed information, see the MemoryAndCpuUsage example
-  // AudioMemory(12 + 8); // 12 for Sens, 8 for Wav Player
-
-  //audioMemory(8); // NOTE:   This memory allocation should be combined with Audio Sense Setup
-  //audioShield.enable();
-  //audioShield.volume(0.5);
-
   // Setup the SPI driver for MicroSd Card
   // Our project uses the on board MicroSd, NOT the AudioShield's MicroSd slot
   SPI.setMOSI(SDCARD_MOSI_PIN);
@@ -96,7 +87,7 @@ void musicPlayerSetup() {
 void pauseMusic() {
   if (!isPaused && playSdWav1.isPlaying()) {
     // Set volume to zero (mute) but keep playing
-    audioShield.volume(PAUSED_AUDIO_VOLUME);
+    setMusicVolume(PAUSED_MUSIC_VOLUME);
 
     isPaused = true;
     pauseStartTime = millis(); // Record when pausing started
@@ -107,7 +98,7 @@ void pauseMusic() {
 void resumeMusic() {
   if (isPaused && playSdWav1.isPlaying()) {
     // Restore volume
-    audioShield.volume(PLAYING_AUDIO_VOLUME);
+    setMusicVolume(PLAYING_MUSIC_VOLUME);
 
     isPaused = false;
     Serial.println("Music resumed (volume restored)");
@@ -197,7 +188,7 @@ void playMusic(ContactState state) {
     // Reset isPaused since we're stopping the song
     isPaused = false;
     // Also reset the volume to the default
-    audioShield.volume(PLAYING_AUDIO_VOLUME);
+    setMusicVolume(PLAYING_MUSIC_VOLUME);
     break;
   case MUSIC_STATE_FINISHED:
     if (state.isLinked) {
@@ -223,5 +214,10 @@ void playMusic(ContactState state) {
       Serial.println(songToPlay);
     }
   }
+}
+
+void setMusicVolume(float volume) {
+  // Adjust the gain on the music output mixer channel (channel 2)
+  mixerMusicOutput.gain(2, volume);
 }
 // Music Player End
