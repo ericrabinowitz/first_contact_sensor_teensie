@@ -26,5 +26,6 @@ void stopMusic();
 void advanceToNextSong();
 const char *getCurrentSong(bool isLinked);
 void playMusic(ContactState state);
+void setMusicVolume(float volume);
 
 #endif // MUSIC_PLAYER_H
