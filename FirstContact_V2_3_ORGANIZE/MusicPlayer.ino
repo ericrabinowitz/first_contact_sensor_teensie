@@ -98,6 +98,7 @@ void pauseMusic() {
 void resumeMusic() {
   if (isPaused && playSdWav1.isPlaying()) {
     // Restore volume
+    // TODO: ramp volume back up?
     setMusicVolume(PLAYING_MUSIC_VOLUME);
 
     isPaused = false;
@@ -156,14 +157,17 @@ MusicState getMusicState(bool isInitialized) {
 }
 
 // New helper: updates volume based on fade logic during pause.
-void updateFadedVolume() {
-  if (isPaused && playSdWav1.isPlaying()) {
+void updateFadedVolume(bool isLinked) {
+  // TODO: Move this logic into ContactState for sharing with lights?
+  // Check if we are paused and not linked. If we're linked, it means
+  // we're in the process of resuming a song.
+  if (isPaused && !isLinked && playSdWav1.isPlaying()) {
     unsigned long elapsed = millis() - pauseStartTime;
     float fraction = elapsed / (float)PAUSE_TIMEOUT_MS;
     if (fraction > 1.0)
       fraction = 1.0;
-    float newVolume = PLAYING_AUDIO_VOLUME * (1.0 - fraction);
-    audioShield.volume(newVolume);
+    float newVolume = PLAYING_MUSIC_VOLUME * (1.0 - fraction);
+    setMusicVolume(newVolume);
     Serial.print("Fading volume to ");
     Serial.println(newVolume);
   }
@@ -199,9 +203,9 @@ void playMusic(ContactState state) {
     stopMusic();
     advanceToNextSong();
 
-    // Reset isPaused since we're stopping the song
+    // Reset isPaused since we're stopping the song.
     isPaused = false;
-    // Also reset the volume to the default
+    // Also reset the volume to the default.
     setMusicVolume(PLAYING_MUSIC_VOLUME);
     break;
   case MUSIC_STATE_FINISHED:
@@ -212,8 +216,12 @@ void playMusic(ContactState state) {
       Serial.println("Idle song finished. Looping.");
     }
     break;
+  case MUSIC_STATE_PAUSED:
+    // Update the faded volume based on the elapsed time.
+    updateFadedVolume(state.isLinked);
+    break;
   default:
-    // No action needed for other states
+    // No action needed for other states.
     break;
   }
 

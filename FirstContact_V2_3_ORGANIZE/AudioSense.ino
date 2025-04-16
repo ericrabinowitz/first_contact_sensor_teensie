@@ -71,6 +71,8 @@ void audioSenseSetup() {
   // NOTE: This volume is shared between mixers, so is important not just for
   // the music volume but also the signal sensitivity.
   audioShield.enable();
+  // TODO: Can we just set the gain of the mixer instead of the audio shield?
+  // Then we can play music at full volume.
   audioShield.volume(SIGNAL_AUDIO_VOLUME);
 
   const int sample_time_ms = main_period_ms / 2;
