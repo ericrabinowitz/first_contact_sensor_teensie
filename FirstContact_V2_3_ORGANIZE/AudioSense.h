@@ -23,7 +23,7 @@ ContactState getContactState();
 void printState(const ContactState &state);
 void audioMusicSetup();
 
-// The audio out shared between the audio sensing and music player.
-extern AudioOutputI2S audioOut;
+// Make playSdWav1 addressable from other files.
+extern AudioPlaySdWav playSdWav1;
 
 #endif // AUDIO_SENSE_H
