@@ -155,6 +155,20 @@ MusicState getMusicState(bool isInitialized) {
   return MUSIC_STATE_PLAYING;
 }
 
+// New helper: updates volume based on fade logic during pause.
+void updateFadedVolume() {
+  if (isPaused && playSdWav1.isPlaying()) {
+    unsigned long elapsed = millis() - pauseStartTime;
+    float fraction = elapsed / (float)PAUSE_TIMEOUT_MS;
+    if (fraction > 1.0)
+      fraction = 1.0;
+    float newVolume = PLAYING_AUDIO_VOLUME * (1.0 - fraction);
+    audioShield.volume(newVolume);
+    Serial.print("Fading volume to ");
+    Serial.println(newVolume);
+  }
+}
+
 /* Play Audio Based On State */
 void playMusic(ContactState state) {
   MusicState musicState = getMusicState(state.isInitialized);
