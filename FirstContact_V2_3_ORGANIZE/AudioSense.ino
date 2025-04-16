@@ -2,7 +2,6 @@
 AudioSense: The contact sensing and audio mixing logic.
 */
 
-#include <Adafruit_SSD1306.h>
 #include <Audio.h>
 
 #include "AudioSense.h"
@@ -11,10 +10,12 @@ AudioSense: The contact sensing and audio mixing logic.
 #define LED1_PIN 3
 #define LED2_PIN 4
 #define LED3_PIN 5
+// This is the volume tuned for the sense signal sensitivity.
+#define SIGNAL_AUDIO_VOLUME 0.75
 
-//
 // Frequencies to Transmit and listen for through hands (f_1 and f_2 are the tx frequencies)
 const int f_1 = 20;
+// These are unused.
 const int f_2 = 20;
 const int f_3 = 20;
 const int f_4 = 20;
@@ -23,56 +24,34 @@ const int f_4 = 20;
 // Edit with caution and experimentation.
 float thresh = 0.01;
 
-// GUItool: begin automatically generated code
-//AudioSynthWaveformSine   sine2;          //xy=190.99998474121094,122.99998474121094
-AudioInputI2S audioIn;        //xy=192.99998474121094,369
-AudioSynthWaveformSine sine1; //xy=207.99998474121094,60.99998474121094
+// The controller for the audio shield.
+AudioControlSGTL5000 audioShield;
 
-/*
-AudioAnalyzeToneDetect   right_f_4; //xy=466.20001220703125,575.2000122070312
-AudioAnalyzeToneDetect   right_f_3;        //xy=467,540
-AudioAnalyzeToneDetect   right_f_2;        //xy=471,502
-AudioAnalyzeToneDetect   right_f_1;        //xy=472,464
-AudioAnalyzeToneDetect   left_f_4;           //xy=474,384
-AudioAnalyzeToneDetect   left_f_3;           //xy=475,348
-AudioAnalyzeToneDetect   left_f_2;           //xy=477,313
-*/
-AudioAnalyzeToneDetect right_f_1; //xy=472,464
-AudioAnalyzeToneDetect left_f_1;  //xy=483,276
-AudioOutputI2S audioOut;          //xy=711,92.99998474121094
-AudioMixer4 mixerRight;
-AudioMixer4 mixerLeft;
+// The audio input used for sensing.
+AudioInputI2S audioIn;
 
-AudioConnection patchCordM1L(sine1, 0, mixerLeft, 0);
-//AudioConnection          patchCordM1R(sine1, 0, mixerRight, 0);
+// The sine wave signal generator.
+AudioSynthWaveformSine sine1;
 
-//AudioConnection          patchCordM2L(sine2, 0, mixerLeft, 1);
-//AudioConnection          patchCordM2R(sine2, 0, mixerRight, 1);
+// The input signal detectors.
+AudioAnalyzeToneDetect left_f_1;
+AudioAnalyzeToneDetect right_f_1;
 
-//
-// Audio Player
-// NOTE: this is defined here to hook up to the connections mixer, but used in
-// MusicPlayer.ino.
-AudioPlaySdWav playSdWav1;
-AudioConnection patchCord11(playSdWav1, 0, mixerLeft, 2);
-AudioConnection patchCord12(playSdWav1, 1, mixerRight, 2);
-// Audio Player
-//
+// The mixer to use for audio sensing.
+AudioMixer4 mixerSensingOutput;
 
+// Connect the sine wave generator to sensing mixer.
+AudioConnection patchCordM1L(sine1, 0, mixerSensingOutput, 0);
+
+// Connect the audio input to the left/right sensing detectors
 AudioConnection patchCord2(audioIn, 0, left_f_1, 0);
 AudioConnection patchCord6(audioIn, 1, right_f_1, 0);
-/*
-AudioConnection          patchCord3(audioIn, 0, left_f_2, 0);
-AudioConnection          patchCord4(audioIn, 0, left_f_3, 0);
-AudioConnection          patchCord5(audioIn, 0, left_f_4, 0);
-AudioConnection          patchCord6(audioIn, 1, right_f_1, 0);
-AudioConnection          patchCord7(audioIn, 1, right_f_2, 0);
-AudioConnection          patchCord8(audioIn, 1, right_f_3, 0);
-AudioConnection          patchCord9(audioIn, 1, right_f_4, 0);
-*/
 
-AudioConnection patchCordMOL(mixerLeft, 0, audioOut, 0);
-AudioConnection patchCordMOR(mixerRight, 0, audioOut, 1);
+// This audio output is shared between the audio sensing and the music player.
+AudioOutputI2S audioOut;
+
+// Left channel (sense signal) plays on the left audio out channel.
+AudioConnection patchCordMOL(mixerSensingOutput, 0, audioOut, 0);
 
 elapsedMillis since_main = 0;
 uint16_t main_period_ms = 150;
@@ -88,21 +67,18 @@ void audioSenseSetup() {
   // of cycles to match.  These numbers were picked for match
   // times of approx 30 ms.  Longer times are more precise.
 
+  // Enable the audio shield and set the output volume.
+  // NOTE: This volume is shared between mixers, so is important not just for
+  // the music volume but also the signal sensitivity.
+  audioShield.enable();
+  audioShield.volume(SIGNAL_AUDIO_VOLUME);
+
   const int sample_time_ms = main_period_ms / 2;
 
-  left_f_1.frequency(f_1, sample_time_ms * f_1 / 1000); //(1209, 36);
-  /*
-  left_f_2.frequency(f_2,  sample_time_ms*f_2/1000);
-  left_f_3.frequency(f_3,  sample_time_ms*f_3/1000);
-  left_f_4.frequency(f_4,  sample_time_ms*f_4/1000);
-  */
-  // Assuming the calcs get optimized out.
+  // Configure the left/right tone analyzers to detect tone.
+  left_f_1.frequency(f_1, sample_time_ms * f_1 / 1000);
   right_f_1.frequency(f_1, sample_time_ms * f_1 / 1000);
-  /*
-  right_f_2.frequency(f_2, sample_time_ms*f_2/1000);
-  right_f_3.frequency(f_3, sample_time_ms*f_3/1000);
-  right_f_4.frequency(f_4, sample_time_ms*f_4/1000);
-*/
+
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
   pinMode(LED3_PIN, OUTPUT);

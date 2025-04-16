@@ -4,6 +4,8 @@ MusicPlayer: Logic for playing songs.
 
 #include "AudioSense.h"
 #include "MusicPlayer.h"
+
+#include <Audio.h>
 #include <SD.h>
 #include <SPI.h>
 #include <SerialFlash.h>
@@ -45,7 +47,7 @@ const char *contactSongs[] = {
 // Current song index
 unsigned int currentSongIndex = 0;
 //AudioPlaySdWav playSdWav1;
-AudioControlSGTL5000 audioShield;
+
 bool isPaused;
 unsigned long pauseStartTime;
 
@@ -53,6 +55,20 @@ unsigned long pauseStartTime;
 #define PLAYING_AUDIO_VOLUME 0.75
 #define PAUSED_AUDIO_VOLUME 0.4
 #define PAUSE_TIMEOUT_MS 2000
+
+//
+// Audio Player
+// NOTE: this is defined here to hook up to the connections mixer, but used in
+// MusicPlayer.ino.
+AudioPlaySdWav playSdWav1;
+AudioMixer4 mixerMusicOutput;
+// Have them both go to the right mixer.
+AudioConnection patchCord11(playSdWav1, 0, mixerMusicOutput, 2);
+// Left channel (music player) plays on the right audio out channel.
+AudioConnection patchCordMOR(mixerMusicOutput, 0, audioOut, 1);
+// Audio Player
+//
+
 //
 // Music Player Start
 
@@ -61,9 +77,6 @@ void musicPlayerSetup() {
   // detailed information, see the MemoryAndCpuUsage example
   // AudioMemory(12 + 8); // 12 for Sens, 8 for Wav Player
 
-  // Enable the audio shield and set the output volume.
-  audioShield.enable();
-  audioShield.volume(PLAYING_AUDIO_VOLUME);
   //audioMemory(8); // NOTE:   This memory allocation should be combined with Audio Sense Setup
   //audioShield.enable();
   //audioShield.volume(0.5);
