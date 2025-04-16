@@ -20,10 +20,7 @@ MusicPlayer: Logic for playing songs.
 #define SDCARD_MOSI_PIN 11 // not actually used
 #define SDCARD_SCK_PIN 13  // not actually used
 
-// Audio Files used for Contact and Idle States
-#define SONG_NAME_IDLE "Missing Link Electra dormant with background.wav"
-
-// Contact songs array.
+// Active songs array.
 const char *contactSongs[] = {
     "Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav",
     "Missing Link unSCruz active 2 MarchForth Gospel A.wav",
@@ -36,15 +33,22 @@ const char *contactSongs[] = {
     "Missing Link unSCruz active 9 Flume The Difference.wav",
     "Missing Link unSCruz active 10 Doldinger Bastian.wav",
     "Missing Link unSCruz active 11 Yung Bae Straight Up.wav",
-    "Missing Link unSCruz active 12 Purple Disco All My Life.wav"};
+    "Missing Link unSCruz active 12 Purple Disco All My Life.wav",
+};
+
+// Dormant songs array.
+const char *idleSongs[] = {"Missing Link Eros dormant.wav",
+                           "Missing Link Electra dormant with background.wav"};
 
 // Current song index
 unsigned int currentSongIndex = 0;
+unsigned int currentIdleSongIndex = 0;
 
 bool isPaused;
 unsigned long pauseStartTime;
 
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
+#define NUM_IDLE_SONGS (sizeof(idleSongs) / sizeof(idleSongs[0]))
 #define PLAYING_MUSIC_VOLUME 1.0
 #define FADE_MUSIC_INIT_VOLUME 0.4
 #define PAUSE_TIMEOUT_MS 2000
@@ -100,12 +104,18 @@ void stopMusic() {
     playSdWav1.stop();
   }
 }
-
-void advanceToNextSong() {
-  // Advance to next song
+void queueNextActiveSong() {
+  Serial.println("Song finished. Advancing to next active song.");
   currentSongIndex = (currentSongIndex + 1) % NUM_CONTACT_SONGS;
-  Serial.print("Next song will be: ");
+  Serial.print("Next active song will be: ");
   Serial.println(contactSongs[currentSongIndex]);
+}
+
+void queueNextIdleSong() {
+  Serial.println("Idle song finished. Looping to next idle song.");
+  currentIdleSongIndex = (currentIdleSongIndex + 1) % NUM_IDLE_SONGS;
+  Serial.print("Next idle song will be: ");
+  Serial.println(idleSongs[currentIdleSongIndex]);
 }
 
 // Helper function to get the current song to play.
@@ -113,7 +123,7 @@ const char *getCurrentSong(bool isLinked) {
   if (isLinked) {
     return contactSongs[currentSongIndex];
   } else {
-    return SONG_NAME_IDLE;
+    return idleSongs[currentIdleSongIndex];
   }
 }
 
@@ -188,7 +198,8 @@ void playMusic(ContactState state) {
   case MUSIC_STATE_PAUSE_FINISHED:
     Serial.println("Pause timed out. Stopping song to switch to dormant.");
     stopMusic();
-    advanceToNextSong();
+    queueNextActiveSong();
+    queueNextIdleSong();
 
     // Reset isPaused since we're stopping the song.
     isPaused = false;
@@ -197,10 +208,9 @@ void playMusic(ContactState state) {
     break;
   case MUSIC_STATE_FINISHED:
     if (state.isLinked) {
-      Serial.println("Song finished. Advancing to next song.");
-      advanceToNextSong();
+      queueNextActiveSong();
     } else {
-      Serial.println("Idle song finished. Looping.");
+      queueNextIdleSong();
     }
     break;
   case MUSIC_STATE_PAUSED:
