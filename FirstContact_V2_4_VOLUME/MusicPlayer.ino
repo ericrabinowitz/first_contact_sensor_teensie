@@ -21,13 +21,7 @@ MusicPlayer: Logic for playing songs.
 #define SDCARD_SCK_PIN 13  // not actually used
 
 // Audio Files used for Contact and Idle States
-#ifdef TEST_CONNECTION_ENABLE
-#define SONG_NAME_IDLE "disconnected.wav"
-// #define SONG_NAME_CONTACT "connected.wav" - removing this as we'll use an array instead
-#else
 #define SONG_NAME_IDLE "Missing Link Electra dormant with background.wav"
-// #define SONG_NAME_CONTACT "eros_active1.wav" - removing this as we'll use an array instead
-#endif
 
 // Contact songs array.
 const char *contactSongs[] = {
@@ -51,25 +45,18 @@ bool isPaused;
 unsigned long pauseStartTime;
 
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
-#define PLAYING_MUSIC_VOLUME 0.75
-#define PAUSED_MUSIC_VOLUME 0.1
+#define PLAYING_MUSIC_VOLUME 1.0
+#define FADE_MUSIC_INIT_VOLUME 0.5
 #define PAUSE_TIMEOUT_MS 2000
 
-//
-// Audio Player
-// NOTE: this is defined here to hook up to the connections mixer, but used in
-// MusicPlayer.ino.
+// The wav player interface.
 AudioPlaySdWav playSdWav1;
+// The music mixer, used to adjust music volume before sending to audio output.
 AudioMixer4 mixerMusicOutput;
 // Have them both go to the right mixer.
 AudioConnection patchCord11(playSdWav1, 0, mixerMusicOutput, 2);
 // Left channel (music player) plays on the right audio out channel.
 AudioConnection patchCordMOR(mixerMusicOutput, 0, audioOut, 1);
-// Audio Player
-//
-
-//
-// Music Player Start
 
 void musicPlayerSetup() {
   // Setup the SPI driver for MicroSd Card
@@ -87,7 +74,7 @@ void musicPlayerSetup() {
 void pauseMusic() {
   if (!isPaused && playSdWav1.isPlaying()) {
     // Set volume to zero (mute) but keep playing
-    setMusicVolume(PAUSED_MUSIC_VOLUME);
+    setMusicVolume(FADE_MUSIC_INIT_VOLUME);
 
     isPaused = true;
     pauseStartTime = millis(); // Record when pausing started
@@ -166,7 +153,7 @@ void updateFadedVolume(bool isLinked) {
     float fraction = elapsed / (float)PAUSE_TIMEOUT_MS;
     if (fraction > 1.0)
       fraction = 1.0;
-    float newVolume = PLAYING_MUSIC_VOLUME * (1.0 - fraction);
+    float newVolume = FADE_MUSIC_INIT_VOLUME * (1.0 - fraction);
     setMusicVolume(newVolume);
     Serial.print("Fading volume to ");
     Serial.println(newVolume);
