@@ -26,7 +26,7 @@ void mqttSubCallback(char *topic, byte *payload, unsigned int length);
 void reconnect();
 void mqttLoop();
 void initMqtt();
-void publishState(bool isInitialized, bool wasLinked, bool isLinked);
+void publishState(ContactState state);
 
 extern PubSubClient client; // Externally defined MQTT client instance
 
