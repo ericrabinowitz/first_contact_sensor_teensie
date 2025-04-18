@@ -4,6 +4,8 @@ MusicPlayer: Logic for playing songs.
 
 #include "AudioSense.h"
 #include "MusicPlayer.h"
+
+#include <Audio.h>
 #include <SD.h>
 #include <SPI.h>
 #include <SerialFlash.h>
@@ -19,13 +21,7 @@ MusicPlayer: Logic for playing songs.
 #define SDCARD_SCK_PIN 13  // not actually used
 
 // Audio Files used for Contact and Idle States
-#ifdef TEST_CONNECTION_ENABLE
-#define SONG_NAME_IDLE "disconnected.wav"
-// #define SONG_NAME_CONTACT "connected.wav" - removing this as we'll use an array instead
-#else
 #define SONG_NAME_IDLE "Missing Link Electra dormant with background.wav"
-// #define SONG_NAME_CONTACT "eros_active1.wav" - removing this as we'll use an array instead
-#endif
 
 // Contact songs array.
 const char *contactSongs[] = {
@@ -44,30 +40,25 @@ const char *contactSongs[] = {
 
 // Current song index
 unsigned int currentSongIndex = 0;
-//AudioPlaySdWav playSdWav1;
-AudioControlSGTL5000 audioShield;
+
 bool isPaused;
 unsigned long pauseStartTime;
 
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
-#define PLAYING_AUDIO_VOLUME 0.75
-#define PAUSED_AUDIO_VOLUME 0.4
+#define PLAYING_MUSIC_VOLUME 1.0
+#define FADE_MUSIC_INIT_VOLUME 0.4
 #define PAUSE_TIMEOUT_MS 2000
-//
-// Music Player Start
+
+// The wav player interface.
+AudioPlaySdWav playSdWav1;
+// The music mixer, used to adjust music volume before sending to audio output.
+AudioMixer4 mixerMusicOutput;
+// Have them both go to the right mixer.
+AudioConnection patchCord11(playSdWav1, 0, mixerMusicOutput, 2);
+// Left channel (music player) plays on the right audio out channel.
+AudioConnection patchCordMOR(mixerMusicOutput, 0, audioOut, 1);
 
 void musicPlayerSetup() {
-  // Audio connections require memory to work.  For more
-  // detailed information, see the MemoryAndCpuUsage example
-  // AudioMemory(12 + 8); // 12 for Sens, 8 for Wav Player
-
-  // Enable the audio shield and set the output volume.
-  audioShield.enable();
-  audioShield.volume(PLAYING_AUDIO_VOLUME);
-  //audioMemory(8); // NOTE:   This memory allocation should be combined with Audio Sense Setup
-  //audioShield.enable();
-  //audioShield.volume(0.5);
-
   // Setup the SPI driver for MicroSd Card
   // Our project uses the on board MicroSd, NOT the AudioShield's MicroSd slot
   SPI.setMOSI(SDCARD_MOSI_PIN);
@@ -82,9 +73,6 @@ void musicPlayerSetup() {
 
 void pauseMusic() {
   if (!isPaused && playSdWav1.isPlaying()) {
-    // Set volume to zero (mute) but keep playing
-    audioShield.volume(PAUSED_AUDIO_VOLUME);
-
     isPaused = true;
     pauseStartTime = millis(); // Record when pausing started
     Serial.println("Music paused (volume minimized)");
@@ -94,7 +82,8 @@ void pauseMusic() {
 void resumeMusic() {
   if (isPaused && playSdWav1.isPlaying()) {
     // Restore volume
-    audioShield.volume(PLAYING_AUDIO_VOLUME);
+    // TODO: ramp volume back up?
+    setMusicVolume(PLAYING_MUSIC_VOLUME);
 
     isPaused = false;
     Serial.println("Music resumed (volume restored)");
@@ -151,6 +140,31 @@ MusicState getMusicState(bool isInitialized) {
   return MUSIC_STATE_PLAYING;
 }
 
+// New helper: updates volume based on fade logic during pause.
+void updateFadedVolume(bool isLinked) {
+  // TODO: Move this logic into ContactState for sharing with lights?
+  // Check if we are paused and not linked. If we're linked, it means
+  // we're in the process of resuming a song.
+  if (isPaused && !isLinked && playSdWav1.isPlaying()) {
+    unsigned long elapsed = millis() - pauseStartTime;
+    float fraction = elapsed / (float)PAUSE_TIMEOUT_MS;
+    if (fraction > 1.0)
+      fraction = 1.0;
+    float newVolume = FADE_MUSIC_INIT_VOLUME * (1.0 - fraction);
+    setMusicVolume(newVolume);
+
+    // Print the volume only if it has changed significantly.
+    // This is to avoid flooding the serial output with too many messages.
+    static int lastSigVolume = -1;
+    int currentSig = (int)(newVolume * 10);
+    if (currentSig != lastSigVolume) {
+      lastSigVolume = currentSig;
+      Serial.print("Fading volume to ");
+      Serial.println(newVolume);
+    }
+  }
+}
+
 /* Play Audio Based On State */
 void playMusic(ContactState state) {
   MusicState musicState = getMusicState(state.isInitialized);
@@ -181,10 +195,10 @@ void playMusic(ContactState state) {
     stopMusic();
     advanceToNextSong();
 
-    // Reset isPaused since we're stopping the song
+    // Reset isPaused since we're stopping the song.
     isPaused = false;
-    // Also reset the volume to the default
-    audioShield.volume(PLAYING_AUDIO_VOLUME);
+    // Also reset the volume to the default.
+    setMusicVolume(PLAYING_MUSIC_VOLUME);
     break;
   case MUSIC_STATE_FINISHED:
     if (state.isLinked) {
@@ -194,8 +208,12 @@ void playMusic(ContactState state) {
       Serial.println("Idle song finished. Looping.");
     }
     break;
+  case MUSIC_STATE_PAUSED:
+    // Update the faded volume based on the elapsed time.
+    updateFadedVolume(state.isLinked);
+    break;
   default:
-    // No action needed for other states
+    // No action needed for other states.
     break;
   }
 
@@ -211,4 +229,8 @@ void playMusic(ContactState state) {
     }
   }
 }
-// Music Player End
+
+void setMusicVolume(float volume) {
+  // Adjust the gain on the music output mixer channel (channel 2)
+  mixerMusicOutput.gain(2, volume);
+}
