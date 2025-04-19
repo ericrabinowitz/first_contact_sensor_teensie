@@ -27,6 +27,8 @@ void reconnect();
 void mqttLoop();
 void initMqtt();
 void publishState(ContactState state);
+bool setInactiveLedState();
+bool setActiveLedState();
 
 extern PubSubClient client; // Externally defined MQTT client instance
 
