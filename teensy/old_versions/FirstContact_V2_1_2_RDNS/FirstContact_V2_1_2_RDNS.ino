@@ -603,7 +603,7 @@ String reverseDnsLookup(IPAddress ip) {
   String Hostname = reverseDnsLookup(Ethernet.localIP());
 
   Serial.printf ("Hostname:");
-  Serial.print (Hostname);
+  Serial.println (Hostname);
 
   //Serial.println( reverseDnsLookup(Ethernet.localIP()));
 
@@ -641,19 +641,25 @@ PubSubClient client(ethClient);
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    char str[128];
+    sprintf (str, "Attempting MQTT connection using [%s] as user name...", hostname);
+    Serial.print(str);
+    //Serial.print("Attempting MQTT connection using [%s] as user name...", hostname);
     // Attempt to connect
-    if (client.connect("ArduinoClient")) {
+    //if (client.connect("ArduinoClient1")) {
+    if (client.connect(hostname)) {
       Serial.println("connected");
       // Once connected, publish an announcement...
       //client.publish("wled/dee","hello world");
 
 
+#if 0 // Test message
       Serial.println("Sending ON");
       client.publish(
         "wled/all/api",
         "{\"on\": true, \"bri\": 255, \"seg\": [{\"col\": [255, 0, 0], \"fx\": 40}, {\"col\": [0, 255, 0], \"fx\": 80}, {\"col\": [0, 0, 255], \"fx\": 70}]}"
       );
+#endif
         // ... and resubscribe
       client.subscribe("wled/all/api");
     } else {
@@ -1195,7 +1201,8 @@ void displaySplashScreen(void) {
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("    1st CONTACT!"));
+                        
+  display.println(F("     Missing Link"));
   display.println(F(""));
   display.println(F(""));
 
