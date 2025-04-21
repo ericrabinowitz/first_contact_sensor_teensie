@@ -265,7 +265,7 @@ PubSubClient client(ethClient);
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    if (client.connect("ArduinoClient")) {
+    if (client.connect(hostname)) {
       Serial.println("connected");
       setInactiveLedState();
       client.subscribe("wled/all/api");
@@ -303,11 +303,63 @@ void publishState(ContactState state) {
     return;
   }
 
-  if (state.isLinked)
-    publishSucceeded = setActiveLedState();
-  else
-    publishSucceeded = setInactiveLedState();
+if (state.isLinked) {
+    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\": \
+      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
+        {\"col\": [0, 255, 255],   \"fx\": 36},   \
+        {\"col\": [128, 128, 255], \"fx\": 36}]   \
+        }");
+  } else {
+    publishSucceeded = client.publish("wled/all/api", "{\"on\": false, \
+        \"bri\": 255, \
+        \"seg\":  \
+      [{\"col\": [255, 0, 0], \"fx\": 42},    \
+        {\"col\": [0, 255, 0], \"fx\": 42},    \
+        {\"col\": [0, 0, 255], \"fx\": 42}]    \
+        }");
+    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\":  \
+      [{\"col\": [255, 0, 0], \"fx\": 42},    \
+        {\"col\": [0, 255, 0], \"fx\": 42},    \
+        {\"col\": [0, 0, 255], \"fx\": 42}]    \
+        }");
+    }
 }
+
+/*
+    publishSucceeded = client.publish("wled/elektra/api", "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\": \
+      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
+        {\"col\": [0, 255, 255],   \"fx\": 36},   \
+        {\"col\": [128, 128, 255], \"fx\": 36}]   \
+        }") && \
+    client.publish("wled/eros/api", "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\": \
+      [{\"col\": [0, 255, 255],   \"fx\": 36},  \
+        {\"col\": [255, 255, 0],   \"fx\": 36},   \
+        {\"col\": [255, 128, 128], \"fx\": 36}]   \
+        }");
+  else
+    publishSucceeded = client.publish("wled/elektra/api", "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\":  \
+      [{\"col\": [255, 0, 0], \"fx\": 42},    \
+        {\"col\": [0, 255, 0], \"fx\": 42},    \
+        {\"col\": [0, 0, 255], \"fx\": 42}]    \
+        }") && \
+      client.publish("wled/eros/api", "{\"on\": true, \
+        \"bri\": 255, \
+        \"seg\":  \
+      [{\"col\": [0, 0, 255], \"fx\": 42},    \
+        {\"col\": [0, 255, 0], \"fx\": 42},    \
+        {\"col\": [255, 0, 0], \"fx\": 42}]    \
+        }");
+  */
 
 // See 
 

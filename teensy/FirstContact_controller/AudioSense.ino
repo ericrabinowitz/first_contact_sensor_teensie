@@ -14,7 +14,7 @@ AudioSense: The contact sensing and audio mixing logic.
 #define SIGNAL_AUDIO_VOLUME 0.75
 
 // Frequencies to Transmit and listen for through hands (f_1 and f_2 are the tx frequencies)
-const int f_1 = 20;
+const int f_1 = 10000;
 // These are unused.
 const int f_2 = 20;
 const int f_3 = 20;
