@@ -50,7 +50,7 @@ unsigned long pauseStartTime;
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
 #define NUM_IDLE_SONGS (sizeof(idleSongs) / sizeof(idleSongs[0]))
 #define PLAYING_MUSIC_VOLUME 1.0
-#define FADE_MUSIC_INIT_VOLUME 0.4
+#define FADE_MUSIC_INIT_VOLUME 0.25
 #define PAUSE_TIMEOUT_MS 2000
 
 // The wav player interface.
