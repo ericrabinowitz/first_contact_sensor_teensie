@@ -37,8 +37,8 @@ const char *contactSongs[] = {
 };
 
 // Dormant songs array.
-const char *idleSongs[] = {"Missing Link Eros dormant.wav",
-                           "Missing Link Electra dormant with background.wav"};
+const char *idleSongs[] = {"Missing Link dormant Eros.wav",
+                           "Missing Link dormant Electra.wav"};
 
 // Current song index
 unsigned int currentSongIndex = 0;
