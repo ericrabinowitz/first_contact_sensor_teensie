@@ -129,9 +129,15 @@ const char *getCurrentSong(bool isLinked) {
 }
 
 // Helper function to determine the current state of music playback
-MusicState getMusicState(bool isInitialized) {
-  if (!isInitialized) {
+MusicState getMusicState(ContactState state) {
+  if (!state.isInitialized) {
     return MUSIC_STATE_NOT_STARTED;
+  }
+
+  if (state.isLinked) {
+    // Reset idle-out timer when entering active state. Each transition to
+    // unlinked/paused starts a new i
+    idleOutTimerStarted = false;
   }
 
   if (isPaused) {
@@ -153,7 +159,8 @@ MusicState getMusicState(bool isInitialized) {
 
   // once pause-timeout was set, after 30 s of idle play, enter idle-out
   if (idleOutTimerStarted
-      && (millis() - idleOutStartTime >= IDLE_OUT_TIMEOUT_MS)) {
+      && (millis() - idleOutStartTime >= IDLE_OUT_TIMEOUT_MS)
+    ) {
     return MUSIC_STATE_RECENT_CONNECTION_IDLE_OUT;
   }
 
@@ -200,7 +207,7 @@ static void handlePauseComplete() {
 
 /* Play Audio Based On State */
 void playMusic(ContactState state) {
-  MusicState musicState = getMusicState(state.isInitialized);
+  MusicState musicState = getMusicState(state);
 
   // State transition: Connected -> Disconnected.
   if (state.wasLinked && !state.isLinked) {

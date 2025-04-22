@@ -19,7 +19,7 @@ typedef enum {
 } MusicState;
 
 // Function prototypes for Music Player
-MusicState getMusicState(bool isInitialized);
+MusicState getMusicState(ContactState state);
 void musicPlayerSetup();
 void pauseMusic();
 void resumeMusic();
