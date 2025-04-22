@@ -13,6 +13,7 @@ typedef enum {
   MUSIC_STATE_PLAYING,        // Music is playing at normal volume.
   MUSIC_STATE_PAUSED,         // Music is playing but at lower volume.
   MUSIC_STATE_PAUSE_TIMEOUT,  // Music was paused but timeout occurred.
+  MUSIC_STATE_RECENT_CONNECTION_IDLE_OUT,   // new: waiting 30s idle-out
   MUSIC_STATE_PAUSE_FINISHED, // Music was paused and finished.
   MUSIC_STATE_FINISHED        // A song has finished playing.
 } MusicState;

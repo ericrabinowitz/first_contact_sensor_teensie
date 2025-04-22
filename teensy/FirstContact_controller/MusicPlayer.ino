@@ -52,6 +52,10 @@ unsigned long pauseStartTime;
 #define PLAYING_MUSIC_VOLUME 1.0
 #define FADE_MUSIC_INIT_VOLUME 0.25
 #define PAUSE_TIMEOUT_MS 2000
+#define IDLE_OUT_TIMEOUT_MS 30000 // new 30s idle-out
+
+static unsigned long idleOutStartTime = 0;    // new
+static bool idleOutTimerStarted = false;      // new
 
 // The wav player interface.
 AudioPlaySdWav playSdWav1;
@@ -129,24 +133,33 @@ MusicState getMusicState(bool isInitialized) {
   if (!isInitialized) {
     return MUSIC_STATE_NOT_STARTED;
   }
+
   if (isPaused) {
-    // Check if pause has timed out
-    if (millis() - pauseStartTime > PAUSE_TIMEOUT_MS) {
-      Serial.println("Music paused timeout.");
-      return MUSIC_STATE_PAUSE_TIMEOUT;
-    } else if (!playSdWav1.isPlaying()) {
-      // If music is paused but not playing it ended while paused.
-      // Treat it as timed out.
-      Serial.println("Music ended while paused.");
-      return MUSIC_STATE_PAUSE_FINISHED;
+    // still within the fade/pause window?
+    if (millis() - pauseStartTime <= PAUSE_TIMEOUT_MS) {
+      // if playback stopped while paused, treat as finished
+      if (!playSdWav1.isPlaying()) {
+        return MUSIC_STATE_PAUSE_FINISHED;
+      }
+      return MUSIC_STATE_PAUSED;
     }
-    return MUSIC_STATE_PAUSED;
+    // pause has timed out → start idle-out timer
+    if (!idleOutTimerStarted) {
+      idleOutTimerStarted = true;
+      idleOutStartTime = millis();
+    }
+    return MUSIC_STATE_PAUSE_TIMEOUT;
+  }
+
+  // once pause-timeout was set, after 30 s of idle play, enter idle-out
+  if (idleOutTimerStarted
+      && (millis() - idleOutStartTime >= IDLE_OUT_TIMEOUT_MS)) {
+    return MUSIC_STATE_RECENT_CONNECTION_IDLE_OUT;
   }
 
   if (!playSdWav1.isPlaying()) {
     return MUSIC_STATE_FINISHED;
   }
-
   return MUSIC_STATE_PLAYING;
 }
 
@@ -175,6 +188,16 @@ void updateFadedVolume(bool isLinked) {
   }
 }
 
+// new helper to factor common pause-complete actions
+static void handlePauseComplete() {
+  stopMusic();
+  queueNextIdleSong();
+  // Reset isPaused since we're stopping the song.
+  isPaused = false;
+  // Also reset the volume to the default.
+  setMusicVolume(PLAYING_MUSIC_VOLUME);
+}
+
 /* Play Audio Based On State */
 void playMusic(ContactState state) {
   MusicState musicState = getMusicState(state.isInitialized);
@@ -199,17 +222,19 @@ void playMusic(ContactState state) {
 
   // Handle pause timeout and finished states.
   switch (musicState) {
-  case MUSIC_STATE_PAUSE_TIMEOUT:
-  case MUSIC_STATE_PAUSE_FINISHED:
-    Serial.println("Pause timed out. Stopping song to switch to dormant.");
-    stopMusic();
+  case MUSIC_STATE_RECENT_CONNECTION_IDLE_OUT:
+    Serial.println("Recent connection idled out. Queuing next active song.");
     queueNextActiveSong();
-    queueNextIdleSong();
-
-    // Reset isPaused since we're stopping the song.
-    isPaused = false;
-    // Also reset the volume to the default.
-    setMusicVolume(PLAYING_MUSIC_VOLUME);
+    break;
+  case MUSIC_STATE_PAUSE_TIMEOUT:
+    Serial.println("Pause timed out. Switching to dormant music.");
+    handlePauseComplete();
+    break;
+  case MUSIC_STATE_PAUSE_FINISHED:
+    Serial.println("Song finished while fading. Stopping and switching to dormant.");
+    handlePauseComplete();
+    // Queue the next active song, because the song finished.
+    queueNextActiveSong();
     break;
   case MUSIC_STATE_FINISHED:
     if (state.isLinked) {
