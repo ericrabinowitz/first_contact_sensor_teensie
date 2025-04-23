@@ -305,28 +305,18 @@ void publishState(ContactState state) {
 
 if (state.isLinked) {
     publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\": \
-      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
-        {\"col\": [0, 255, 255],   \"fx\": 36},   \
-        {\"col\": [128, 128, 255], \"fx\": 36}]   \
-        }");
+      \"seg\": \
+      [{\"col\": [255, 0, 0], \"bri\": 255, \"fx\": 36},  \
+      {\"col\": [255, 255, 255, 255], \"bri\": 200, \"fx\": 0}]   \
+    }");
   } else {
-    publishSucceeded = client.publish("wled/all/api", "{\"on\": false, \
-        \"bri\": 255, \
-        \"seg\":  \
-      [{\"col\": [255, 0, 0], \"fx\": 42},    \
-        {\"col\": [0, 255, 0], \"fx\": 42},    \
-        {\"col\": [0, 0, 255], \"fx\": 42}]    \
-        }");
+    //publishSucceeded = client.publish("wled/all/api", "{\"on\": false}");
     publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\":  \
-      [{\"col\": [255, 0, 0], \"fx\": 42},    \
-        {\"col\": [0, 255, 0], \"fx\": 42},    \
-        {\"col\": [0, 0, 255], \"fx\": 42}]    \
-        }");
-    }
+      \"seg\":  \
+      [{\"col\": [0, 0, 255], \"bri\": 255, \"fx\": 42},    \
+      {\"col\": [255, 255, 255, 255], \"bri\": 0, \"fx\": 0}]   \
+    }");
+  }
 }
 
 /*
