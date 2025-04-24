@@ -136,8 +136,7 @@ MusicState getMusicState(ContactState state) {
 
   if (state.isLinked) {
     // Reset idle-out timer when entering active state. Each transition to
-    // unlinked/paused starts a new i
-    idleOutTimerStarted = false;
+    // an unlinked or paused state starts a new idle-out timer.
   }
 
   if (isPaused) {
