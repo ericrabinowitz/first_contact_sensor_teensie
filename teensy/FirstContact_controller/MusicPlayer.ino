@@ -161,6 +161,8 @@ MusicState getMusicState(ContactState state) {
   if (idleOutTimerStarted
       && (millis() - idleOutStartTime >= IDLE_OUT_TIMEOUT_MS)
     ) {
+    // Reset the idle out timer, to take action (e.g. queue next song) only once.
+    idleOutTimerStarted = false;
     return MUSIC_STATE_RECENT_CONNECTION_IDLE_OUT;
   }
 
