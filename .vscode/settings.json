@@ -1,5 +1,15 @@
 {
-  "cSpell.words": ["CONNACK", "elektra", "mqttc", "Perc", "Remi", "WLED"],
+  "cSpell.words": [
+    "CONNACK",
+    "dnsmasq",
+    "elektra",
+    "mosquitto",
+    "mqttc",
+    "Perc",
+    "Perlin",
+    "Remi",
+    "WLED"
+  ],
   "files.associations": {
     "ostream": "cpp",
     "print": "cpp"

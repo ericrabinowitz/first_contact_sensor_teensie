@@ -48,3 +48,5 @@ dnsmasq.enable
 dnsmasq.restart
 dnsmasq.status
 
+# Install python dependency manager
+wget -qO- https://astral.sh/uv/install.sh | sh
