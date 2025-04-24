@@ -7,7 +7,7 @@
 # wget -qO- https://astral.sh/uv/install.sh | sh
 
 # Execute
-# ./on.py
+# ./mqtt_test.py
 
 import paho.mqtt.client as mqtt
 import json
@@ -23,7 +23,7 @@ MQTT_PASSWORD = None  # If using authentication, otherwise set as None
 # effects)
 # Example: A simple JSON message for WLED to change color or effect
 message = {
-    "on": True,  # Turn on WLED
+    "on": False,  # Turn on WLED
     "bri": 255,  # Maximum brightness
     "seg": [
         {

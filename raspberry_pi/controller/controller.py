@@ -3,15 +3,14 @@
 # dependencies = ["httpx", "paho-mqtt"]
 # ///
 
-# Installation
+# Install
 # wget -qO- https://astral.sh/uv/install.sh | sh
 
-# Led strings:
-# arch
-# heart, head, snake (optional)
-# hand - always on?
+# Execute
+# ./controller.py
 
 from enum import Enum
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import math
 import os
@@ -19,7 +18,7 @@ import threading
 
 import httpx
 import paho.mqtt.client as mqtt
-from http.server import BaseHTTPRequestHandler, HTTPServer
+
 
 ### Reference docs
 # https://docs.google.com/document/d/107ZdOsc81E29lZZVTtqirHpqJKrvnqui0-EGSTGGslk/edit?tab=t.0
@@ -147,42 +146,48 @@ def postToWled(payload):
 
 
 def wledOff(segmentId):
-    postToWled({
-        "seg": [
-            {
-                "id": segmentId,
-                "on": "f",
-            }
-        ]
-    })
+    postToWled(
+        {
+            "seg": [
+                {
+                    "id": segmentId,
+                    "on": "f",
+                }
+            ]
+        }
+    )
 
 
 def wledFadeOff(segmentId):
-    postToWled({
-        "seg": [
-            {
-                "id": segmentId,
-                "on": "f",
-                "tt": FADE_MS / 100,  # transition time, in units of 100ms
-            }
-        ]
-    })
+    postToWled(
+        {
+            "seg": [
+                {
+                    "id": segmentId,
+                    "on": "f",
+                    "tt": FADE_MS / 100,  # transition time, in units of 100ms
+                }
+            ]
+        }
+    )
 
 
 ### Actions
 
 
 def hapticMotorOn():
-    postToWled({
-        "seg": [
-            {
-                "id": hapticMotor.id,
-                "on": "t",
-                "bri": math.round(255 * hapticMotor.brightnessPerc),
-                "col": [[0, 0, 0, 255]],
-            }
-        ]
-    })
+    postToWled(
+        {
+            "seg": [
+                {
+                    "id": hapticMotor.id,
+                    "on": "t",
+                    "bri": math.round(255 * hapticMotor.brightnessPerc),
+                    "col": [[0, 0, 0, 255]],
+                }
+            ]
+        }
+    )
 
 
 def hapticMotorOff():
@@ -191,17 +196,19 @@ def hapticMotorOff():
 
 def ledsOn(name):
     # TODO: palettes?
-    postToWled({
-        "seg": [
-            {
-                "id": leds[name].id,
-                "on": "t",
-                "bri": math.round(255 * leds[name].brightnessPerc),
-                "col": [[255, 0, 0], [0, 255, 0], [0, 0, 255]],
-                "fx": effectToId[leds[name].effect.value],
-            }
-        ]
-    })
+    postToWled(
+        {
+            "seg": [
+                {
+                    "id": leds[name].id,
+                    "on": "t",
+                    "bri": math.round(255 * leds[name].brightnessPerc),
+                    "col": [[255, 0, 0], [0, 255, 0], [0, 0, 255]],
+                    "fx": effectToId[leds[name].effect.value],
+                }
+            ]
+        }
+    )
 
 
 def ledsOff(name):
@@ -209,18 +216,20 @@ def ledsOff(name):
 
 
 def ledsFadeOn(name):
-    postToWled({
-        "seg": [
-            {
-                "id": leds[name].id,
-                "on": "t",
-                "bri": math.round(255 * leds[name].brightnessPerc),
-                "col": [[255, 0, 0], [0, 255, 0], [0, 0, 255]],
-                "fx": effectToId[leds[name].effect.value],
-                "tt": FADE_MS / 100,  # transition time, in units of 100ms
-            }
-        ]
-    })
+    postToWled(
+        {
+            "seg": [
+                {
+                    "id": leds[name].id,
+                    "on": "t",
+                    "bri": math.round(255 * leds[name].brightnessPerc),
+                    "col": [[255, 0, 0], [0, 255, 0], [0, 0, 255]],
+                    "fx": effectToId[leds[name].effect.value],
+                    "tt": FADE_MS / 100,  # transition time, in units of 100ms
+                }
+            ]
+        }
+    )
 
 
 def ledsFadeOff(name):
@@ -228,45 +237,60 @@ def ledsFadeOff(name):
 
 
 def audioOn(client):
-    publishMqtt(client, {
-        "action": "play",
-        "song": currentSong,
-        "transitionMs": 0,
-        "volume": 100,
-    })
+    publishMqtt(
+        client,
+        {
+            "action": "play",
+            "song": currentSong,
+            "transitionMs": 0,
+            "volume": 100,
+        },
+    )
 
 
 def audioOff(client):
-    publishMqtt(client, {
-        "action": "pause",
-        "transitionMs": 0,
-        "coolDownMs": 0,
-    })
+    publishMqtt(
+        client,
+        {
+            "action": "pause",
+            "transitionMs": 0,
+            "coolDownMs": 0,
+        },
+    )
 
 
 def audioFadeOn(client):
-    publishMqtt(client, {
-        "action": "play",
-        "song": currentSong,
-        "transitionMs": FADE_MS,
-        "volume": 100,
-    })
+    publishMqtt(
+        client,
+        {
+            "action": "play",
+            "song": currentSong,
+            "transitionMs": FADE_MS,
+            "volume": 100,
+        },
+    )
 
 
 def audioFadeOff(client):
-    publishMqtt(client, {
-        "action": "pause",
-        "transitionMs": FADE_MS,
-        "coolDownMs": 0,
-    })
+    publishMqtt(
+        client,
+        {
+            "action": "pause",
+            "transitionMs": FADE_MS,
+            "coolDownMs": 0,
+        },
+    )
 
 
 def audioRecentOff(client):
-    publishMqtt(client, {
-        "action": "pause",
-        "transitionMs": 0,
-        "coolDownMs": COOL_DOWN_MS,
-    })
+    publishMqtt(
+        client,
+        {
+            "action": "pause",
+            "transitionMs": 0,
+            "coolDownMs": COOL_DOWN_MS,
+        },
+    )
 
 
 ### Debug server
@@ -293,14 +317,16 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/":
-            self._send_response({
-                "description": "Missing Link rpi controller script",
-                "current_mode": currentMode.value,
-                "current_song": currentSong,
-                "haptic_motor": hapticMotor,
-                "leds": leds,
-                "effectToId": effectToId,
-            })
+            self._send_response(
+                {
+                    "description": "Missing Link rpi controller script",
+                    "current_mode": currentMode.value,
+                    "current_song": currentSong,
+                    "haptic_motor": hapticMotor,
+                    "leds": leds,
+                    "effectToId": effectToId,
+                }
+            )
         else:
             self._send_404()
 
@@ -316,52 +342,66 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
         if self.path == "/mode":
             try:
                 currentMode = Mode(data["mode"])
-                self._send_response({
-                    "current_mode": currentMode.value,
-                })
+                self._send_response(
+                    {
+                        "current_mode": currentMode.value,
+                    }
+                )
                 print("current operating mode:", currentMode.name)
             except Exception as e:
                 print(e)
                 self._send_400()
         elif self.path == "/song":
             currentSong = data.get("song", currentSong)
-            self._send_response({
-                "current_mode": currentMode.value,
-            })
+            self._send_response(
+                {
+                    "current_mode": currentMode.value,
+                }
+            )
             print("current contact song:", currentSong)
         elif self.path == "/effect":
             try:
                 effect = Effect[data["effect"].upper()]
                 led = data["led"]
                 leds[led].effect = effect
-                self._send_response({
-                    "current_mode": currentMode.value,
-                })
+                self._send_response(
+                    {
+                        "current_mode": currentMode.value,
+                    }
+                )
                 print(f"current effect for {led}: {effect.name}")
             except Exception as e:
                 print(e)
                 self._send_400()
         elif self.path == "/touch":
             action = data.get("action", "start")
-            code = publishMqtt({
-                "type": "touch",
-                "action": action,
-            })
-            self._send_response({
-                "status_code": code,
-            })
+            code = publishMqtt(
+                {
+                    "type": "touch",
+                    "action": action,
+                }
+            )
+            self._send_response(
+                {
+                    "status_code": code,
+                }
+            )
             print(f"triggered a touch {action} event")
         elif self.path == "/wled":
             code = postToWled(data)
-            self._send_response({
-                "status_code": code,
-            })
+            self._send_response(
+                {
+                    "status_code": code,
+                }
+            )
             print("sent the following to WLED:", json.dumps(data))
         elif self.path == "/mqtt":
             code = publishMqtt(data)
-            self._send_response({
-                "status_code": code,
-            })
+            self._send_response(
+                {
+                    "status_code": code,
+                }
+            )
             print("sent the following to MQTT:", json.dumps(data))
         else:
             self._send_404()
@@ -392,7 +432,7 @@ def on_connect(mqttc, userdata, flags, reason_code, properties):
 # The callback for when a PUBLISH message is received from the server.
 def on_message(mqttc, userdata, msg):
     if DEBUG:
-        print(msg.topic+" "+str(msg.payload))
+        print(msg.topic + " " + str(msg.payload))
     payload = json.loads(msg.payload)
     run_controller(mqttc, payload)
 
