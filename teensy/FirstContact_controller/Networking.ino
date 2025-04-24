@@ -314,26 +314,26 @@ if (state.isLinked) {
 // segment 1 = haptic motors
 
 bool setActiveLedState() {
-  bool result = client.publish("wled/elektra/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 0], [0, 255, 255], [128, 128, 255]], \"fx\": 36}, \
-    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]}   \
+  bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[0, 25, 255], [0, 200, 255], [0, 25, 255]], \"fx\": 72, \"pal\": 3}, \
+    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]} \
   ]}");
 
-  return result && client.publish("wled/eros/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[0, 255 255], [255, 255, 0], [255, 128, 128]], \"fx\": 36}, \
-    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]}   \
+  return result && client.publish("wled/eros/api", "{\"tt\": 0, \"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 0, 100], [225, 0, 255], [255, 0, 100]], \"fx\": 72, \"pal\": 3}, \
+    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]} \
   ]}");
 }
 
 bool setInactiveLedState() {
-  bool result = client.publish("wled/elektra/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 0}, \
-    {\"id\": 1, \"on\": false, \"bri\": 0}   \
+  bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 42}, \
+    {\"id\": 1, \"on\": false, \"bri\": 0} \
   ]}");
 
-  return result && client.publish("wled/eros/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 0}, \
-    {\"id\": 1, \"on\": false, \"bri\": 0}   \
+  return result && client.publish("wled/eros/api", "{\"tt\": 0, \"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 42}, \
+    {\"id\": 1, \"on\": false, \"bri\": 0} \
   ]}");
 }
 
