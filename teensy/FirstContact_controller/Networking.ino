@@ -307,6 +307,7 @@ if (state.isLinked) {
     publishSucceeded = setActiveLedState();
   } else {
     publishSucceeded = setInactiveLedState();
+  }
 }
 
 // segment 0 = LEDs
