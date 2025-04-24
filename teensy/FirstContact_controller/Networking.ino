@@ -304,6 +304,39 @@ void publishState(ContactState state) {
   }
 
 if (state.isLinked) {
+    publishSucceeded = setActiveLedState();
+  } else {
+    publishSucceeded = setInactiveLedState();
+}
+
+// segment 0 = LEDs
+// segment 1 = haptic motors
+
+bool setActiveLedState() {
+  bool result = client.publish("wled/elektra/api", "{\"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 0], [0, 255, 255], [128, 128, 255]], \"fx\": 36}, \
+    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]}   \
+  ]}");
+
+  return result && client.publish("wled/eros/api", "{\"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[0, 255 255], [255, 255, 0], [255, 128, 128]], \"fx\": 36}, \
+    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]}   \
+  ]}");
+}
+
+bool setInactiveLedState() {
+  bool result = client.publish("wled/elektra/api", "{\"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 0}, \
+    {\"id\": 1, \"on\": false, \"bri\": 0}   \
+  ]}");
+
+  return result && client.publish("wled/eros/api", "{\"seg\": [ \
+    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 0}, \
+    {\"id\": 1, \"on\": false, \"bri\": 0}   \
+  ]}");
+}
+
+/*
     publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
         \"bri\": 255, \
         \"seg\": \
@@ -311,7 +344,7 @@ if (state.isLinked) {
         {\"col\": [0, 255, 255],   \"fx\": 36},   \
         {\"col\": [128, 128, 255], \"fx\": 36}]   \
         }");
-  } else {
+  else
     publishSucceeded = client.publish("wled/all/api", "{\"on\": false, \
         \"bri\": 255, \
         \"seg\":  \
@@ -326,8 +359,7 @@ if (state.isLinked) {
         {\"col\": [0, 255, 0], \"fx\": 42},    \
         {\"col\": [0, 0, 255], \"fx\": 42}]    \
         }");
-    }
-}
+*/
 
 /*
     publishSucceeded = client.publish("wled/elektra/api", "{\"on\": true, \
@@ -360,43 +392,3 @@ if (state.isLinked) {
         {\"col\": [255, 0, 0], \"fx\": 42}]    \
         }");
   */
-
-// See 
-
-bool setActiveLedState() {
-  bool result = client.publish("wled/electra/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]},    \
-    {\"id\": 1, \"on\": true, \"bri\": 255, \"col\": [255, 0, 100], \"fx\": 3}, \
-    {\"id\": 2, \"on\": true, \"bri\": 255, \"col\": [255, 0, 100], \"fx\": 3}, \
-    {\"id\": 3, \"on\": true, \"bri\": 255, \"col\": [255, 0, 100], \"fx\": 3}, \
-    {\"id\": 4, \"on\": true, \"bri\": 255, \"col\": [255, 0, 100], \"fx\": 3}  \
-  ]}");
-
-  return result && client.publish("wled/eros/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]},    \
-    {\"id\": 1, \"on\": true, \"bri\": 255, \"col\": [0, 200, 255], \"fx\": 3}, \
-    {\"id\": 2, \"on\": true, \"bri\": 255, \"col\": [0, 200, 255], \"fx\": 3}, \
-    {\"id\": 3, \"on\": true, \"bri\": 255, \"col\": [0, 200, 255], \"fx\": 3}, \
-    {\"id\": 4, \"on\": true, \"bri\": 255, \"col\": [0, 200, 255], \"fx\": 3}, \
-    {\"id\": 5, \"on\": true, \"bri\": 255, \"col\": [0, 200, 255], \"fx\": 3}  \
-  ]}");
-}
-
-bool setInactiveLedState() {
-  bool result = client.publish("wled/electra/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": false}, \
-    {\"id\": 1, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}, \
-    {\"id\": 2, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}, \
-    {\"id\": 3, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}, \
-    {\"id\": 4, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}  \
-  ]}");
-
-  return result && client.publish("wled/eros/api", "{\"seg\": [ \
-    {\"id\": 0, \"on\": false}, \
-    {\"id\": 1, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}, \
-    {\"id\": 2, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}, \
-    {\"id\": 3, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}, \
-    {\"id\": 4, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}, \
-    {\"id\": 5, \"on\": true, \"bri\": 200, \"col\": [255, 255, 255], \"fx\": 0}  \
-  ]}");
-}
