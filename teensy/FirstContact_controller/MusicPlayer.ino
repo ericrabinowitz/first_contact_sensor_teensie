@@ -50,9 +50,9 @@ unsigned long pauseStartTime;
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
 #define NUM_IDLE_SONGS (sizeof(idleSongs) / sizeof(idleSongs[0]))
 #define PLAYING_MUSIC_VOLUME 1.0
-#define FADE_MUSIC_INIT_VOLUME 0.25
+#define FADE_MUSIC_INIT_VOLUME 0.15
 #define PAUSE_TIMEOUT_MS 2000
-#define IDLE_OUT_TIMEOUT_MS 30000 // new 30s idle-out
+#define IDLE_OUT_TIMEOUT_MS 10000 // new 10s idle-out
 
 static unsigned long idleOutStartTime = 0;    // new
 static bool idleOutTimerStarted = false;      // new
