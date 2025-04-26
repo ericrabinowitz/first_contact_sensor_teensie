@@ -140,5 +140,5 @@ void loop() {
   displayTimeCount();
 
   // Drive haptics based on state
-  driveHaptics(state); // Add this call
+  driveHaptics(state);
 }
