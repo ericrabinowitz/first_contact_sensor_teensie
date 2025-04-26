@@ -86,6 +86,7 @@ I found it helpful to wire one of the buttons to the two pin contacts for conven
 #include "Display.h"
 #include "MusicPlayer.h"
 #include "Networking.h"
+#include "Haptics.h" // Add this include
 
 void setup() {
   // Display Setup
@@ -137,4 +138,7 @@ void loop() {
   displayActivityStatus(state.isLinked);
   // Update the count and time at the bottom of the display.
   displayTimeCount();
+
+  // Drive haptics based on state
+  driveHaptics(state); // Add this call
 }

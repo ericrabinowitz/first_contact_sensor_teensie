@@ -8,11 +8,6 @@ Networking: The ethernet, DNS, and MQTT WLED messaging logic.
 using namespace qindesign::network;
 
 
-const unsigned int HAPTIC_MOTOR_PIN = 29;
-const unsigned int HAPTIC_MOTOR_FREQUENCY = 400;
-// [0-255]. 128 is 50% duty cycle.
-const unsigned int HAPTIC_MOTOR_DUTY_CYCLE_VALUE = 512;
-
 // --- UDP and DNS Setup ---
 EthernetUDP udp;
 const unsigned int DNS_PORT = 53;
@@ -296,11 +291,6 @@ void initMqtt() {
   client.setCallback(mqttSubCallback);
 }
 
-void initHaptics() {
-  analogWriteFrequency(HAPTIC_MOTOR_PIN, HAPTIC_MOTOR_FREQUENCY);
-  analogWriteResolution(10);
-}
-
 /*
   publishState() - Publish via MQTT if we are on(Connected) or off
       - This routine is called at high-speed in our main loop
@@ -324,8 +314,6 @@ if (state.isLinked) {
 // segment 0 = all LEDs
 
 bool setActiveLedState() {
-  analogWrite(HAPTIC_MOTOR_PIN, HAPTIC_MOTOR_DUTY_CYCLE_VALUE);
-
   bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [{ \
     \"id\": 0, \
     \"on\": true, \
@@ -346,8 +334,6 @@ bool setActiveLedState() {
 }
 
 bool setInactiveLedState() {
-  analogWrite(HAPTIC_MOTOR_PIN, 0);
-
   return client.publish("wled/all/api", "{\"tt\": 0, \"seg\": [{ \
     \"id\": 0, \
     \"on\": true, \

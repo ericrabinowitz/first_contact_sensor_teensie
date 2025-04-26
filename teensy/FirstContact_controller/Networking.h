@@ -32,7 +32,4 @@ bool setActiveLedState();
 
 extern PubSubClient client; // Externally defined MQTT client instance
 
-// Haptics helper functions.
-void initHaptics();
-
 #endif // NETWORKING_H
