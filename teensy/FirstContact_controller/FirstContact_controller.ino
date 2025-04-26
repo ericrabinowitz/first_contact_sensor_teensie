@@ -112,6 +112,9 @@ void setup() {
   // Music Player Setup
   Serial.printf("_______Audio Music Init________\n");
   musicPlayerSetup();
+
+  // Haptic Setup
+  initHaptics();
 }
 
 void loop() {

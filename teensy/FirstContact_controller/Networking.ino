@@ -7,8 +7,11 @@ Networking: The ethernet, DNS, and MQTT WLED messaging logic.
 
 using namespace qindesign::network;
 
-const unsigned int HAPTIC_MOTOR_PIN_L = 9;
-const unsigned int HAPTIC_MOTOR_PIN_R = 10;
+
+const unsigned int HAPTIC_MOTOR_PIN = 29;
+const unsigned int HAPTIC_MOTOR_FREQUENCY = 400;
+// [0-255]. 128 is 50% duty cycle.
+const unsigned int HAPTIC_MOTOR_DUTY_CYCLE_VALUE = 512;
 
 // --- UDP and DNS Setup ---
 EthernetUDP udp;
@@ -293,6 +296,11 @@ void initMqtt() {
   client.setCallback(mqttSubCallback);
 }
 
+void initHaptics() {
+  analogWriteFrequency(HAPTIC_MOTOR_PIN, HAPTIC_MOTOR_FREQUENCY);
+  analogWriteResolution(10);
+}
+
 /*
   publishState() - Publish via MQTT if we are on(Connected) or off
       - This routine is called at high-speed in our main loop
@@ -316,38 +324,36 @@ if (state.isLinked) {
 // segment 0 = all LEDs
 
 bool setActiveLedState() {
-  analogWrite(HAPTIC_MOTOR_PIN_L, 150);
-  analogWrite(HAPTIC_MOTOR_PIN_R, 150);
+  analogWrite(HAPTIC_MOTOR_PIN, HAPTIC_MOTOR_DUTY_CYCLE_VALUE);
 
   bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [{ \
-    \"id\": 0,
-    \"on\": true,
-    \"bri\": 255,
-    \"col\": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
-    \"fx\": 72,
-    \"pal\": 3
+    \"id\": 0, \
+    \"on\": true, \
+    \"bri\": 255, \
+    \"col\": [[0, 25, 255], [0, 200, 255], [0, 25, 255]], \
+    \"fx\": 72, \
+    \"pal\": 3 \
   }]}");
 
   return result && client.publish("wled/eros/api", "{\"tt\": 0, \"seg\": [{ \
-    \"id\": 0,
-    \"on\": true,
-    \"bri\": 255,
-    \"col\": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
-    \"fx\": 72,
-    \"pal\": 3
+    \"id\": 0, \
+    \"on\": true, \
+    \"bri\": 255, \
+    \"col\": [[255, 0, 100], [225, 0, 255], [255, 0, 100]], \
+    \"fx\": 72, \
+    \"pal\": 3 \
   }]}");
 }
 
 bool setInactiveLedState() {
-  analogWrite(HAPTIC_MOTOR_PIN_L, 0);
-  analogWrite(HAPTIC_MOTOR_PIN_R, 0);
+  analogWrite(HAPTIC_MOTOR_PIN, 0);
 
   return client.publish("wled/all/api", "{\"tt\": 0, \"seg\": [{ \
-    \"id\": 0,
-    \"on\": true,
-    \"bri\": 255,
-    \"col\": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
-    \"fx\": 42,
-    \"pal\": 3
+    \"id\": 0, \
+    \"on\": true, \
+    \"bri\": 255, \
+    \"col\": [[255, 255, 255], [0, 0, 0], [0, 0, 0]], \
+    \"fx\": 42, \
+    \"pal\": 3 \
   }]}");
 }
