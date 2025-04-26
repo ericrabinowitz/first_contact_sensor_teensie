@@ -7,6 +7,7 @@ Networking: The ethernet, DNS, and MQTT WLED messaging logic.
 
 using namespace qindesign::network;
 
+
 // --- UDP and DNS Setup ---
 EthernetUDP udp;
 const unsigned int DNS_PORT = 53;
@@ -310,86 +311,35 @@ if (state.isLinked) {
   }
 }
 
-// segment 0 = LEDs
-// segment 1 = haptic motors
+// segment 0 = all LEDs
 
 bool setActiveLedState() {
-  bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[0, 25, 255], [0, 200, 255], [0, 25, 255]], \"fx\": 72, \"pal\": 3}, \
-    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]} \
-  ]}");
+  bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [{ \
+    \"id\": 0, \
+    \"on\": true, \
+    \"bri\": 255, \
+    \"col\": [[0, 25, 255], [0, 200, 255], [0, 25, 255]], \
+    \"fx\": 72, \
+    \"pal\": 3 \
+  }]}");
 
-  return result && client.publish("wled/eros/api", "{\"tt\": 0, \"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 0, 100], [225, 0, 255], [255, 0, 100]], \"fx\": 72, \"pal\": 3}, \
-    {\"id\": 1, \"on\": true, \"bri\": 170, \"col\": [[255, 255, 255, 255]]} \
-  ]}");
+  return result && client.publish("wled/eros/api", "{\"tt\": 0, \"seg\": [{ \
+    \"id\": 0, \
+    \"on\": true, \
+    \"bri\": 255, \
+    \"col\": [[255, 0, 100], [225, 0, 255], [255, 0, 100]], \
+    \"fx\": 72, \
+    \"pal\": 3 \
+  }]}");
 }
 
 bool setInactiveLedState() {
-  bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 42}, \
-    {\"id\": 1, \"on\": false, \"bri\": 0} \
-  ]}");
-
-  return result && client.publish("wled/eros/api", "{\"tt\": 0, \"seg\": [ \
-    {\"id\": 0, \"on\": true, \"bri\": 255, \"col\": [[255, 255, 255], [255, 255, 255], [255, 255, 255]], \"fx\": 42}, \
-    {\"id\": 1, \"on\": false, \"bri\": 0} \
-  ]}");
+  return client.publish("wled/all/api", "{\"tt\": 0, \"seg\": [{ \
+    \"id\": 0, \
+    \"on\": true, \
+    \"bri\": 255, \
+    \"col\": [[255, 255, 255], [0, 0, 0], [0, 0, 0]], \
+    \"fx\": 42, \
+    \"pal\": 3 \
+  }]}");
 }
-
-/*
-    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\": \
-      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
-        {\"col\": [0, 255, 255],   \"fx\": 36},   \
-        {\"col\": [128, 128, 255], \"fx\": 36}]   \
-        }");
-  else
-    publishSucceeded = client.publish("wled/all/api", "{\"on\": false, \
-        \"bri\": 255, \
-        \"seg\":  \
-      [{\"col\": [255, 0, 0], \"fx\": 42},    \
-        {\"col\": [0, 255, 0], \"fx\": 42},    \
-        {\"col\": [0, 0, 255], \"fx\": 42}]    \
-        }");
-    publishSucceeded = client.publish("wled/all/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\":  \
-      [{\"col\": [255, 0, 0], \"fx\": 42},    \
-        {\"col\": [0, 255, 0], \"fx\": 42},    \
-        {\"col\": [0, 0, 255], \"fx\": 42}]    \
-        }");
-*/
-
-/*
-    publishSucceeded = client.publish("wled/elektra/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\": \
-      [{\"col\": [255, 255, 0],   \"fx\": 36},  \
-        {\"col\": [0, 255, 255],   \"fx\": 36},   \
-        {\"col\": [128, 128, 255], \"fx\": 36}]   \
-        }") && \
-    client.publish("wled/eros/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\": \
-      [{\"col\": [0, 255, 255],   \"fx\": 36},  \
-        {\"col\": [255, 255, 0],   \"fx\": 36},   \
-        {\"col\": [255, 128, 128], \"fx\": 36}]   \
-        }");
-  else
-    publishSucceeded = client.publish("wled/elektra/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\":  \
-      [{\"col\": [255, 0, 0], \"fx\": 42},    \
-        {\"col\": [0, 255, 0], \"fx\": 42},    \
-        {\"col\": [0, 0, 255], \"fx\": 42}]    \
-        }") && \
-      client.publish("wled/eros/api", "{\"on\": true, \
-        \"bri\": 255, \
-        \"seg\":  \
-      [{\"col\": [0, 0, 255], \"fx\": 42},    \
-        {\"col\": [0, 255, 0], \"fx\": 42},    \
-        {\"col\": [255, 0, 0], \"fx\": 42}]    \
-        }");
-  */
