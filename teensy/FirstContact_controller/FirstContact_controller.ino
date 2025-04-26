@@ -86,7 +86,7 @@ I found it helpful to wire one of the buttons to the two pin contacts for conven
 #include "Display.h"
 #include "MusicPlayer.h"
 #include "Networking.h"
-#include "Haptics.h" // Add this include
+#include "Haptics.h"
 
 void setup() {
   // Display Setup
