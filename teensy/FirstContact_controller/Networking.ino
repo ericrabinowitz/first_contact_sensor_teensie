@@ -5,7 +5,7 @@ Networking: The ethernet, DNS, and MQTT WLED messaging logic.
 #include "Networking.h"
 #include "defines.h"
 
-using namespace qindesign::network;
+//using namespace qindesign::network;
 
 
 // --- UDP and DNS Setup ---
@@ -23,6 +23,7 @@ IPAddress UDP_LOG_PC_IP(192, 168, 1, 50);
 IPAddress server(192, 168, 4, 1); // MQTT Broker (Raspberry PI)
 
 char *hostname = 0; // Filled by reverse DNS lookup
+EthernetClient ethClient;
 
 // --- DNS Helper Functions ---
 
@@ -145,7 +146,7 @@ String reverseDnsLookup(IPAddress ip) {
   return String("Timeout");
 }
 
-// --- Ethernet and MQTT Setup ---
+// --- Ethernet Setup ---
 
 void initEthernet() {
 networkErrorRetry: // Entry point if we fail to initialize network
@@ -196,17 +197,9 @@ networkErrorRetry: // Entry point if we fail to initialize network
   } else {
     networkError = false;
 
-    //char text[128];
-    //sprintf (text, "IP:%s", Ethernet.localIP() );
-    //displayNetworkStatus ( Ethernet.localIP().printTo() );
+    IPAddress ipAddress = Ethernet.localIP();
 
-    IPAddress ipAddress =
-        Ethernet.localIP(); // Assuming Ethernet.localIP() returns an IP address
-
-    // Convert IP address to char* (C-string)
-    char
-        ipString[128]; // Enough space for an IPv4 address in dot-decimal format
-
+    char ipString[128];
     sprintf(ipString, "IP:%d.%d.%d.%d", ipAddress[0], ipAddress[1],
             ipAddress[2], ipAddress[3]);
 
@@ -232,8 +225,6 @@ networkErrorRetry: // Entry point if we fail to initialize network
   Serial.printf("Hostname:");
   Serial.print(Hostname);
 
-  //Serial.println( reverseDnsLookup(Ethernet.localIP()));
-
   hostname = stringToCharArray(Hostname);
 
   displayHostname(hostname);
@@ -250,96 +241,15 @@ String getLocalIp() {
          String(ip[3]);
 }
 
-void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
-  Serial.print("\nmqttSubCallback() Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (unsigned int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
+// Networking accessors for Lights.ino
+IPAddress getServer() {
+  return server;
 }
 
-EthernetClient ethClient;
-PubSubClient client(ethClient);
-
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    if (client.connect(hostname)) {
-      Serial.println("connected");
-      setInactiveLedState();
-      client.subscribe("wled/all/api");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      delay(5000);
-    }
-  }
+char* getHostname() {
+  return hostname;
 }
 
-void mqttLoop() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-}
-
-void initMqtt() {
-  client.setServer(server, 1883);
-  client.setCallback(mqttSubCallback);
-}
-
-/*
-  publishState() - Publish via MQTT if we are on(Connected) or off
-      - This routine is called at high-speed in our main loop
-      - It only publishes changes to state
-*/
-void publishState(ContactState state) {
-  static bool publishSucceeded = false;
-
-  if (publishSucceeded && state.isUnchanged()) {
-    // No change in state to report.
-    return;
-  }
-
-if (state.isLinked) {
-    publishSucceeded = setActiveLedState();
-  } else {
-    publishSucceeded = setInactiveLedState();
-  }
-}
-
-// segment 0 = all LEDs
-
-bool setActiveLedState() {
-  bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [{ \
-    \"id\": 0, \
-    \"on\": true, \
-    \"bri\": 255, \
-    \"col\": [[0, 25, 255], [0, 200, 255], [0, 25, 255]], \
-    \"fx\": 72, \
-    \"pal\": 3 \
-  }]}");
-
-  return result && client.publish("wled/eros/api", "{\"tt\": 0, \"seg\": [{ \
-    \"id\": 0, \
-    \"on\": true, \
-    \"bri\": 255, \
-    \"col\": [[255, 0, 100], [225, 0, 255], [255, 0, 100]], \
-    \"fx\": 72, \
-    \"pal\": 3 \
-  }]}");
-}
-
-bool setInactiveLedState() {
-  return client.publish("wled/all/api", "{\"tt\": 0, \"seg\": [{ \
-    \"id\": 0, \
-    \"on\": true, \
-    \"bri\": 255, \
-    \"col\": [[255, 255, 255], [0, 0, 0], [0, 0, 0]], \
-    \"fx\": 42, \
-    \"pal\": 3 \
-  }]}");
+EthernetClient& getEthClient() {
+  return ethClient;
 }
