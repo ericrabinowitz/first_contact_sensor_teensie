@@ -44,8 +44,9 @@ const char *idleSongs[] = {"Missing Link dormant Eros.wav",
 unsigned int currentSongIndex = 0;
 unsigned int currentIdleSongIndex = 0;
 
-bool isPaused;
-unsigned long pauseStartTime;
+// Rename isPaused to isFading and pauseStartTime to fadeStartTime
+bool isFading;
+unsigned long fadeStartTime;
 
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
 #define NUM_IDLE_SONGS (sizeof(idleSongs) / sizeof(idleSongs[0]))
@@ -79,24 +80,24 @@ void musicPlayerSetup() {
   }
 }
 
-void pauseMusic() {
-  if (!isPaused && playSdWav1.isPlaying()) {
-    isPaused = true;
-    pauseStartTime = millis(); // Record when pausing started
-    Serial.println("Music paused (volume minimized)");
+void fadeMusic() {
+  if (!isFading && playSdWav1.isPlaying()) {
+    isFading = true;
+    fadeStartTime = millis(); // Record when fading started
+    Serial.println("Music fading (ramping down volume)");
   }
 }
 
 void resumeMusic() {
-  if (isPaused && playSdWav1.isPlaying()) {
+  if (isFading && playSdWav1.isPlaying()) {
     // Restore volume
     // TODO: ramp volume back up?
     setMusicVolume(PLAYING_MUSIC_VOLUME);
 
-    isPaused = false;
+    isFading = false;
     Serial.println("Music resumed (volume restored)");
   } else {
-    Serial.println("Music is not paused or not playing");
+    Serial.println("Music is not fading or not playing");
   }
 }
 
@@ -139,21 +140,21 @@ MusicState getMusicState(ContactState state) {
     // an unlinked or paused state starts a new idle-out timer.
   }
 
-  if (isPaused) {
-    // still within the fade/pause window?
-    if (millis() - pauseStartTime <= PAUSE_TIMEOUT_MS) {
-      // if playback stopped while paused, treat as finished
+  if (isFading) {
+    // still within the fading window?
+    if (millis() - fadeStartTime <= PAUSE_TIMEOUT_MS) {
+      // if playback stopped while fading, treat as finished
       if (!playSdWav1.isPlaying()) {
-        return MUSIC_STATE_PAUSE_FINISHED;
+        return MUSIC_STATE_FADE_FINISHED;
       }
-      return MUSIC_STATE_PAUSED;
+      return MUSIC_STATE_FADING;
     }
-    // pause has timed out → start idle-out timer
+    // Fading has timed out → start idle-out timer.
     if (!idleOutTimerStarted) {
       idleOutTimerStarted = true;
       idleOutStartTime = millis();
     }
-    return MUSIC_STATE_PAUSE_TIMEOUT;
+    return MUSIC_STATE_FADE_TIMEOUT;
   }
 
   // once pause-timeout was set, after 30 s of idle play, enter idle-out
@@ -171,13 +172,13 @@ MusicState getMusicState(ContactState state) {
   return MUSIC_STATE_PLAYING;
 }
 
-// New helper: updates volume based on fade logic during pause.
+// New helper: updates volume based on fade logic during fade.
 void updateFadedVolume(bool isLinked) {
   // TODO: Move this logic into ContactState for sharing with lights?
-  // Check if we are paused and not linked. If we're linked, it means
+  // Check if we are fading and not linked. If we're linked, it means
   // we're in the process of resuming a song.
-  if (isPaused && !isLinked && playSdWav1.isPlaying()) {
-    unsigned long elapsed = millis() - pauseStartTime;
+  if (isFading && !isLinked && playSdWav1.isPlaying()) {
+    unsigned long elapsed = millis() - fadeStartTime;
     float fraction = elapsed / (float)PAUSE_TIMEOUT_MS;
     if (fraction > 1.0)
       fraction = 1.0;
@@ -196,12 +197,11 @@ void updateFadedVolume(bool isLinked) {
   }
 }
 
-// new helper to factor common pause-complete actions
-static void handlePauseComplete() {
+static void handleFadeComplete() {
   stopMusic();
   queueNextIdleSong();
-  // Reset isPaused since we're stopping the song.
-  isPaused = false;
+  // Reset isFading since we're stopping the song.
+  isFading = false;
   // Also reset the volume to the default.
   setMusicVolume(PLAYING_MUSIC_VOLUME);
 }
@@ -212,35 +212,35 @@ void playMusic(ContactState state) {
 
   // State transition: Connected -> Disconnected.
   if (state.wasLinked && !state.isLinked) {
-    pauseMusic();
+    fadeMusic();
   }
   // State transition: Disconnected -> Connected.
   else if (!state.wasLinked && state.isLinked) {
-    if (musicState == MUSIC_STATE_PAUSED) {
-      // If we were paused (previous disconnect), resume playback
-      Serial.println("Resuming paused music");
+    if (musicState == MUSIC_STATE_FADING) {
+      // If we were fading (previous disconnect), resume playback
+      Serial.println("Resuming faded music");
       resumeMusic();
     } else if (musicState == MUSIC_STATE_PLAYING) {
-      // If we weren't paused, stop any currently playing song.
+      // If we weren't fading, stop any currently playing song.
       // This is expected to be the idle song.
       Serial.println("Stopping current song to play contact song");
       stopMusic();
     }
   }
 
-  // Handle pause timeout and finished states.
+  // Handle fade timeout and finished states.
   switch (musicState) {
   case MUSIC_STATE_RECENT_CONNECTION_IDLE_OUT:
     Serial.println("Recent connection idled out. Queuing next active song.");
     queueNextActiveSong();
     break;
-  case MUSIC_STATE_PAUSE_TIMEOUT:
-    Serial.println("Pause timed out. Switching to dormant music.");
-    handlePauseComplete();
+  case MUSIC_STATE_FADE_TIMEOUT:
+    Serial.println("Fade timed out. Switching to dormant music.");
+    handleFadeComplete();
     break;
-  case MUSIC_STATE_PAUSE_FINISHED:
+  case MUSIC_STATE_FADE_FINISHED:
     Serial.println("Song finished while fading. Stopping and switching to dormant.");
-    handlePauseComplete();
+    handleFadeComplete();
     // Queue the next active song, because the song finished.
     queueNextActiveSong();
     break;
@@ -251,7 +251,7 @@ void playMusic(ContactState state) {
       queueNextIdleSong();
     }
     break;
-  case MUSIC_STATE_PAUSED:
+  case MUSIC_STATE_FADING:
     // Update the faded volume based on the elapsed time.
     updateFadedVolume(state.isLinked);
     break;

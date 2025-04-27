@@ -11,17 +11,17 @@ MusicPlayer: Logic for playing songs.
 typedef enum {
   MUSIC_STATE_NOT_STARTED,    // No music has started yet.
   MUSIC_STATE_PLAYING,        // Music is playing at normal volume.
-  MUSIC_STATE_PAUSED,         // Music is playing but at lower volume.
-  MUSIC_STATE_PAUSE_TIMEOUT,  // Music was paused but timeout occurred.
+  MUSIC_STATE_FADING,         // Music is fading (was: paused) at lower volume.
+  MUSIC_STATE_FADE_TIMEOUT,   // Music was fading but timeout occurred.
   MUSIC_STATE_RECENT_CONNECTION_IDLE_OUT,   // new: waiting 30s idle-out
-  MUSIC_STATE_PAUSE_FINISHED, // Music was paused and finished.
+  MUSIC_STATE_FADE_FINISHED,  // Music was fading and finished.
   MUSIC_STATE_FINISHED        // A song has finished playing.
 } MusicState;
 
 // Function prototypes for Music Player
 MusicState getMusicState(ContactState state);
 void musicPlayerSetup();
-void pauseMusic();
+void fadeMusic();
 void resumeMusic();
 void stopMusic();
 void advanceToNextSong();
