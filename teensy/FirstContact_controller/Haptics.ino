@@ -7,14 +7,22 @@ void initHaptics() {
   pinMode(HAPTIC_MOTOR_PIN, OUTPUT);
 }
 
+void hapticMotorOn() {
+  analogWrite(HAPTIC_MOTOR_PIN, HAPTIC_MOTOR_DUTY_CYCLE_VALUE);
+}
+
+void hapticMotorOff() {
+  analogWrite(HAPTIC_MOTOR_PIN, 0);
+}
+
 void driveHaptics(const ContactState& state) {
   if (state.isUnchanged()) {
     return; // No change in state to report.
   }
 
   if (state.isLinked) {
-    analogWrite(HAPTIC_MOTOR_PIN, HAPTIC_MOTOR_DUTY_CYCLE_VALUE);
+    hapticMotorOn();
   } else {
-    analogWrite(HAPTIC_MOTOR_PIN, 0);
+    hapticMotorOff();
   }
 }
