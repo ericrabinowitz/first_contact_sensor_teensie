@@ -6,10 +6,11 @@ Networking: The ethernet, DNS, and MQTT WLED messaging logic.
 #define NETWORKING_H
 
 #include <Arduino.h>
-#include <PubSubClient.h>
 #include <QNEthernet.h>
 #include <cstring>
 #include <string>
+
+using namespace qindesign::network;
 
 // Network-related helper functions
 void initEthernet();
@@ -21,15 +22,9 @@ String parsePtrResponse(byte *buffer, int buflen, int queryLength);
 // Replace printLocalIp declaration with getLocalIp
 String getLocalIp();
 
-// MQTT callbacks and helper functions
-void mqttSubCallback(char *topic, byte *payload, unsigned int length);
-void reconnect();
-void mqttLoop();
-void initMqtt();
-void publishState(ContactState state);
-bool setInactiveLedState();
-bool setActiveLedState();
-
-extern PubSubClient client; // Externally defined MQTT client instance
+// Networking accessors for Lights.ino
+IPAddress getServer();
+char* getHostname();
+EthernetClient& getEthClient();
 
 #endif // NETWORKING_H
