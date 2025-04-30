@@ -87,13 +87,18 @@ bool setActiveLedState() {
 }
 
 bool setInactiveLedState() {
-  return client.publish("wled/all/api", "{\"tt\": 0, \"seg\": [{ \
+  bool result = client.publish("wled/all/api", "{\"tt\": 0, \"seg\": [{ \
+    \"id\": 0, \
+    \"fx\": 0, \
+    \"bri\": 255, \
+    \"col\": [[0,0,0], [0,0,0], [0,0,0]] \
+   }]}");
+  return result && client.publish("wled/all/api", "{\"tt\": 0, \"seg\": [{ \
     \"id\": 0, \
     \"on\": true, \
     \"bri\": 255, \
     \"col\": [[255, 255, 255], [0, 0, 0], [0, 0, 0]], \
     \"fx\": 42, \
-    \"pal\": 3, \
-    \"cl\": true \
+    \"pal\": 3 \
   }]}");
 }
