@@ -10,3 +10,5 @@
 
 void initHaptics();
 void driveHaptics(const ContactState& state);
+void hapticMotorOn();
+void hapticMotorOff();
