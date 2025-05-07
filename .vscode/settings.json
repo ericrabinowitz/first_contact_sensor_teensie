@@ -1,10 +1,14 @@
 {
   "cSpell.words": [
     "CONNACK",
+    "cpconf",
     "dnsmasq",
     "elektra",
+    "journalctl",
     "mosquitto",
     "mqttc",
+    "nmconnection",
+    "omxplayer",
     "Perc",
     "Perlin",
     "Remi",

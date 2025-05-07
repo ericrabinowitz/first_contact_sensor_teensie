@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-# These commands were run to get set up. Run via ./setup.sh
+
+# This script sets up the Raspberry Pi.
+# Execute: ./setup.sh
+# Supports:
+#   Raspberry Pi 3/4/5
+#   Raspbian GNU/Linux
+#   based on Debian 12 (bookworm) -- needs to be a recent version.
 
 # Make sourcing alias files work in non-interactive shell.
 shopt -s expand_aliases
-
-# Run on a Raspberry Pi 3/4/5
-# Raspbian GNU/Linux
-# Version 12 (bookworm) -- needs to be a recent version.
 
 # Stop the script if any command returns nonzero status.
 set -e
 
 # Update
-sudo apt-get update
+sudo apt update
 
 # This include a lot of shortcuts for managing the services running on the pi
 cp bash_aliases ~/.bash_aliases
@@ -37,6 +39,14 @@ mosquitto.enable
 mosquitto.restart
 mosquitto.status
 
+# Install and configure the controller program.
+controller.install
+cpconf controller.service
+# Set the system to bring up the controller.
+controller.enable
+controller.restart
+controller.status
+
 # Install and configure dnsmasq dhcp/dns server
 dnsmasq.install
 cpconf dnsmasq.conf
@@ -47,6 +57,3 @@ cpconf override.conf
 dnsmasq.enable
 dnsmasq.restart
 dnsmasq.status
-
-# Install python dependency manager
-wget -qO- https://astral.sh/uv/install.sh | sh
