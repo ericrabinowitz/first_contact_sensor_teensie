@@ -5,6 +5,7 @@ DNSMASQ_CONF="/etc/dnsmasq.conf"
 DNSMASQ_OVERRIDE="/etc/systemd/system/dnsmasq.service.d/override.conf"
 HOSTS_CONF="/etc/hosts"
 HOSTNAME_CONF="/etc/hostname"
+CONTROLLER_SVC="/etc/systemd/system/controller.service"
 
 # Aliases for editing configuration files using these variables
 # NetworkManager manages the static IP and configuration of the pi.
@@ -17,13 +18,15 @@ alias mosquitto.conf="sudo vim $MOSQUITTO_CONF"
 alias hosts.conf="sudo vim $HOSTS_CONF"
 # The hostname of the raspberry pi server
 alias hostname.conf="sudo vim $HOSTNAME_CONF"
+# controller orchestrates audio and light effects.
+alias controller.conf="sudo vim $CONTROLLER_SVC"
 
 alias aliases="vim ~/.bash_aliases && source ~/.bashrc"
 alias leases="cat /var/lib/misc/dnsmasq.leases"
 alias arp.local="arp -a | grep 192.168.4."
 
 # Generic service aliases using a loop
-for service in NetworkManager mosquitto dnsmasq; do
+for service in NetworkManager mosquitto dnsmasq controller; do
   # To get status and logs.
   alias ${service}.status="sudo systemctl status --no-pager ${service}"
   alias ${service}.logs="journalctl -eu ${service}"
@@ -36,8 +39,9 @@ for service in NetworkManager mosquitto dnsmasq; do
 done
 
 # Install aliases.
-alias mosquitto.install="sudo apt-get install -y mosquitto mosquitto-clients"
-alias dnsmasq.install="sudo apt-get install -y dnsmasq"
+alias mosquitto.install="sudo apt install -y mosquitto mosquitto-clients"
+alias dnsmasq.install="sudo apt install -y dnsmasq"
+alias controller.install="sudo apt install -y build-essential python3-dev; curl -LsSf https://astral.sh/uv/install.sh | sh"
 # NetworkManager should already be installed by default.
 alias NetworkManager.install="echo 'NetworkManager should already be installed'"
 
@@ -46,7 +50,7 @@ alias NetworkManager.cpconf="cpconf $(basename $NM_CONF)"
 alias dnsmasq.cpconf="cpconf $(basename $DNSMASQ_CONF) && cpconf $(basename $DNSMASQ_OVERRIDE)"
 alias mosquitto.cpconf="cpconf $(basename $MOSQUITTO_CONF)"
 alias host.cpconf="cpconf $(basename $HOSTS_CONF) && cpconf $(basename $HOSTNAME_CONF)"
-
+alias controller.cpconf="cpconf $(basename $CONTROLLER_SVC)"
 
 # Custom function to copy configuration files using the variables and sudo
 cpconf() {
@@ -54,19 +58,21 @@ cpconf() {
     dnsmasq.conf)
       sudo cp "$1" "$DNSMASQ_CONF" ;;
     override.conf)
-      sudo mkdir -p $(dirname $DNSMASQ_OVERRIDE)
+      sudo mkdir -p "$(dirname $DNSMASQ_OVERRIDE)"
       sudo cp "$1" "$DNSMASQ_OVERRIDE" ;;
     mosquitto.conf)
       sudo cp "$1" "$MOSQUITTO_CONF" ;;
     wired_connection_1.nmconnection)
-      sudo mkdir -p $(dirname $NM_CONF)
+      sudo mkdir -p "$(dirname $NM_CONF)"
       sudo cp "$1" "$NM_CONF" && sudo chmod 600 "$NM_CONF" ;;
     hosts)
       sudo cp "$1" "$HOSTS_CONF" ;;
     hostname)
       sudo cp "$1" "$HOSTNAME_CONF" ;;
+    controller.service)
+      sudo cp "$1" "$CONTROLLER_SVC" ;;
     *)
-      echo "Usage: cpconf {dnsmasq.conf|mosquitto.conf|wired_connection_1.nmconnection}"
+      echo "Error: Unknown configuration file $1."
       return 1 ;;
   esac
 }
