@@ -43,19 +43,19 @@ curl http://192.168.4.1:8080/info
 # Get dynamic config data
 curl http://192.168.4.1:8080/config
 
-# Override any part of the config
+# Override any part of the dynamic config
 curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/config \
   -d '{"debug":true}'
 
-# Simulation linking
+# Simulate linking
 curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/touch \
   -d '{"action":"link", "statues":["eros","elektra"]}'
 
-# Simulation unlinking
+# Simulate unlinking
 curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/touch \
   -d '{"action":"unlink"}'
 
-# Toggle lights on and off
+# Toggle the lights on and off
 curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/wled/all \
   -d '{"on":"t"}'
 
@@ -87,12 +87,12 @@ controller.logs
 ### Other
 
 ```bash
-# play audio
+# Play an audio file
 aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav"
 
-# Subscribe to MQTT topic
+# Subscribe to a MQTT topic
 mosquitto_sub -t "missing_link/touch"
 
-# Send MQTT message
+# Send a MQTT message
 mosquito_pub -t "missing_link/haptic" -m '{"statue":"eros"}'
 ```

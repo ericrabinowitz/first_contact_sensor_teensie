@@ -70,7 +70,8 @@ cpconf() {
     hostname)
       sudo cp "$1" "$HOSTNAME_CONF" ;;
     controller.service)
-      sudo cp "$1" "$CONTROLLER_SVC" ;;
+      sed "s/{{ user }}/$USER/g" "$1" > "$1.tmp"
+      sudo mv "$1.tmp" "$CONTROLLER_SVC" ;;
     *)
       echo "Error: Unknown configuration file $1."
       return 1 ;;

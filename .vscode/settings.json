@@ -11,7 +11,10 @@
     "omxplayer",
     "Perc",
     "Perlin",
+    "PYTHONPATH",
+    "PYTHONUNBUFFERED",
     "Remi",
+    "teensie",
     "WLED"
   ],
   "files.associations": {
