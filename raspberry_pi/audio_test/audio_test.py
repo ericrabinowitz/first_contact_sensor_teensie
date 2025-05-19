@@ -20,7 +20,7 @@ from just_playback import Playback
 
 
 # Folder for audio files
-SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
+SONG_DIR = "/run/audio_files"
 
 
 def play_song(songFile: str):
@@ -47,4 +47,4 @@ def play_song(songFile: str):
 
 
 if __name__ == "__main__":
-    play_song("Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav")
+    play_song("Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav")

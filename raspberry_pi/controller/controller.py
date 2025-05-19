@@ -37,7 +37,8 @@ import paho.mqtt.client as mqtt
 VERSION = "0.2.0"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
 # Folder for audio files
-SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
+# SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
+SONG_DIR = "/run/audio_files"
 
 # MQTT server settings
 LINK_MQTT_TOPIC = "missing_link/touch"  # Topic for link/unlink msgs
@@ -132,6 +133,7 @@ def setup_config_and_songs():
 
     entries = os.listdir(SONG_DIR)
     files = [f for f in entries if os.path.isfile(os.path.join(SONG_DIR, f))]
+    files.sort()
 
     dynConfig["active_songs"] = [f for f in files if " active " in f.lower()]
     dynConfig["dormant_songs"] = [f for f in files if " dormant " in f.lower()]
@@ -170,7 +172,7 @@ def get_statue(path: str, default: Statue = None) -> Statue | None:
 
 def publish_mqtt(topic: str, payload: dict):
     if dynConfig["debug"]:
-        print(f"Publishing to {topic}: {json.dumps(payload)}")
+        print(f"Publishing to {topic}: {json.dumps(payload, indent=2)}")
     r = mqttc.publish(topic, json.dumps(payload))
     try:
         r.wait_for_publish(1)
@@ -183,6 +185,7 @@ def send_to_wled(statue: Statue, payload: dict):
     return publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
 
 
+# TODO: doesn't handle pause / resume currently
 def play_song(mode: Mode, song: str):
     global current_playback
     global last_played_s
@@ -192,6 +195,7 @@ def play_song(mode: Mode, song: str):
         print(f"Error: '{song}' is not a valid song.")
         return
     if new_playback is current_playback:
+        current_playback.play()
         return
 
     if mode == Mode.BASIC:
@@ -286,7 +290,7 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
-        self.wfile.write(bytes(json.dumps(payload), "utf-8"))
+        self.wfile.write(bytes(json.dumps(payload, indent=2), "utf-8"))
 
     def _send_404(self):
         self.send_response(404)
@@ -328,7 +332,7 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
             try:
                 config_merger.merge(dynConfig, data)
                 self._send_response(dynConfig)
-                print("new config settings:", json.dumps(data))
+                print("new config settings:", json.dumps(data, indent=2))
             except Exception as e:
                 print(e)
                 self._send_400()
@@ -369,14 +373,17 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
 
 
 def start_debug_server():
-    httpd = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
+    server = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
     try:
         print(f"Starting debug server on port {DEBUG_PORT}")
-        httpd.serve_forever()
+        server.serve_forever()
     except KeyboardInterrupt:
         pass
     except Exception as e:
         print(e)
+    finally:
+        server.server_close()
+        print("Debug server stopped")
 
 
 # ### MQTT client
@@ -396,8 +403,8 @@ def on_message(mqttc, userdata, msg):
         print(f"Received message on topic {msg.topic}: {msg.payload}")
     payload = json.loads(msg.payload)
 
-    # TODO: check topic name
-    run_controller(payload)
+    if msg.topic == LINK_MQTT_TOPIC:
+        run_controller(payload)
 
 
 def start_controller():
@@ -441,9 +448,11 @@ if __name__ == "__main__":
     start_controller()
 
     try:
+        print("Starting MQTT client")
         mqttc.loop_forever(retry_first_connection=True)
     except KeyboardInterrupt:
         pass
     except Exception as e:
         print(e)
     mqttc.disconnect()
+    print("Disconnected from MQTT broker")
