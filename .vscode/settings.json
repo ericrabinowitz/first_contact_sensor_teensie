@@ -1,13 +1,20 @@
 {
   "cSpell.words": [
     "CONNACK",
+    "cpconf",
     "dnsmasq",
     "elektra",
+    "journalctl",
     "mosquitto",
     "mqttc",
+    "nmconnection",
+    "omxplayer",
     "Perc",
     "Perlin",
+    "PYTHONPATH",
+    "PYTHONUNBUFFERED",
     "Remi",
+    "teensie",
     "WLED"
   ],
   "files.associations": {
