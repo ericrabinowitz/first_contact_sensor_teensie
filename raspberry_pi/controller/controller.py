@@ -13,6 +13,7 @@ from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
+import subprocess
 import threading
 import time
 
@@ -37,7 +38,8 @@ import paho.mqtt.client as mqtt
 VERSION = "0.2.0"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
 # Folder for audio files
-# SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
+SRC_SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
+# Use ramdisk to speed up startup
 SONG_DIR = "/run/audio_files"
 
 # MQTT server settings
@@ -122,7 +124,13 @@ last_played_s = 0
 # ### Helper functions
 
 
-# Can switch back to a hardcoded list of songs if that's easier
+def copy_files():
+    src = os.path.join(SRC_SONG_DIR, "")
+    subprocess.call(["sudo", "rsync", "-a", "--no-compress", src, SONG_DIR])
+    subprocess.call(["sudo", "chmod", "-R", "777", SONG_DIR])
+    print(f"Copied files from {src} to {SONG_DIR}")
+
+
 def setup_config_and_songs():
     global dynConfig
     global current_playback
@@ -195,12 +203,15 @@ def play_song(mode: Mode, song: str):
         print(f"Error: '{song}' is not a valid song.")
         return
     if new_playback is current_playback:
-        current_playback.play()
+        if not current_playback.playing:
+            current_playback.play()
         return
 
     if mode == Mode.BASIC:
         new_playback.play()
         if current_playback.playing:
+            # TODO: test pausing first
+            current_playback.pause()
             current_playback.stop()
         current_playback = new_playback
 
@@ -432,6 +443,7 @@ def run_controller(msg: dict):
 
 
 if __name__ == "__main__":
+    copy_files()
     setup_config_and_songs()
 
     # Should be in the global scope, mqttc is a global variable

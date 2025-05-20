@@ -4,6 +4,7 @@
     "cpconf",
     "dnsmasq",
     "elektra",
+    "Goertzel",
     "journalctl",
     "mosquitto",
     "mqttc",
@@ -14,6 +15,7 @@
     "PYTHONPATH",
     "PYTHONUNBUFFERED",
     "Remi",
+    "samplerate",
     "teensie",
     "WLED"
   ],
