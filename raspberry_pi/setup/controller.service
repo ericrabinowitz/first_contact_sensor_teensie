@@ -10,11 +10,14 @@ After=network-online.target
 Type=simple
 User={{ user }}
 Group={{ user }}
+
 Environment=PATH=/home/{{ user }}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONPATH=/home/{{ user }}/first_contact_sensor_teensie/raspberry_pi/controller
+
 WorkingDirectory=/home/{{ user }}/first_contact_sensor_teensie/raspberry_pi/controller
 ExecStart=/home/{{ user }}/first_contact_sensor_teensie/raspberry_pi/controller/controller.py
+
 Restart=on-failure
 TimeoutStartSec=300
 

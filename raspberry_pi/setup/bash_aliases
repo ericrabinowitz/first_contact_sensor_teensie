@@ -41,7 +41,7 @@ done
 # Install aliases.
 alias mosquitto.install="sudo apt install -y mosquitto mosquitto-clients"
 alias dnsmasq.install="sudo apt install -y dnsmasq"
-alias controller.install="sudo apt install -y build-essential python3-dev; sudo cp -r ../../audio_files /run; sudo chmod -R 777 /run/audio_files; curl -LsSf https://astral.sh/uv/install.sh | sh"
+alias controller.install="sudo apt install -y build-essential python3-dev libportaudio2; curl -LsSf https://astral.sh/uv/install.sh | sh"
 # NetworkManager should already be installed by default.
 alias NetworkManager.install="echo 'NetworkManager should already be installed'"
 
