@@ -9,6 +9,7 @@
 # Execute
 # ./tone_detect_test.py
 
+from enum import Enum
 import json
 import re
 import threading
@@ -30,155 +31,288 @@ import sounddevice as sd
 # https://arlpy.readthedocs.io/en/latest/signal.html
 
 
-BLOCK_SIZE = 1024
-TONE_FREQ = 10000
-TOUCH_THRESHOLD = 0.1
 USB_ADAPTER = "usb audio device"
 AUDIO_JACK = "bcm2835 headphones"
 
+# Audio tones, in Hz
+tones_hz = [
+    7902,  # B
+    7040,  # A
+    6272,  # G
+    5588,  # F
+    4699,  # D
+    4186,  # C
+]
+tone_streams = {}
+
+
+class Statue(Enum):
+    EROS = "eros"
+    ELEKTRA = "elektra"
+
+
+# ALSA system has a default limit of 32 cards
+# A USB host controller can support up to 127 devices, including hubs
+# Daisy-chaining can also introduce latency, especially for low-latency devices
+# Example channel config:
+# {
+#     "device_id": "hw:3,0",  # Should map to a particular USB port
+#     "device_index": 1,
+#     "channel": 0,
+#     "sample_rate": 44100.0,
+#     "device_type": "usb audio device",
+# }
 dynConfig = {
-    "audio": {
-        "device": None,
-        "num_channels": None,
-        "sample_rate": None,
-        "index": None,
+    "debug": True,
+    "block_size": 1024,
+    "touch_threshold": 0.1,
+    Statue.EROS.value: {
+        "audio": {
+            "device_id": "hw:1,0",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "tone": {
+            "device_id": "hw:1,0",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "detect": {
+            "device_id": "hw:1,0",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "tone_freq": -1,  # Hz
     },
-    "tone": {
-        "device": None,
-        "num_channels": None,
-        "sample_rate": None,
-        "index": None,
-    },
-    "receive": {
-        "device": None,
-        "num_channels": None,
-        "sample_rate": None,
-        "index": None,
+    Statue.ELEKTRA.value: {
+        "audio": {
+            "device_id": "hw:2,0",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "tone": {
+            "device_id": "hw:2,0",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "detect": {
+            "device_id": "hw:2,0",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "tone_freq": -1,  # Hz
     },
 }
 
 
-def detect_devices():
+def configure_devices():
     devices = sd.query_devices()
-    print("Available audio devices:")
-    print(json.dumps(devices, indent=2))
+    if dynConfig["debug"]:
+        print("Available audio devices:")
+        print(json.dumps(devices, indent=2))
 
-    pattern = r"^([^:]*): - \(hw:(\d+),(\d+)\)$"
+    pattern = r"^([^:]*): - \((hw:\d+,\d+)\)$"
+    statues = [s.value for s in Statue]
+    curr_statue_i = 0
+    curr_ch_type = "audio"
+
+    print("Processing output channels...")
     for device in devices:
         match = re.search(pattern, device["name"])
         if not match:
             continue
-        device_name = match.group(1)
-        device_id = f"hw:{match.group(2)}"
-        print(f"Device: {device_name}, ID: {device_id}")
+        device_type = match.group(1).lower()
+        device_id = match.group(2)
+        if dynConfig["debug"]:
+            print(f"Device: {device_type}, ID: {device_id}")
 
-        if device_name.lower() == AUDIO_JACK:
-            dynConfig["audio"]["device"] = device_id
-            dynConfig["audio"]["num_channels"] = int(device["max_output_channels"])
-            dynConfig["audio"]["sample_rate"] = int(device["default_samplerate"])
-            dynConfig["audio"]["index"] = int(device["index"])
+        if device_type != USB_ADAPTER:
+            # Only allow USB external sound cards for now
+            continue
 
-        if device_name.lower() == USB_ADAPTER:
-            dynConfig["tone"]["device"] = device_id
-            dynConfig["tone"]["num_channels"] = int(device["max_output_channels"])
-            dynConfig["tone"]["sample_rate"] = int(device["default_samplerate"])
-            dynConfig["tone"]["index"] = int(device["index"])
+        for ch in range(1, int(device["max_output_channels"]) + 1):
+            if curr_statue_i >= len(statues):
+                break
 
-        if device_name.lower() == USB_ADAPTER:
-            dynConfig["receive"]["device"] = device_id
-            dynConfig["receive"]["num_channels"] = int(device["max_input_channels"])
-            dynConfig["receive"]["sample_rate"] = int(device["default_samplerate"])
-            dynConfig["receive"]["index"] = int(device["index"])
+            statue = statues[curr_statue_i]
+            dynConfig[statue][curr_ch_type]["device_id"] = device_id
+            dynConfig[statue][curr_ch_type]["device_index"] = int(device["index"])
+            dynConfig[statue][curr_ch_type]["channel"] = ch
+            dynConfig[statue][curr_ch_type]["sample_rate"] = int(
+                device["default_samplerate"]
+            )
+            dynConfig[statue][curr_ch_type]["device_type"] = device_type
 
+            if curr_ch_type == "audio":
+                curr_ch_type = "tone"
+                dynConfig[statue]["tone_freq"] = tones_hz[curr_statue_i]
+            else:
+                curr_ch_type = "audio"
+                curr_statue_i += 1
 
-def play_tone():
-    print(f"Playing a {TONE_FREQ} Hz tone")
+    print("Processing input channels...")
+    curr_ch_type = "detect"
+    curr_statue_i = 0
+    for device in devices:
+        match = re.search(pattern, device["name"])
+        if not match:
+            continue
+        device_type = match.group(1).lower()
+        device_id = match.group(2)
 
-    # Generate a time array and sine wave
-    duration = 60  # seconds
-    sample_rate = dynConfig["tone"]["sample_rate"]
-    device = dynConfig["tone"]["device"]
-    # channels = np.arange(1, dynConfig["tone"]["num_channels"] + 1)
+        if device_type != USB_ADAPTER:
+            # Only allow USB external sound cards for now
+            continue
 
-    t = np.linspace(0, duration, int(sample_rate * duration), False)
-    tone = np.sin(2 * np.pi * TONE_FREQ * t)
-    tone = tone.astype(np.float32)
+        for ch in range(1, int(device["max_input_channels"]) + 1):
+            if curr_statue_i >= len(statues):
+                break
 
-    try:
-        sd.play(
-            device=device,
-            data=tone,
-            samplerate=sample_rate,
-            # mapping=[1],
-            blocking=True,
-            loop=True,
-        )
-    except KeyboardInterrupt:
-        sd.stop()
-        print("Playback stopped")
-    except Exception as e:
-        print(e)
+            statue = statues[curr_statue_i]
+            dynConfig[statue][curr_ch_type]["device_id"] = device_id
+            dynConfig[statue][curr_ch_type]["device_index"] = int(device["index"])
+            dynConfig[statue][curr_ch_type]["channel"] = ch
+            dynConfig[statue][curr_ch_type]["sample_rate"] = int(
+                device["default_samplerate"]
+            )
+            dynConfig[statue][curr_ch_type]["device_type"] = device_type
+            curr_statue_i += 1
 
-
-# def play_tone2():
-#     # Generate a 10kHz sine wave
-#     t = np.arange(BLOCK_SIZE) / SAMPLE_RATE
-#     tone = 0.5 * np.sin(2 * np.pi * TONE_FREQ * t)
-
-#     # Play the tone
-#     stream = sd.OutputStream(
-#         device=f"hw:{SEND_CHANNEL}",
-#         channels=1,
-#         samplerate=SAMPLE_RATE,
-#         blocksize=BLOCK_SIZE,
-#     )
-#     stream.start()
-#     for _ in range(10):
-#         stream.write(tone)
-#         time.sleep(BLOCK_SIZE / SAMPLE_RATE)
-#     stream.stop()
+    if dynConfig["debug"]:
+        print("Final dynamic configuration:")
+        print(json.dumps(dynConfig, indent=2))
 
 
-def detect_tone():
-    device = dynConfig["receive"]["device"]
-    sample_rate = dynConfig["receive"]["sample_rate"]
-    # channels = dynConfig["receive"]["num_channels"]
+# def play_tone(statue):
+#     config = dynConfig[statue.value]["tone"]
+#     freq = dynConfig[statue.value]["tone_freq"]
+#     print(f"Playing a {freq} Hz tone for the {statue.value} statue")
+
+#     # Generate a time array and sine wave
+#     duration = 60  # seconds
+#     t = np.linspace(0, duration, int(config["sample_rate"] * duration), False)
+#     tone = np.sin(2 * np.pi * freq * t)
+#     tone = tone.astype(np.float32)
+
+#     try:
+#         sd.play(
+#             device=config["device_id"],
+#             data=tone,
+#             samplerate=config["sample_rate"],
+#             mapping=[config["channel"]],
+#             blocking=True,
+#             loop=True,
+#         )
+#     except KeyboardInterrupt:
+#         sd.stop()
+#         print("Playback stopped")
+#     except Exception as e:
+#         print(e)
+
+
+def play_tone(statue):
+    config = dynConfig[statue.value]["tone"]
+    freq = dynConfig[statue.value]["tone_freq"]
+    print(f"Playing a {freq} Hz tone for the {statue.value} statue")
+
+    def callback(outdata, frames, time_info, status):
+        t = (np.arange(frames) + callback.offset) / config["sample_rate"]
+        outdata[:] = 0.5 * np.sin(2 * np.pi * freq * t).reshape(-1, 1)
+        callback.offset += frames
+
+    callback.offset = 0
+
+    # Play the tone, non-blocking
+    tone_streams[statue.value] = sd.OutputStream(
+        device=config["device_id"],
+        channels=config["channel"],
+        samplerate=config["sample_rate"],
+        blocksize=dynConfig["block_size"],
+        # latency="high",
+        # dtype="float32",
+    )
+
+
+def detect_tone(statue, other_statues):
+    config = dynConfig[statue.value]["tone"]
+    freqs = [dynConfig[s.value]["tone_freq"] for s in other_statues]
+    print(f"At {statue.value} statue, detect the following tones: {freqs}")
 
     stream = sd.InputStream(
-        device=device,
-        channels=1,
-        samplerate=sample_rate,
-        blocksize=BLOCK_SIZE,
-        latency="low",
+        device=config["device_id"],
+        channels=config["channel"],
+        samplerate=config["sample_rate"],
+        blocksize=dynConfig["block_size"],
+        # latency="low",
         # dtype="float32",
     )
     stream.start()
+    # Detect the tone using the Goertzel algorithm, blocking
     while True:
         try:
-            audio, _ = stream.read(BLOCK_SIZE)
+            audio, _ = stream.read(dynConfig["block_size"])
             channel1 = audio[:, 0].astype(np.float64)
             # Goertzel is cheap for single‑tone detection
             # level = sig.goertzel(audio[:, 0], TONE_FREQ, sample_rate)
-            level, _ = G.goertzel(channel1, TONE_FREQ / sample_rate)
-            if level > TOUCH_THRESHOLD:
-                print(f"Tone detected at {level:.2f}")
-                time.sleep(0.1)
+            for s in other_statues:
+                freq = dynConfig[s.value]["tone_freq"]
+                level, _ = G.goertzel(channel1, freq / config["sample_rate"])
+                if level > dynConfig["touch_threshold"]:
+                    if dynConfig["debug"]:
+                        print(f"Tone ${freq} detected at {level:.2f}")
+                    print(f"Connection detected: {statue.value} - {s.value}")
+                    time.sleep(0.1)
         except KeyboardInterrupt:
-            print("Tone detection stopped")
             break
         except Exception as e:
             print(e)
             break
 
     stream.stop()
+    tone_streams[statue.value].stop()
     stream.close()
-    print("Stream stopped")
+    tone_streams[statue.value].close()
+    print(f"Tone detection and playing stopped for {statue.value}")
+
+
+# Play a tone for each statue and detect tones from other statues.
+# Connections are pairwise, self detection is not possible.
+def play_and_detect_tones():
+    statues = [s for s in Statue]
+
+    # The first statue detects all other tones, doesn't need to play one
+    for i in range(1, len(statues)):
+        play_tone(statues[i])
+
+    # The last statue is detected by the other statues, doesn't need to detect
+    for i in range(len(statues) - 1):
+        other_statues = statues[(i + 1) :]
+        thread = threading.Thread(
+            target=detect_tone, args=(statues[i], other_statues), daemon=True
+        )
+        thread.start()
 
 
 if __name__ == "__main__":
-    detect_devices()
+    configure_devices()
 
-    thread = threading.Thread(target=play_tone, args=(), daemon=True)
-    thread.start()
+    play_and_detect_tones()
 
-    detect_tone()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        time.sleep(0.5)
+        print("Done")
