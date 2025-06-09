@@ -1,0 +1,37 @@
+Multi-Channel Audio Test (Raspberry Pi) - Fixed
+==================================================
+Detecting USB audio devices from ALSA...
+Raw /proc/asound/cards content:
+ 0 [b1             ]: bcm2835_hdmi - bcm2835 HDMI 1
+                      bcm2835 HDMI 1
+ 1 [Headphones     ]: bcm2835_headpho - bcm2835 Headphones
+                      bcm2835 Headphones
+ 3 [Device         ]: USB-Audio - USB Audio Device
+                      C-Media Electronics Inc. USB Audio Device at usb-0000:01:00.0-1.3, full speed
+
+----------------------------------------
+Found USB device: Card 3 [Device] - C-Media Electronics Inc. USB Audio Device at usb-0000:01:00.0-1.3, full speed
+
+Found 1 USB audio devices in ALSA:
+  Card 3: Device - C-Media Electronics Inc. USB Audio Device at usb-0000:01:00.0-1.3, full speed
+  Failed to query device hw:3,0: No input/output device matching 'hw:3,0'
+  Failed to query device plughw:3,0: No input/output device matching 'plughw:3,0'
+✓ Successfully configured USB device: 3 - C-Media Electronics Inc. USB Audio Device at usb-0000:01:00.0-1.3, full speed
+
+Total USB output devices configured: 1
+USB output devices configuration:
+  3: C-Media Electronics Inc. USB Audio Device at usb-0000:01:00.0-1.3, full speed (128 channels @ 44100Hz)
+
+Loading audio file: /run/audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav
+Audio file loaded:
+  Channels: 6
+  Sample rate: 44100 Hz
+  Duration: 164.57 seconds
+  Shape: (7257600, 6)
+
+Playing 1 channels on 1 devices
+
+Only one USB device found. Playing all channels mixed...
+Playing on device: 3 - C-Media Electronics Inc. USB Audio Device at usb-0000:01:00.0-1.3, full speed
+
+Test interrupted by user.

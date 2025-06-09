@@ -1,0 +1,28 @@
+Testing USB Audio Devices
+========================================
+
+Testing: C-Media USB Headphone Set (hw:2,0)
+  Failed: No input/output device matching 'hw:2,0'
+
+Testing: USB Audio Device (hw:3,0)
+  Failed: No input/output device matching 'hw:3,0'
+
+Testing: Card 2 by index (2)
+  Channels: 128
+  Sample rate: 44100.0
+  Playing 440Hz tone for 2.0 seconds...
+  Success!
+
+Testing: Card 3 by index (3)
+  Channels: 128
+  Sample rate: 44100.0
+  Playing 440Hz tone for 2.0 seconds...
+  Success!
+
+Testing: C-Media USB Headphone Set (plug) (plughw:2,0)
+  Failed: No input/output device matching 'plughw:2,0'
+
+Testing: USB Audio Device (plug) (plughw:3,0)
+  Failed: No input/output device matching 'plughw:3,0'
+
+Test complete!
