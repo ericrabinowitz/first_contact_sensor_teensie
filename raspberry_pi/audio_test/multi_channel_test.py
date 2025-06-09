@@ -11,7 +11,6 @@
 
 import json
 import re
-import threading
 import time
 
 import numpy as np
@@ -28,6 +27,7 @@ USB_ADAPTER = "usb audio device"
 AUDIO_FILE = "Missing Link Playa 1 - 6 Channel 6-7.wav"
 AUDIO_DIR = "/run/audio_files"
 DEBUG = True
+BLOCK_SIZE = 1024  # Frames per block
 
 # Store detected USB audio output devices
 usb_output_devices = []
@@ -86,6 +86,9 @@ def play_multi_channel_audio():
         print(f"  Duration: {duration:.2f} seconds")
         print(f"  Shape: {data.shape}")
         
+        # Convert to float32 for sounddevice
+        data = data.astype(np.float32)
+        
     except Exception as e:
         print(f"Error loading audio file: {e}")
         return
@@ -98,54 +101,103 @@ def play_multi_channel_audio():
     
     print(f"\nPlaying {channels_to_play} channels on {channels_to_play} devices")
     
+    # Create a shared playback state
+    class PlaybackState:
+        def __init__(self):
+            self.position = 0
+            self.finished = False
+    
+    state = PlaybackState()
+    
     # Create output streams for each channel/device
     streams = []
-    stream_threads = []
     
-    def play_channel(channel_idx, device_info, channel_data):
-        """Play a single channel on a specific device."""
-        try:
-            print(f"Starting playback of channel {channel_idx + 1} on {device_info['device_id']}")
+    def create_callback(channel_idx):
+        """Create a callback function for a specific channel."""
+        def callback(outdata, frames, time_info, status):
+            if status:
+                print(f"Stream {channel_idx + 1} status: {status}")
             
-            # Ensure the audio data is in the correct format (float32)
-            audio_data = channel_data.astype(np.float32)
+            # Calculate the range of samples to read
+            start = state.position
+            end = min(start + frames, num_samples)
+            actual_frames = end - start
             
-            # Play the audio blocking on this thread
-            sd.play(
-                data=audio_data,
-                samplerate=sample_rate,
+            if actual_frames > 0:
+                # Extract the channel data for this range
+                outdata[:actual_frames, 0] = data[start:end, channel_idx]
+                
+                # Fill any remaining frames with silence
+                if actual_frames < frames:
+                    outdata[actual_frames:, 0] = 0
+                    
+                # Update position (only one callback should do this)
+                if channel_idx == 0:
+                    state.position = end
+                    if end >= num_samples:
+                        state.finished = True
+            else:
+                # No more data, fill with silence
+                outdata[:] = 0
+                state.finished = True
+                
+        return callback
+    
+    # Create streams for each channel
+    try:
+        for i in range(channels_to_play):
+            device_info = usb_output_devices[i]
+            print(f"Creating stream for channel {i + 1} on {device_info['device_id']}")
+            
+            stream = sd.OutputStream(
                 device=device_info['device_index'],
-                blocking=True
+                channels=1,
+                samplerate=sample_rate,
+                blocksize=BLOCK_SIZE,
+                callback=create_callback(i),
+                finished_callback=lambda: print(f"Stream {i + 1} finished")
             )
+            streams.append(stream)
             
-        except Exception as e:
-            print(f"Error playing channel {channel_idx + 1}: {e}")
+    except Exception as e:
+        print(f"Error creating streams: {e}")
+        # Close any streams that were created
+        for stream in streams:
+            stream.close()
+        return
     
-    # Start playback threads for each channel
+    # Start all streams simultaneously
     print("\nStarting synchronized playback...")
     start_time = time.time()
     
-    for i in range(channels_to_play):
-        # Extract single channel data
-        channel_data = data[:, i].reshape(-1, 1)
+    try:
+        # Start all streams
+        for i, stream in enumerate(streams):
+            stream.start()
+            print(f"Started stream {i + 1}")
         
-        # Create and start thread for this channel
-        thread = threading.Thread(
-            target=play_channel,
-            args=(i, usb_output_devices[i], channel_data),
-            daemon=True
-        )
-        stream_threads.append(thread)
-        thread.start()
+        print("All streams started. Playing...")
         
-        # Very small delay to ensure threads start in order
-        time.sleep(0.001)
-    
-    print("All channels started. Playing...")
-    
-    # Wait for all threads to complete
-    for thread in stream_threads:
-        thread.join()
+        # Wait for playback to complete
+        while not state.finished:
+            time.sleep(0.1)
+            # Print progress
+            progress = (state.position / num_samples) * 100
+            print(f"\rProgress: {progress:.1f}%", end='', flush=True)
+        
+        print("\n\nWaiting for streams to finish...")
+        time.sleep(0.5)  # Give streams time to flush buffers
+        
+    except KeyboardInterrupt:
+        print("\n\nPlayback interrupted by user")
+    except Exception as e:
+        print(f"\nError during playback: {e}")
+    finally:
+        # Stop and close all streams
+        for i, stream in enumerate(streams):
+            stream.stop()
+            stream.close()
+            print(f"Closed stream {i + 1}")
     
     elapsed = time.time() - start_time
     print(f"\nPlayback completed. Total time: {elapsed:.2f} seconds")
