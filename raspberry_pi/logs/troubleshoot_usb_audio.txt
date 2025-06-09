@@ -1,0 +1,178 @@
+USB Audio Device Troubleshooting
+========================================
+
+1. Checking USB devices (lsusb):
+------------------------------
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 001 Device 005: ID 0416:c168 Winbond Electronics Corp. MTouch
+Bus 001 Device 006: ID 05ac:026c Apple, Inc. Magic Keyboard with Numeric Keypad
+Bus 001 Device 008: ID 0d8c:000c C-Media Electronics, Inc. Audio Adapter
+Bus 001 Device 003: ID 046d:c537 Logitech, Inc. Cordless Mouse Receiver
+Bus 001 Device 002: ID 2109:3431 VIA Labs, Inc. Hub
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+
+2. Checking ALSA sound cards (aplay -l):
+------------------------------
+**** List of PLAYBACK Hardware Devices ****
+card 0: b1 [bcm2835 HDMI 1], device 0: bcm2835 HDMI 1 [bcm2835 HDMI 1]
+  Subdevices: 4/4
+  Subdevice #0: subdevice #0
+  Subdevice #1: subdevice #1
+  Subdevice #2: subdevice #2
+  Subdevice #3: subdevice #3
+card 0: b1 [bcm2835 HDMI 1], device 1: bcm2835 HDMI 1 [bcm2835 HDMI 1]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+card 1: Headphones [bcm2835 Headphones], device 0: bcm2835 Headphones [bcm2835 Headphones]
+  Subdevices: 4/4
+  Subdevice #0: subdevice #0
+  Subdevice #1: subdevice #1
+  Subdevice #2: subdevice #2
+  Subdevice #3: subdevice #3
+card 2: Set [C-Media USB Headphone Set], device 0: USB Audio [USB Audio]
+  Subdevices: 1/1
+  Subdevice #0: subdevice #0
+
+
+3. Checking ALSA PCMs (aplay -L):
+------------------------------
+hw:CARD=b1,DEV=0
+hw:CARD=b1,DEV=1
+hw:CARD=Headphones,DEV=0
+hw:CARD=Set,DEV=0
+
+
+4. Checking /proc/asound/cards:
+------------------------------
+ 0 [b1             ]: bcm2835_hdmi - bcm2835 HDMI 1
+                      bcm2835 HDMI 1
+ 1 [Headphones     ]: bcm2835_headpho - bcm2835 Headphones
+                      bcm2835 Headphones
+ 2 [Set            ]: USB-Audio - C-Media USB Headphone Set
+                      C-Media USB Headphone Set at usb-0000:01:00.0-1.2, full speed
+
+
+5. Checking sounddevice devices:
+------------------------------
+[
+  {
+    "name": "sysdefault",
+    "index": 0,
+    "hostapi": 0,
+    "max_input_channels": 0,
+    "max_output_channels": 128,
+    "default_low_input_latency": -1.0,
+    "default_low_output_latency": 0.0016099773242630386,
+    "default_high_input_latency": -1.0,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  },
+  {
+    "name": "lavrate",
+    "index": 1,
+    "hostapi": 0,
+    "max_input_channels": 0,
+    "max_output_channels": 128,
+    "default_low_input_latency": -1.0,
+    "default_low_output_latency": 0.0016099773242630386,
+    "default_high_input_latency": -1.0,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  },
+  {
+    "name": "samplerate",
+    "index": 2,
+    "hostapi": 0,
+    "max_input_channels": 0,
+    "max_output_channels": 128,
+    "default_low_input_latency": -1.0,
+    "default_low_output_latency": 0.0016099773242630386,
+    "default_high_input_latency": -1.0,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  },
+  {
+    "name": "speexrate",
+    "index": 3,
+    "hostapi": 0,
+    "max_input_channels": 0,
+    "max_output_channels": 128,
+    "default_low_input_latency": -1.0,
+    "default_low_output_latency": 0.0016099773242630386,
+    "default_high_input_latency": -1.0,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  },
+  {
+    "name": "pulse",
+    "index": 4,
+    "hostapi": 0,
+    "max_input_channels": 32,
+    "max_output_channels": 32,
+    "default_low_input_latency": 0.008684807256235827,
+    "default_low_output_latency": 0.00873015873015873,
+    "default_high_input_latency": 0.034807256235827665,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  },
+  {
+    "name": "upmix",
+    "index": 5,
+    "hostapi": 0,
+    "max_input_channels": 0,
+    "max_output_channels": 8,
+    "default_low_input_latency": -1.0,
+    "default_low_output_latency": 0.0015419501133786847,
+    "default_high_input_latency": -1.0,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  },
+  {
+    "name": "vdownmix",
+    "index": 6,
+    "hostapi": 0,
+    "max_input_channels": 0,
+    "max_output_channels": 6,
+    "default_low_input_latency": -1.0,
+    "default_low_output_latency": 0.0015419501133786847,
+    "default_high_input_latency": -1.0,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  },
+  {
+    "name": "dmix",
+    "index": 7,
+    "hostapi": 0,
+    "max_input_channels": 0,
+    "max_output_channels": 2,
+    "default_low_input_latency": -1.0,
+    "default_low_output_latency": 0.021333333333333333,
+    "default_high_input_latency": -1.0,
+    "default_high_output_latency": 0.021333333333333333,
+    "default_samplerate": 48000.0
+  },
+  {
+    "name": "default",
+    "index": 8,
+    "hostapi": 0,
+    "max_input_channels": 32,
+    "max_output_channels": 32,
+    "default_low_input_latency": 0.008684807256235827,
+    "default_low_output_latency": 0.00873015873015873,
+    "default_high_input_latency": 0.034807256235827665,
+    "default_high_output_latency": 0.034829931972789115,
+    "default_samplerate": 44100.0
+  }
+]
+
+6. Looking for hardware devices:
+------------------------------
+
+7. Checking audio group membership:
+------------------------------
+uid=1000(pi) gid=1000(pi) groups=1000(pi),4(adm),20(dialout),24(cdrom),27(sudo),29(audio),44(video),46(plugdev),60(games),100(users),105(input),107(render),109(netdev),117(lpadmin),995(docker),997(gpio),998(i2c),999(spi)
+
+
+========================================
+Troubleshooting complete.
