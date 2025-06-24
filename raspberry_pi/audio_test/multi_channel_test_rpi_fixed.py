@@ -30,7 +30,7 @@ import soundfile as sf
 
 
 AUDIO_FILE = "Missing Link Playa 1 - 6 Channel 6-7.wav"
-AUDIO_DIR = "/run/audio_files"
+AUDIO_DIR = "~/workspace/first_contact_sensor_teensie/audio_files"
 DEBUG = True
 BLOCK_SIZE = 1024  # Frames per block
 

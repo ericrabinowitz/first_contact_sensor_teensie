@@ -8,6 +8,32 @@
 import numpy as np
 import sounddevice as sd
 import time
+import sys
+import os
+
+# Redirect output to both console and log file
+log_dir = os.path.join(os.path.dirname(__file__), '..', 'logs')
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, 'test_usb_devices.log')
+
+class Logger:
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.log = open(filename, 'w')
+    
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+        self.log.flush()
+    
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
+    
+    def close(self):
+        self.log.close()
+
+sys.stdout = Logger(log_file)
 
 print("Testing USB Audio Devices")
 print("=" * 40)
@@ -49,4 +75,5 @@ for device_spec, description in test_devices:
     except Exception as e:
         print(f"  Failed: {e}")
 
-print("\nTest complete!") 
+print("\nTest complete!")
+print(f"\nLog saved to: {log_file}") 
