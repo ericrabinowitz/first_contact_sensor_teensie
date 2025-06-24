@@ -7,6 +7,14 @@ SSH_TARGET ?= rpi5
 # Default target shows help
 .DEFAULT_GOAL := help
 
+## File Synchronization
+sync: ## Sync project files to Raspberry Pi
+	@echo "Syncing project files to $(SSH_TARGET)..."
+	@rsync -avz --exclude '.git' --exclude '*.pyc' --exclude '__pycache__' \
+		--exclude 'teensy' --exclude '.vscode' --exclude '.DS_Store' \
+		./ $(SSH_TARGET):~/workspace/first_contact_sensor_teensie/
+	@echo "✓ Sync complete"
+
 ## Audio Device Management (runs on rpi5)
 audio-list: ## List all audio devices on the Raspberry Pi
 	@ssh $(SSH_TARGET) "echo '=== USB Audio Devices ===' && lsusb | grep -i audio || echo 'No USB audio devices found'; \
@@ -17,6 +25,13 @@ audio-status: ## Show detailed audio device configuration
 	@ssh $(SSH_TARGET) "echo '=== Sound Cards ===' && cat /proc/asound/cards; \
 	echo && echo '=== Loaded Audio Modules ===' && lsmod | grep -E 'snd_usb|snd_' | head -10; \
 	echo && echo '=== USB Audio Details ===' && lsusb -v 2>/dev/null | grep -A 5 -B 5 -i audio | head -20"
+
+## Audio Testing
+audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
+	@ssh $(SSH_TARGET) "sudo apt update && sudo apt install -y libportaudio2 portaudio19-dev"
+
+tone-test: sync ## Play test tone on USB audio devices (syncs files first)
+	@ssh $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && ./tone_test.py'"
 
 ## Help
 help: ## Show this help message
@@ -36,4 +51,4 @@ help: ## Show this help message
 	@echo '  make audio-status'
 	@echo '  SSH_TARGET=pi@192.168.4.1 make audio-list'
 
-.PHONY: audio-list audio-status help
+.PHONY: sync audio-list audio-status audio-deps tone-test help
