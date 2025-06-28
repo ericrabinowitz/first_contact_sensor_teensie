@@ -33,6 +33,20 @@ audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
 tone-test: sync ## Play test tone on USB audio devices (syncs files first)
 	@ssh $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && ./tone_test.py'"
 
+tone-detect: sync ## Run tone detection test with ELEKTRA->EROS wiring (syncs files first)
+	@ssh $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && ./tone_detect_test.py'"
+
+## Process Management
+stop: ## Stop all running test scripts on Raspberry Pi
+	@echo "Stopping running test scripts on $(SSH_TARGET)..."
+	@ssh $(SSH_TARGET) "pkill -f 'tone_test.py|tone_detect_test.py|controller.py' || true"
+	@echo "✓ Scripts stopped"
+
+kill-all: ## Force kill all Python scripts on Raspberry Pi
+	@echo "Force killing all Python scripts on $(SSH_TARGET)..."
+	@ssh $(SSH_TARGET) "pkill -9 -f 'python|uv run' || true"
+	@echo "✓ All Python processes killed"
+
 ## Help
 help: ## Show this help message
 	@echo 'Missing Link Project - Command Reference'
@@ -51,4 +65,4 @@ help: ## Show this help message
 	@echo '  make audio-status'
 	@echo '  SSH_TARGET=pi@192.168.4.1 make audio-list'
 
-.PHONY: sync audio-list audio-status audio-deps tone-test help
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect stop kill-all help

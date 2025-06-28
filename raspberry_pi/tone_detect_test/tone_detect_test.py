@@ -31,17 +31,13 @@ import sounddevice as sd
 # https://arlpy.readthedocs.io/en/latest/signal.html
 
 
-USB_ADAPTER = "usb audio device"
+USB_ADAPTER = "usb"  # Match any USB device
 AUDIO_JACK = "bcm2835 headphones"
 
-# Audio tones, in Hz
+# Audio tones, in Hz (using only first two for EROS and ELEKTRA)
 tones_hz = [
-    7902,  # B
-    7040,  # A
-    6272,  # G
-    5588,  # F
-    4699,  # D
-    4186,  # C
+    7040,  # A - for EROS
+    4699,  # D - for ELEKTRA
 ]
 tone_streams = {}
 
@@ -67,22 +63,15 @@ dynConfig = {
     "block_size": 1024,
     "touch_threshold": 0.1,
     Statue.EROS.value: {
-        "audio": {
-            "device_id": "hw:1,0",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
         "tone": {
-            "device_id": "hw:1,0",
+            "device_id": "",
             "device_index": -1,
             "channel": -1,
             "sample_rate": -1,
             "device_type": "",
         },
         "detect": {
-            "device_id": "hw:1,0",
+            "device_id": "",
             "device_index": -1,
             "channel": -1,
             "sample_rate": -1,
@@ -91,22 +80,15 @@ dynConfig = {
         "tone_freq": -1,  # Hz
     },
     Statue.ELEKTRA.value: {
-        "audio": {
-            "device_id": "hw:2,0",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
         "tone": {
-            "device_id": "hw:2,0",
+            "device_id": "",
             "device_index": -1,
             "channel": -1,
             "sample_rate": -1,
             "device_type": "",
         },
         "detect": {
-            "device_id": "hw:2,0",
+            "device_id": "",
             "device_index": -1,
             "channel": -1,
             "sample_rate": -1,
@@ -121,78 +103,64 @@ def configure_devices():
     devices = sd.query_devices()
     if dynConfig["debug"]:
         print("Available audio devices:")
-        print(json.dumps(devices, indent=2))
-
-    pattern = r"^([^:]*): - \((hw:\d+,\d+)\)$"
-    statues = [s.value for s in Statue]
-    curr_statue_i = 0
-    curr_ch_type = "audio"
-
-    print("Processing output channels...")
+        for d in devices:
+            print(f"  {d['index']}: {d['name']} ({d['max_input_channels']} in, {d['max_output_channels']} out)")
+    
+    # Updated pattern for "USB PnP Sound Device: Audio (hw:2,0)" format
+    pattern = r'^([^:]*): ([^(]*) \((hw:\d+,\d+)\)$'
+    
+    usb_devices = []
     for device in devices:
         match = re.search(pattern, device["name"])
-        if not match:
-            continue
-        device_type = match.group(1).lower()
-        device_id = match.group(2)
-        if dynConfig["debug"]:
-            print(f"Device: {device_type}, ID: {device_id}")
-
-        if device_type != USB_ADAPTER:
-            # Only allow USB external sound cards for now
-            continue
-
-        for ch in range(1, int(device["max_output_channels"]) + 1):
-            if curr_statue_i >= len(statues):
-                break
-
-            statue = statues[curr_statue_i]
-            dynConfig[statue][curr_ch_type]["device_id"] = device_id
-            dynConfig[statue][curr_ch_type]["device_index"] = int(device["index"])
-            dynConfig[statue][curr_ch_type]["channel"] = ch
-            dynConfig[statue][curr_ch_type]["sample_rate"] = int(
-                device["default_samplerate"]
-            )
-            dynConfig[statue][curr_ch_type]["device_type"] = device_type
-
-            if curr_ch_type == "audio":
-                curr_ch_type = "tone"
-                dynConfig[statue]["tone_freq"] = tones_hz[curr_statue_i]
-            else:
-                curr_ch_type = "audio"
-                curr_statue_i += 1
-
-    print("Processing input channels...")
-    curr_ch_type = "detect"
-    curr_statue_i = 0
-    for device in devices:
-        match = re.search(pattern, device["name"])
-        if not match:
-            continue
-        device_type = match.group(1).lower()
-        device_id = match.group(2)
-
-        if device_type != USB_ADAPTER:
-            # Only allow USB external sound cards for now
-            continue
-
-        for ch in range(1, int(device["max_input_channels"]) + 1):
-            if curr_statue_i >= len(statues):
-                break
-
-            statue = statues[curr_statue_i]
-            dynConfig[statue][curr_ch_type]["device_id"] = device_id
-            dynConfig[statue][curr_ch_type]["device_index"] = int(device["index"])
-            dynConfig[statue][curr_ch_type]["channel"] = ch
-            dynConfig[statue][curr_ch_type]["sample_rate"] = int(
-                device["default_samplerate"]
-            )
-            dynConfig[statue][curr_ch_type]["device_type"] = device_type
-            curr_statue_i += 1
-
+        if match and USB_ADAPTER in device["name"].lower():
+            usb_devices.append({
+                "index": device["index"],
+                "name": device["name"],
+                "device_id": match.group(3),
+                "max_input": device["max_input_channels"],
+                "max_output": device["max_output_channels"],
+                "sample_rate": int(device["default_samplerate"])
+            })
+    
+    if len(usb_devices) < 2:
+        print(f"ERROR: Need at least 2 USB devices, found {len(usb_devices)}")
+        return False
+    
+    print(f"\nFound {len(usb_devices)} USB audio devices")
+    print("Configuring devices based on wiring: ELEKTRA output → EROS input")
+    
+    # First USB device - use its INPUT for EROS detection
+    eros_device = usb_devices[0]
+    if eros_device["max_input"] > 0:
+        print(f"  EROS (detect): {eros_device['name']} [device {eros_device['index']}]")
+        dynConfig[Statue.EROS.value]["detect"]["device_index"] = eros_device["index"]
+        dynConfig[Statue.EROS.value]["detect"]["device_id"] = eros_device["device_id"]
+        dynConfig[Statue.EROS.value]["detect"]["sample_rate"] = eros_device["sample_rate"]
+        dynConfig[Statue.EROS.value]["detect"]["device_type"] = eros_device["name"]
+        # Set channel to 1 for mono input (actual channel count set when creating stream)
+        dynConfig[Statue.EROS.value]["detect"]["channel"] = 1
+    
+    # Second USB device - use its OUTPUT for ELEKTRA tone
+    elektra_device = usb_devices[1]
+    if elektra_device["max_output"] > 0:
+        print(f"  ELEKTRA (tone): {elektra_device['name']} [device {elektra_device['index']}]")
+        dynConfig[Statue.ELEKTRA.value]["tone"]["device_index"] = elektra_device["index"]
+        dynConfig[Statue.ELEKTRA.value]["tone"]["device_id"] = elektra_device["device_id"]
+        dynConfig[Statue.ELEKTRA.value]["tone"]["sample_rate"] = elektra_device["sample_rate"]
+        dynConfig[Statue.ELEKTRA.value]["tone"]["device_type"] = elektra_device["name"]
+        # Set channel to 2 for stereo output (actual channel count set when creating stream)
+        dynConfig[Statue.ELEKTRA.value]["tone"]["channel"] = 2
+    
+    # Set tone frequencies
+    dynConfig[Statue.EROS.value]["tone_freq"] = tones_hz[0]  # 7040 Hz
+    dynConfig[Statue.ELEKTRA.value]["tone_freq"] = tones_hz[1]  # 4699 Hz
+    
     if dynConfig["debug"]:
-        print("Final dynamic configuration:")
-        print(json.dumps(dynConfig, indent=2))
+        print("\nConfiguration summary:")
+        print(f"  EROS will detect {dynConfig[Statue.ELEKTRA.value]['tone_freq']}Hz on device {eros_device['index']}")
+        print(f"  ELEKTRA will play {dynConfig[Statue.ELEKTRA.value]['tone_freq']}Hz on device {elektra_device['index']}")
+    
+    return True
 
 
 # def play_tone(statue):
@@ -225,94 +193,129 @@ def configure_devices():
 def play_tone(statue):
     config = dynConfig[statue.value]["tone"]
     freq = dynConfig[statue.value]["tone_freq"]
-    print(f"Playing a {freq} Hz tone for the {statue.value} statue")
-
+    
+    if config["device_index"] == -1:
+        print(f"WARNING: No output device configured for {statue.value}")
+        return
+    
+    print(f"Playing {freq}Hz tone for {statue.value} on device {config['device_index']}")
+    
     def callback(outdata, frames, time_info, status):
-        t = (np.arange(frames) + callback.offset) / config["sample_rate"]
-        outdata[:] = 0.5 * np.sin(2 * np.pi * freq * t).reshape(-1, 1)
-        callback.offset += frames
-
-    callback.offset = 0
-
-    # Play the tone, non-blocking
-    tone_streams[statue.value] = sd.OutputStream(
-        device=config["device_id"],
-        channels=config["channel"],
+        if status:
+            print(f"Stream status: {status}")
+        t = (np.arange(frames) + callback.phase) / config["sample_rate"]
+        # Generate stereo sine wave (same signal on both channels)
+        sine_wave = 0.5 * np.sin(2 * np.pi * freq * t)
+        outdata[:, 0] = sine_wave  # Left channel
+        outdata[:, 1] = sine_wave  # Right channel
+        callback.phase = (callback.phase + frames) % config["sample_rate"]
+    
+    callback.phase = 0
+    
+    # Create and start the output stream
+    stream = sd.OutputStream(
+        device=config["device_index"],
+        channels=2,  # Stereo output
         samplerate=config["sample_rate"],
         blocksize=dynConfig["block_size"],
-        # latency="high",
-        # dtype="float32",
+        callback=callback
     )
+    
+    tone_streams[statue.value] = stream
+    stream.start()
+    print(f"✓ Tone stream started for {statue.value}")
 
 
 def detect_tone(statue, other_statues):
-    config = dynConfig[statue.value]["tone"]
+    config = dynConfig[statue.value]["detect"]  # Use detect config, not tone
+    
+    if config["device_index"] == -1:
+        print(f"WARNING: No input device configured for {statue.value}")
+        return
+    
     freqs = [dynConfig[s.value]["tone_freq"] for s in other_statues]
-    print(f"At {statue.value} statue, detect the following tones: {freqs}")
-
+    print(f"{statue.value} listening for tones {freqs}Hz on device {config['device_index']}")
+    
     stream = sd.InputStream(
-        device=config["device_id"],
-        channels=config["channel"],
+        device=config["device_index"],
+        channels=1,  # Mono input
         samplerate=config["sample_rate"],
         blocksize=dynConfig["block_size"],
-        # latency="low",
-        # dtype="float32",
     )
+    
     stream.start()
-    # Detect the tone using the Goertzel algorithm, blocking
+    print(f"✓ Detection started for {statue.value}")
+    
+    # Detect tones using the Goertzel algorithm
     while True:
         try:
-            audio, _ = stream.read(dynConfig["block_size"])
-            channel1 = audio[:, 0].astype(np.float64)
-            # Goertzel is cheap for single‑tone detection
-            # level = sig.goertzel(audio[:, 0], TONE_FREQ, sample_rate)
+            audio, overflowed = stream.read(dynConfig["block_size"])
+            if overflowed:
+                print("Input overflow!")
+            
+            # Convert to float64 for Goertzel
+            audio_data = audio[:, 0].astype(np.float64)
+            
+            # Check for each other statue's tone
             for s in other_statues:
                 freq = dynConfig[s.value]["tone_freq"]
-                level, _ = G.goertzel(channel1, freq / config["sample_rate"])
+                normalized_freq = freq / config["sample_rate"]
+                level, _ = G.goertzel(audio_data, normalized_freq)
+                
                 if level > dynConfig["touch_threshold"]:
-                    if dynConfig["debug"]:
-                        print(f"Tone ${freq} detected at {level:.2f}")
-                    print(f"Connection detected: {statue.value} - {s.value}")
-                    time.sleep(0.1)
+                    print(f"🔗 Connection detected: {statue.value} ← {s.value} (level: {level:.2f})")
+                    time.sleep(0.5)  # Debounce
+        
         except KeyboardInterrupt:
             break
         except Exception as e:
-            print(e)
+            print(f"Error in detection: {e}")
             break
-
+    
     stream.stop()
-    tone_streams[statue.value].stop()
     stream.close()
-    tone_streams[statue.value].close()
-    print(f"Tone detection and playing stopped for {statue.value}")
+    print(f"Detection stopped for {statue.value}")
 
 
 # Play a tone for each statue and detect tones from other statues.
-# Connections are pairwise, self detection is not possible.
+# Based on wiring: ELEKTRA output → EROS input
 def play_and_detect_tones():
-    statues = [s for s in Statue]
-
-    # The first statue detects all other tones, doesn't need to play one
-    for i in range(1, len(statues)):
-        play_tone(statues[i])
-
-    # The last statue is detected by the other statues, doesn't need to detect
-    for i in range(len(statues) - 1):
-        other_statues = statues[(i + 1) :]
-        thread = threading.Thread(
-            target=detect_tone, args=(statues[i], other_statues), daemon=True
-        )
-        thread.start()
+    print("\nStarting tone generation and detection...")
+    print("Wiring: ELEKTRA output → EROS input")
+    
+    # ELEKTRA plays its tone
+    play_tone(Statue.ELEKTRA)
+    
+    # Small delay to ensure tone is playing
+    time.sleep(0.5)
+    
+    # EROS detects ELEKTRA's tone
+    detect_thread = threading.Thread(
+        target=detect_tone, 
+        args=(Statue.EROS, [Statue.ELEKTRA]), 
+        daemon=True
+    )
+    detect_thread.start()
 
 
 if __name__ == "__main__":
-    configure_devices()
-
+    print("=== Missing Link Tone Detection Test ===")
+    print("Press Ctrl+C to stop\n")
+    
+    if not configure_devices():
+        print("Device configuration failed!")
+        exit(1)
+    
     play_and_detect_tones()
-
+    
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        print("\n\nShutting down...")
+        # Close all tone streams
+        for stream in tone_streams.values():
+            stream.stop()
+            stream.close()
         time.sleep(0.5)
         print("Done")
