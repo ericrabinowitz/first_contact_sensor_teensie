@@ -31,10 +31,10 @@ audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
 	@ssh $(SSH_TARGET) "sudo apt update && sudo apt install -y libportaudio2 portaudio19-dev"
 
 tone-test: sync ## Play test tone on USB audio devices (syncs files first)
-	@ssh $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && ./tone_test.py'"
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && PYTHONUNBUFFERED=1 stdbuf -o0 -e0 ./tone_test.py'"
 
 tone-detect: sync ## Run tone detection test with ELEKTRA->EROS wiring (syncs files first)
-	@ssh $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && ./tone_detect_test.py'"
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && PYTHONUNBUFFERED=1 stdbuf -o0 -e0 ./tone_detect_test.py'"
 
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
