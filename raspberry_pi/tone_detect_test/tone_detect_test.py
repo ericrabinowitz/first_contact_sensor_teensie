@@ -9,6 +9,7 @@
 # Execute
 # ./tone_detect_test.py
 
+import os
 import threading
 import time
 import sys
@@ -180,7 +181,6 @@ def play_and_detect_tones():
 
     # First, play audio on EROS (left channel)
     # Use a sample audio file from the project
-    import os
     audio_file = "../../audio_files/Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav"
     if os.path.exists(audio_file):
         print("Starting EROS audio playback...")

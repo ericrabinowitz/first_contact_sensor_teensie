@@ -8,6 +8,7 @@ import threading
 import time
 import numpy as np
 import sounddevice as sd
+import soundfile as sf
 from .devices import dynConfig, get_audio_devices
 
 
@@ -24,7 +25,6 @@ def play_audio(statue, audio_file):
 
     try:
         # Load the audio file
-        import soundfile as sf
         data, samplerate = sf.read(audio_file)
 
         # Handle multi-channel files - extract first channel if needed
@@ -177,7 +177,6 @@ def play_multichannel_audio(audio_file, devices=None):
     """
     try:
         # Load the audio file
-        import soundfile as sf
         audio_data, sample_rate = sf.read(audio_file)
 
         # Ensure audio_data is 2D (samples x channels)
