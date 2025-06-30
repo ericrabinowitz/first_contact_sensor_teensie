@@ -115,7 +115,7 @@ def configure_devices(max_devices=None):
         print(f"\nConfiguring {statue.value.upper()} with device {usb_device['index']}: {usb_device['name']}")
 
         # Configure input if available
-        if usb_device["max_input"] > 0 and i == 0:  # Only first device needs input for detection
+        if usb_device["max_input"] > 0:  # Configure input for all devices with input capability
             print(f"  {statue.value} (detect): input channel")
             dynConfig[statue.value]["detect"]["device_index"] = usb_device["index"]
             dynConfig[statue.value]["detect"]["device_id"] = usb_device["device_id"]

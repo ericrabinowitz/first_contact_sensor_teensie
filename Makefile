@@ -49,6 +49,9 @@ tone-detect-test: sync ## Run tone detection test with ELEKTRA->EROS wiring (syn
 audio-test: sync ## Run multi-channel audio playback test (syncs files first)
 	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_UNBUF) ./audio_test.py'"
 
+audio-demo: sync ## Run interactive multi-channel audio demo with channel toggles (syncs files first)
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_UNBUF) ./multichannel_audio_demo.py'"
+
 freq-sweep: sync ## Run frequency sweep test to find optimal tone frequencies (syncs files first)
 	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./frequency_sweep_test.py'"
 

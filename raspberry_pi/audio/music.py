@@ -164,6 +164,95 @@ class MultiChannelPlayback:
         return self.is_playing and self.frame_index < len(self.audio_data)
 
 
+class ToggleableMultiChannelPlayback(MultiChannelPlayback):
+    """Extended playback class with per-channel mute control."""
+
+    def __init__(self, audio_data, sample_rate, devices):
+        super().__init__(audio_data, sample_rate, devices)
+        # Initialize all channels as disabled
+        self.channel_enabled = [False] * len(devices)
+        self.active_count = 0
+
+    def _create_callback(self, channel_index):
+        """Create a callback function with mute control for a specific channel."""
+        def callback(outdata, frames, time_info, status):
+            if status:
+                print(f"\rStream status for channel {channel_index}: {status}")
+
+            with self.lock:
+                if self.is_paused:
+                    outdata.fill(0)
+                    return
+
+                # Calculate remaining frames
+                remaining_frames = len(self.audio_data) - self.frame_index
+                if remaining_frames <= 0:
+                    outdata.fill(0)
+                    self.is_playing = False
+                    return
+
+                # Get frames to play
+                frames_to_play = min(frames, remaining_frames)
+
+                # Extract channel data
+                if self.audio_data.ndim == 1 or channel_index >= self.audio_data.shape[1]:
+                    # Mono or channel doesn't exist - use silence
+                    channel_data = np.zeros(frames_to_play)
+                else:
+                    # Get specific channel
+                    channel_data = self.audio_data[self.frame_index:self.frame_index + frames_to_play, channel_index]
+
+                # Apply mute if channel is disabled
+                if not self.channel_enabled[channel_index]:
+                    channel_data = np.zeros_like(channel_data)
+
+                # Create stereo output with audio on left channel only
+                stereo_data = np.zeros((frames, 2))
+                stereo_data[:frames_to_play, 0] = channel_data  # Left channel
+                # Right channel stays silent (reserved for tone)
+
+                outdata[:] = stereo_data
+
+                # Update frame index (only one callback should do this)
+                if channel_index == 0:
+                    self.frame_index += frames_to_play
+
+        return callback
+
+    def toggle_channel(self, channel_index):
+        """Toggle a channel on/off."""
+        if 0 <= channel_index < len(self.channel_enabled):
+            with self.lock:
+                self.channel_enabled[channel_index] = not self.channel_enabled[channel_index]
+
+                # Update active count
+                self.active_count = sum(self.channel_enabled)
+
+                # Handle playback state changes
+                if self.active_count == 0 and self.is_playing:
+                    # Last channel turned off - stop playback
+                    self.is_playing = False
+                    self.frame_index = 0  # Reset to beginning
+                elif self.active_count == 1 and not self.is_playing:
+                    # First channel turned on - start playback
+                    self.is_playing = True
+                    if self.frame_index >= len(self.audio_data):
+                        self.frame_index = 0  # Reset if at end
+
+                return True
+        return False
+
+    def get_channel_states(self):
+        """Return current channel enabled states."""
+        return self.channel_enabled.copy()
+
+    def get_progress(self):
+        """Get playback progress as percentage."""
+        if len(self.audio_data) == 0:
+            return 0
+        return min(100, int(self.frame_index / len(self.audio_data) * 100))
+
+
 def play_multichannel_audio(audio_file, devices=None):
     """
     Play a multi-channel audio file across multiple devices.
