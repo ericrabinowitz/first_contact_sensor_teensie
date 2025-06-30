@@ -1,0 +1,824 @@
+15:25:12.818 === Frequency Sweep Test (2-20kHz) ===
+15:25:12.818 Testing 50 frequencies from 2000Hz to 20000Hz
+15:25:12.818 Sample rate: 48000Hz (Nyquist: 24000.0Hz)
+15:25:12.818 Output device: 5
+15:25:12.818 Input device: 1
+15:25:12.818 Physical connection: Ariel (device 5) → Eros (device 1)
+15:25:12.818 Note: Production statues with long cables work best at ~10kHz
+15:25:12.834 
+--- Testing 2000 Hz ---
+15:25:13.374   Sample 0: Goertzel=0.5079, SNR=31.3dB, Detected=YES
+15:25:13.606   Sample 10: Goertzel=0.5161, SNR=31.0dB, Detected=YES
+15:25:13.798   Sample 20: Goertzel=0.5258, SNR=31.9dB, Detected=YES
+15:25:14.012   Sample 30: Goertzel=0.5149, SNR=32.1dB, Detected=YES
+15:25:14.246   Sample 40: Goertzel=0.5158, SNR=32.0dB, Detected=YES
+15:25:14.438   Sample 50: Goertzel=0.5180, SNR=31.2dB, Detected=YES
+15:25:14.652   Sample 60: Goertzel=0.5122, SNR=31.0dB, Detected=YES
+15:25:14.886   Sample 70: Goertzel=0.5236, SNR=32.1dB, Detected=YES
+15:25:15.078   Sample 80: Goertzel=0.5171, SNR=32.1dB, Detected=YES
+15:25:15.292   Sample 90: Goertzel=0.5176, SNR=31.9dB, Detected=YES
+15:25:15.526   Sample 100: Goertzel=0.5150, SNR=31.3dB, Detected=YES
+15:25:15.718   Sample 110: Goertzel=0.5080, SNR=31.1dB, Detected=YES
+15:25:15.873   Results: Detection=100.0%, Avg Level=0.5203, Avg SNR=31.7dB, Freq Error=0.78%, Est Cable Loss=1.0dB
+15:25:16.073 
+--- Testing 2357 Hz ---
+15:25:16.604   Sample 0: Goertzel=1.0805, SNR=32.7dB, Detected=YES
+15:25:16.838   Sample 10: Goertzel=1.0824, SNR=32.7dB, Detected=YES
+15:25:17.030   Sample 20: Goertzel=1.0818, SNR=32.3dB, Detected=YES
+15:25:17.244   Sample 30: Goertzel=1.0813, SNR=32.2dB, Detected=YES
+15:25:17.478   Sample 40: Goertzel=1.0750, SNR=32.4dB, Detected=YES
+15:25:17.670   Sample 50: Goertzel=1.0785, SNR=32.7dB, Detected=YES
+15:25:17.884   Sample 60: Goertzel=1.0791, SNR=32.6dB, Detected=YES
+15:25:18.118   Sample 70: Goertzel=1.0834, SNR=32.4dB, Detected=YES
+15:25:18.310   Sample 80: Goertzel=1.0750, SNR=32.1dB, Detected=YES
+15:25:18.524   Sample 90: Goertzel=1.0787, SNR=32.5dB, Detected=YES
+15:25:18.758   Sample 100: Goertzel=1.0761, SNR=32.6dB, Detected=YES
+15:25:18.950   Sample 110: Goertzel=1.0844, SNR=32.8dB, Detected=YES
+15:25:19.105   Results: Detection=100.0%, Avg Level=1.0796, Avg SNR=32.4dB, Freq Error=0.56%, Est Cable Loss=1.2dB
+15:25:19.306 
+--- Testing 2700 Hz ---
+15:25:19.836   Sample 0: Goertzel=0.6254, SNR=31.1dB, Detected=YES
+15:25:20.070   Sample 10: Goertzel=0.6313, SNR=30.8dB, Detected=YES
+15:25:20.262   Sample 20: Goertzel=0.6379, SNR=31.1dB, Detected=YES
+15:25:20.476   Sample 30: Goertzel=0.6307, SNR=31.1dB, Detected=YES
+15:25:20.710   Sample 40: Goertzel=0.6299, SNR=30.7dB, Detected=YES
+15:25:20.902   Sample 50: Goertzel=0.6285, SNR=31.0dB, Detected=YES
+15:25:21.116   Sample 60: Goertzel=0.6315, SNR=30.8dB, Detected=YES
+15:25:21.350   Sample 70: Goertzel=0.6312, SNR=31.1dB, Detected=YES
+15:25:21.542   Sample 80: Goertzel=0.6258, SNR=31.2dB, Detected=YES
+15:25:21.756   Sample 90: Goertzel=0.6269, SNR=30.7dB, Detected=YES
+15:25:21.990   Sample 100: Goertzel=0.6312, SNR=31.0dB, Detected=YES
+15:25:22.182   Sample 110: Goertzel=0.6393, SNR=30.8dB, Detected=YES
+15:25:22.338   Results: Detection=100.0%, Avg Level=0.6305, Avg SNR=31.0dB, Freq Error=0.69%, Est Cable Loss=1.3dB
+15:25:22.538 
+--- Testing 3000 Hz ---
+15:25:23.068   Sample 0: Goertzel=1.2440, SNR=33.7dB, Detected=YES
+15:25:23.302   Sample 10: Goertzel=1.2283, SNR=34.4dB, Detected=YES
+15:25:23.494   Sample 20: Goertzel=1.2228, SNR=34.3dB, Detected=YES
+15:25:23.708   Sample 30: Goertzel=1.2280, SNR=34.2dB, Detected=YES
+15:25:23.942   Sample 40: Goertzel=1.2394, SNR=34.4dB, Detected=YES
+15:25:24.134   Sample 50: Goertzel=1.2421, SNR=33.7dB, Detected=YES
+15:25:24.348   Sample 60: Goertzel=1.2291, SNR=34.4dB, Detected=YES
+15:25:24.582   Sample 70: Goertzel=1.2210, SNR=34.3dB, Detected=YES
+15:25:24.774   Sample 80: Goertzel=1.2271, SNR=34.1dB, Detected=YES
+15:25:24.988   Sample 90: Goertzel=1.2390, SNR=34.4dB, Detected=YES
+15:25:25.222   Sample 100: Goertzel=1.2423, SNR=33.7dB, Detected=YES
+15:25:25.414   Sample 110: Goertzel=1.2299, SNR=34.3dB, Detected=YES
+15:25:25.570   Results: Detection=100.0%, Avg Level=1.2214, Avg SNR=33.8dB, Freq Error=0.00%, Est Cable Loss=1.5dB
+15:25:25.770 
+--- Testing 3181 Hz ---
+15:25:26.300   Sample 0: Goertzel=0.2012, SNR=33.8dB, Detected=YES
+15:25:26.534   Sample 10: Goertzel=0.2072, SNR=33.7dB, Detected=YES
+15:25:26.727   Sample 20: Goertzel=0.2088, SNR=33.5dB, Detected=YES
+15:25:26.940   Sample 30: Goertzel=0.2013, SNR=33.6dB, Detected=YES
+15:25:27.174   Sample 40: Goertzel=0.2009, SNR=34.0dB, Detected=YES
+15:25:27.367   Sample 50: Goertzel=0.2010, SNR=33.8dB, Detected=YES
+15:25:27.580   Sample 60: Goertzel=0.2093, SNR=33.7dB, Detected=YES
+15:25:27.814   Sample 70: Goertzel=0.2066, SNR=33.5dB, Detected=YES
+15:25:28.007   Sample 80: Goertzel=0.2017, SNR=33.6dB, Detected=YES
+15:25:28.220   Sample 90: Goertzel=0.2003, SNR=34.0dB, Detected=YES
+15:25:28.454   Sample 100: Goertzel=0.2017, SNR=33.8dB, Detected=YES
+15:25:28.647   Sample 110: Goertzel=0.2100, SNR=33.8dB, Detected=YES
+15:25:28.802   Results: Detection=100.0%, Avg Level=0.2041, Avg SNR=33.7dB, Freq Error=0.20%, Est Cable Loss=1.6dB
+15:25:29.002 
+--- Testing 3500 Hz ---
+15:25:29.533   Sample 0: Goertzel=0.5200, SNR=32.4dB, Detected=YES
+15:25:29.767   Sample 10: Goertzel=0.5273, SNR=31.8dB, Detected=YES
+15:25:29.959   Sample 20: Goertzel=0.5326, SNR=32.3dB, Detected=YES
+15:25:30.173   Sample 30: Goertzel=0.5164, SNR=31.6dB, Detected=YES
+15:25:30.407   Sample 40: Goertzel=0.5145, SNR=32.0dB, Detected=YES
+15:25:30.599   Sample 50: Goertzel=0.5173, SNR=32.5dB, Detected=YES
+15:25:30.813   Sample 60: Goertzel=0.5272, SNR=31.7dB, Detected=YES
+15:25:31.047   Sample 70: Goertzel=0.5336, SNR=32.3dB, Detected=YES
+15:25:31.239   Sample 80: Goertzel=0.5184, SNR=31.6dB, Detected=YES
+15:25:31.453   Sample 90: Goertzel=0.5158, SNR=32.0dB, Detected=YES
+15:25:31.687   Sample 100: Goertzel=0.5163, SNR=32.6dB, Detected=YES
+15:25:31.879   Sample 110: Goertzel=0.5251, SNR=31.7dB, Detected=YES
+15:25:32.034   Results: Detection=100.0%, Avg Level=0.5215, Avg SNR=32.0dB, Freq Error=0.45%, Est Cable Loss=1.8dB
+15:25:32.234 
+--- Testing 3889 Hz ---
+15:25:32.765   Sample 0: Goertzel=0.0523, SNR=34.0dB, Detected=NO
+15:25:32.999   Sample 10: Goertzel=0.0644, SNR=34.5dB, Detected=NO
+15:25:33.191   Sample 20: Goertzel=0.0576, SNR=33.7dB, Detected=NO
+15:25:33.405   Sample 30: Goertzel=0.0540, SNR=34.5dB, Detected=NO
+15:25:33.639   Sample 40: Goertzel=0.0525, SNR=33.6dB, Detected=NO
+15:25:33.831   Sample 50: Goertzel=0.0529, SNR=34.1dB, Detected=NO
+15:25:34.045   Sample 60: Goertzel=0.0643, SNR=34.6dB, Detected=NO
+15:25:34.279   Sample 70: Goertzel=0.0576, SNR=33.7dB, Detected=NO
+15:25:34.471   Sample 80: Goertzel=0.0525, SNR=34.5dB, Detected=NO
+15:25:34.685   Sample 90: Goertzel=0.0522, SNR=33.6dB, Detected=NO
+15:25:34.919   Sample 100: Goertzel=0.0537, SNR=34.0dB, Detected=NO
+15:25:35.111   Sample 110: Goertzel=0.0652, SNR=34.6dB, Detected=NO
+15:25:35.266   Results: Detection=0.0%, Avg Level=0.0571, Avg SNR=34.2dB, Freq Error=0.04%, Est Cable Loss=1.9dB
+15:25:35.466 
+--- Testing 4000 Hz ---
+15:25:35.997   Sample 0: Goertzel=0.9955, SNR=30.1dB, Detected=YES
+15:25:36.231   Sample 10: Goertzel=1.0284, SNR=32.1dB, Detected=YES
+15:25:36.423   Sample 20: Goertzel=1.0000, SNR=32.4dB, Detected=YES
+15:25:36.637   Sample 30: Goertzel=0.9944, SNR=33.0dB, Detected=YES
+15:25:36.871   Sample 40: Goertzel=0.9807, SNR=32.0dB, Detected=YES
+15:25:37.063   Sample 50: Goertzel=0.9794, SNR=30.2dB, Detected=YES
+15:25:37.277   Sample 60: Goertzel=1.0261, SNR=32.1dB, Detected=YES
+15:25:37.511   Sample 70: Goertzel=1.0020, SNR=32.4dB, Detected=YES
+15:25:37.703   Sample 80: Goertzel=0.9915, SNR=32.9dB, Detected=YES
+15:25:37.917   Sample 90: Goertzel=0.9813, SNR=32.0dB, Detected=YES
+15:25:38.151   Sample 100: Goertzel=0.9774, SNR=30.2dB, Detected=YES
+15:25:38.343   Sample 110: Goertzel=1.0278, SNR=32.2dB, Detected=YES
+15:25:38.498   Results: Detection=100.0%, Avg Level=1.0057, Avg SNR=32.0dB, Freq Error=0.39%, Est Cable Loss=2.0dB
+15:25:38.699 
+--- Testing 4231 Hz ---
+15:25:39.229   Sample 0: Goertzel=1.0879, SNR=33.5dB, Detected=YES
+15:25:39.463   Sample 10: Goertzel=1.1021, SNR=33.6dB, Detected=YES
+15:25:39.655   Sample 20: Goertzel=1.1052, SNR=32.8dB, Detected=YES
+15:25:39.869   Sample 30: Goertzel=1.0972, SNR=32.7dB, Detected=YES
+15:25:40.103   Sample 40: Goertzel=1.0945, SNR=33.6dB, Detected=YES
+15:25:40.295   Sample 50: Goertzel=1.0960, SNR=33.4dB, Detected=YES
+15:25:40.509   Sample 60: Goertzel=1.1026, SNR=33.6dB, Detected=YES
+15:25:40.743   Sample 70: Goertzel=1.1018, SNR=32.9dB, Detected=YES
+15:25:40.935   Sample 80: Goertzel=1.0980, SNR=32.8dB, Detected=YES
+15:25:41.149   Sample 90: Goertzel=1.0956, SNR=33.6dB, Detected=YES
+15:25:41.383   Sample 100: Goertzel=1.0967, SNR=33.4dB, Detected=YES
+15:25:41.575   Sample 110: Goertzel=1.1028, SNR=33.7dB, Detected=YES
+15:25:41.731   Results: Detection=100.0%, Avg Level=1.0995, Avg SNR=33.2dB, Freq Error=0.29%, Est Cable Loss=2.1dB
+15:25:41.931 
+--- Testing 4500 Hz ---
+15:25:42.461   Sample 0: Goertzel=1.2212, SNR=34.8dB, Detected=YES
+15:25:42.695   Sample 10: Goertzel=1.2280, SNR=33.6dB, Detected=YES
+15:25:42.887   Sample 20: Goertzel=1.2220, SNR=35.2dB, Detected=YES
+15:25:43.101   Sample 30: Goertzel=1.2274, SNR=34.7dB, Detected=YES
+15:25:43.335   Sample 40: Goertzel=1.2252, SNR=34.6dB, Detected=YES
+15:25:43.527   Sample 50: Goertzel=1.2206, SNR=34.8dB, Detected=YES
+15:25:43.741   Sample 60: Goertzel=1.2275, SNR=33.7dB, Detected=YES
+15:25:43.975   Sample 70: Goertzel=1.2224, SNR=35.2dB, Detected=YES
+15:25:44.167   Sample 80: Goertzel=1.2274, SNR=34.7dB, Detected=YES
+15:25:44.381   Sample 90: Goertzel=1.2253, SNR=34.6dB, Detected=YES
+15:25:44.615   Sample 100: Goertzel=1.2206, SNR=34.8dB, Detected=YES
+15:25:44.807   Sample 110: Goertzel=1.2271, SNR=33.8dB, Detected=YES
+15:25:44.963   Results: Detection=100.0%, Avg Level=1.2245, Avg SNR=34.4dB, Freq Error=0.00%, Est Cable Loss=2.2dB
+15:25:45.163 
+--- Testing 4699 Hz ---
+15:25:45.693   Sample 0: Goertzel=1.1210, SNR=32.9dB, Detected=YES
+15:25:45.927   Sample 10: Goertzel=1.1157, SNR=33.7dB, Detected=YES
+15:25:46.120   Sample 20: Goertzel=1.1088, SNR=33.9dB, Detected=YES
+15:25:46.333   Sample 30: Goertzel=1.1098, SNR=33.8dB, Detected=YES
+15:25:46.567   Sample 40: Goertzel=1.1124, SNR=32.8dB, Detected=YES
+15:25:46.760   Sample 50: Goertzel=1.1200, SNR=33.0dB, Detected=YES
+15:25:46.973   Sample 60: Goertzel=1.1166, SNR=33.6dB, Detected=YES
+15:25:47.207   Sample 70: Goertzel=1.1078, SNR=33.9dB, Detected=YES
+15:25:47.400   Sample 80: Goertzel=1.1103, SNR=33.9dB, Detected=YES
+15:25:47.613   Sample 90: Goertzel=1.1129, SNR=32.8dB, Detected=YES
+15:25:47.847   Sample 100: Goertzel=1.1163, SNR=33.0dB, Detected=YES
+15:25:48.040   Sample 110: Goertzel=1.1183, SNR=33.6dB, Detected=YES
+15:25:48.195   Results: Detection=100.0%, Avg Level=1.1140, Avg SNR=33.4dB, Freq Error=0.24%, Est Cable Loss=2.3dB
+15:25:48.395 
+--- Testing 5000 Hz ---
+15:25:48.926   Sample 0: Goertzel=0.5354, SNR=32.7dB, Detected=YES
+15:25:49.159   Sample 10: Goertzel=0.5348, SNR=32.4dB, Detected=YES
+15:25:49.352   Sample 20: Goertzel=0.5173, SNR=31.8dB, Detected=YES
+15:25:49.566   Sample 30: Goertzel=0.5176, SNR=33.0dB, Detected=YES
+15:25:49.800   Sample 40: Goertzel=0.5203, SNR=32.9dB, Detected=YES
+15:25:49.992   Sample 50: Goertzel=0.5400, SNR=32.5dB, Detected=YES
+15:25:50.206   Sample 60: Goertzel=0.5364, SNR=32.5dB, Detected=YES
+15:25:50.440   Sample 70: Goertzel=0.5205, SNR=31.7dB, Detected=YES
+15:25:50.632   Sample 80: Goertzel=0.5197, SNR=32.9dB, Detected=YES
+15:25:50.846   Sample 90: Goertzel=0.5177, SNR=32.9dB, Detected=YES
+15:25:51.080   Sample 100: Goertzel=0.5365, SNR=32.5dB, Detected=YES
+15:25:51.272   Sample 110: Goertzel=0.5341, SNR=32.6dB, Detected=YES
+15:25:51.427   Results: Detection=100.0%, Avg Level=0.5265, Avg SNR=32.3dB, Freq Error=0.31%, Est Cable Loss=2.5dB
+15:25:51.627 
+--- Testing 5500 Hz ---
+15:25:52.158   Sample 0: Goertzel=1.0302, SNR=32.8dB, Detected=YES
+15:25:52.392   Sample 10: Goertzel=1.0325, SNR=32.6dB, Detected=YES
+15:25:52.584   Sample 20: Goertzel=1.0169, SNR=32.2dB, Detected=YES
+15:25:52.798   Sample 30: Goertzel=1.0215, SNR=32.1dB, Detected=YES
+15:25:53.032   Sample 40: Goertzel=1.0142, SNR=33.3dB, Detected=YES
+15:25:53.224   Sample 50: Goertzel=1.0289, SNR=32.9dB, Detected=YES
+15:25:53.438   Sample 60: Goertzel=1.0309, SNR=32.4dB, Detected=YES
+15:25:53.672   Sample 70: Goertzel=1.0178, SNR=32.2dB, Detected=YES
+15:25:53.864   Sample 80: Goertzel=1.0221, SNR=32.2dB, Detected=YES
+15:25:54.078   Sample 90: Goertzel=1.0143, SNR=33.3dB, Detected=YES
+15:25:54.312   Sample 100: Goertzel=1.0280, SNR=33.0dB, Detected=YES
+15:25:54.504   Sample 110: Goertzel=1.0284, SNR=32.3dB, Detected=YES
+15:25:54.659   Results: Detection=100.0%, Avg Level=1.0231, Avg SNR=32.8dB, Freq Error=0.28%, Est Cable Loss=2.8dB
+15:25:54.859 
+--- Testing 5639 Hz ---
+15:25:55.390   Sample 0: Goertzel=1.0758, SNR=33.1dB, Detected=YES
+15:25:55.624   Sample 10: Goertzel=1.0681, SNR=34.0dB, Detected=YES
+15:25:55.816   Sample 20: Goertzel=1.0455, SNR=34.0dB, Detected=YES
+15:25:56.030   Sample 30: Goertzel=1.0535, SNR=32.8dB, Detected=YES
+15:25:56.264   Sample 40: Goertzel=1.0637, SNR=32.6dB, Detected=YES
+15:25:56.456   Sample 50: Goertzel=1.0732, SNR=32.9dB, Detected=YES
+15:25:56.670   Sample 60: Goertzel=1.0638, SNR=34.1dB, Detected=YES
+15:25:56.904   Sample 70: Goertzel=1.0396, SNR=33.8dB, Detected=YES
+15:25:57.096   Sample 80: Goertzel=1.0586, SNR=32.8dB, Detected=YES
+15:25:57.310   Sample 90: Goertzel=1.0686, SNR=32.7dB, Detected=YES
+15:25:57.544   Sample 100: Goertzel=1.0724, SNR=32.8dB, Detected=YES
+15:25:57.736   Sample 110: Goertzel=1.0550, SNR=33.9dB, Detected=YES
+15:25:57.891   Results: Detection=100.0%, Avg Level=1.0610, Avg SNR=33.3dB, Freq Error=0.25%, Est Cable Loss=2.8dB
+15:25:58.091 
+--- Testing 6000 Hz ---
+15:25:58.622   Sample 0: Goertzel=1.2019, SNR=35.2dB, Detected=YES
+15:25:58.856   Sample 10: Goertzel=1.1306, SNR=30.8dB, Detected=YES
+15:25:59.048   Sample 20: Goertzel=1.1721, SNR=35.6dB, Detected=YES
+15:25:59.262   Sample 30: Goertzel=1.1231, SNR=34.6dB, Detected=YES
+15:25:59.496   Sample 40: Goertzel=1.1097, SNR=31.7dB, Detected=YES
+15:25:59.688   Sample 50: Goertzel=1.1571, SNR=35.3dB, Detected=YES
+15:25:59.902   Sample 60: Goertzel=1.1288, SNR=30.8dB, Detected=YES
+15:26:00.136   Sample 70: Goertzel=1.1730, SNR=35.5dB, Detected=YES
+15:26:00.328   Sample 80: Goertzel=1.1233, SNR=34.6dB, Detected=YES
+15:26:00.542   Sample 90: Goertzel=1.1097, SNR=31.7dB, Detected=YES
+15:26:00.776   Sample 100: Goertzel=1.1528, SNR=35.2dB, Detected=YES
+15:26:00.968   Sample 110: Goertzel=1.1306, SNR=30.9dB, Detected=YES
+15:26:01.123   Results: Detection=100.0%, Avg Level=1.1679, Avg SNR=33.8dB, Freq Error=0.00%, Est Cable Loss=3.0dB
+15:26:01.324 
+--- Testing 6500 Hz ---
+15:26:01.854   Sample 0: Goertzel=0.5087, SNR=31.8dB, Detected=YES
+15:26:02.088   Sample 10: Goertzel=0.5372, SNR=33.2dB, Detected=YES
+15:26:02.280   Sample 20: Goertzel=0.5182, SNR=31.8dB, Detected=YES
+15:26:02.494   Sample 30: Goertzel=0.5173, SNR=33.1dB, Detected=YES
+15:26:02.728   Sample 40: Goertzel=0.5169, SNR=33.5dB, Detected=YES
+15:26:02.920   Sample 50: Goertzel=0.5319, SNR=31.8dB, Detected=YES
+15:26:03.134   Sample 60: Goertzel=0.5373, SNR=33.2dB, Detected=YES
+15:26:03.368   Sample 70: Goertzel=0.5168, SNR=31.8dB, Detected=YES
+15:26:03.560   Sample 80: Goertzel=0.5181, SNR=33.1dB, Detected=YES
+15:26:03.774   Sample 90: Goertzel=0.5170, SNR=33.6dB, Detected=YES
+15:26:04.008   Sample 100: Goertzel=0.5332, SNR=31.8dB, Detected=YES
+15:26:04.200   Sample 110: Goertzel=0.5384, SNR=33.0dB, Detected=YES
+15:26:04.356   Results: Detection=100.0%, Avg Level=0.5276, Avg SNR=32.6dB, Freq Error=0.24%, Est Cable Loss=3.2dB
+15:26:04.556 
+--- Testing 7000 Hz ---
+15:26:05.086   Sample 0: Goertzel=1.0212, SNR=34.1dB, Detected=YES
+15:26:05.320   Sample 10: Goertzel=1.0324, SNR=32.9dB, Detected=YES
+15:26:05.512   Sample 20: Goertzel=1.0134, SNR=33.2dB, Detected=YES
+15:26:05.726   Sample 30: Goertzel=1.0190, SNR=32.2dB, Detected=YES
+15:26:05.960   Sample 40: Goertzel=1.0143, SNR=33.5dB, Detected=YES
+15:26:06.152   Sample 50: Goertzel=1.0241, SNR=34.2dB, Detected=YES
+15:26:06.366   Sample 60: Goertzel=1.0302, SNR=33.0dB, Detected=YES
+15:26:06.600   Sample 70: Goertzel=1.0127, SNR=33.2dB, Detected=YES
+15:26:06.793   Sample 80: Goertzel=1.0204, SNR=32.2dB, Detected=YES
+15:26:07.006   Sample 90: Goertzel=1.0126, SNR=33.5dB, Detected=YES
+15:26:07.240   Sample 100: Goertzel=1.0249, SNR=34.0dB, Detected=YES
+15:26:07.433   Sample 110: Goertzel=1.0299, SNR=33.1dB, Detected=YES
+15:26:07.588   Results: Detection=100.0%, Avg Level=1.0210, Avg SNR=33.2dB, Freq Error=0.22%, Est Cable Loss=3.5dB
+15:26:07.788 
+--- Testing 7040 Hz ---
+15:26:08.319   Sample 0: Goertzel=1.1617, SNR=33.8dB, Detected=YES
+15:26:08.552   Sample 10: Goertzel=1.1569, SNR=34.5dB, Detected=YES
+15:26:08.745   Sample 20: Goertzel=1.1386, SNR=35.4dB, Detected=YES
+15:26:08.958   Sample 30: Goertzel=1.1489, SNR=34.3dB, Detected=YES
+15:26:09.192   Sample 40: Goertzel=1.1582, SNR=33.2dB, Detected=YES
+15:26:09.385   Sample 50: Goertzel=1.1588, SNR=33.9dB, Detected=YES
+15:26:09.598   Sample 60: Goertzel=1.1565, SNR=34.3dB, Detected=YES
+15:26:09.832   Sample 70: Goertzel=1.1382, SNR=35.3dB, Detected=YES
+15:26:10.025   Sample 80: Goertzel=1.1496, SNR=34.3dB, Detected=YES
+15:26:10.239   Sample 90: Goertzel=1.1583, SNR=33.2dB, Detected=YES
+15:26:10.473   Sample 100: Goertzel=1.1566, SNR=34.1dB, Detected=YES
+15:26:10.665   Sample 110: Goertzel=1.1588, SNR=34.1dB, Detected=YES
+15:26:10.820   Results: Detection=100.0%, Avg Level=1.1517, Avg SNR=34.5dB, Freq Error=0.12%, Est Cable Loss=3.5dB
+15:26:11.020 
+--- Testing 7500 Hz ---
+15:26:11.551   Sample 0: Goertzel=1.2069, SNR=34.8dB, Detected=YES
+15:26:11.785   Sample 10: Goertzel=1.2053, SNR=35.3dB, Detected=YES
+15:26:11.977   Sample 20: Goertzel=1.2115, SNR=34.6dB, Detected=YES
+15:26:12.191   Sample 30: Goertzel=1.2020, SNR=36.3dB, Detected=YES
+15:26:12.425   Sample 40: Goertzel=1.2097, SNR=35.7dB, Detected=YES
+15:26:12.617   Sample 50: Goertzel=1.2099, SNR=34.6dB, Detected=YES
+15:26:12.831   Sample 60: Goertzel=1.2036, SNR=35.5dB, Detected=YES
+15:26:13.065   Sample 70: Goertzel=1.2114, SNR=34.6dB, Detected=YES
+15:26:13.257   Sample 80: Goertzel=1.2018, SNR=36.3dB, Detected=YES
+15:26:13.471   Sample 90: Goertzel=1.2098, SNR=35.7dB, Detected=YES
+15:26:13.705   Sample 100: Goertzel=1.2117, SNR=34.4dB, Detected=YES
+15:26:13.897   Sample 110: Goertzel=1.2025, SNR=35.7dB, Detected=YES
+15:26:14.052   Results: Detection=100.0%, Avg Level=1.2096, Avg SNR=35.2dB, Freq Error=0.00%, Est Cable Loss=3.8dB
+15:26:14.252 
+--- Testing 8000 Hz ---
+15:26:14.783   Sample 0: Goertzel=0.5504, SNR=31.9dB, Detected=YES
+15:26:15.017   Sample 10: Goertzel=0.4780, SNR=28.7dB, Detected=YES
+15:26:15.209   Sample 20: Goertzel=0.4509, SNR=28.5dB, Detected=YES
+15:26:15.423   Sample 30: Goertzel=0.4700, SNR=29.9dB, Detected=YES
+15:26:15.657   Sample 40: Goertzel=0.4979, SNR=32.1dB, Detected=YES
+15:26:15.849   Sample 50: Goertzel=0.5199, SNR=31.9dB, Detected=YES
+15:26:16.063   Sample 60: Goertzel=0.4735, SNR=28.7dB, Detected=YES
+15:26:16.297   Sample 70: Goertzel=0.4475, SNR=28.6dB, Detected=YES
+15:26:16.489   Sample 80: Goertzel=0.4692, SNR=29.8dB, Detected=YES
+15:26:16.703   Sample 90: Goertzel=0.4961, SNR=32.1dB, Detected=YES
+15:26:16.937   Sample 100: Goertzel=0.5161, SNR=32.1dB, Detected=YES
+15:26:17.129   Sample 110: Goertzel=0.4726, SNR=28.6dB, Detected=YES
+15:26:17.284   Results: Detection=100.0%, Avg Level=0.4996, Avg SNR=31.0dB, Freq Error=0.20%, Est Cable Loss=4.0dB
+15:26:17.484 
+--- Testing 8192 Hz ---
+15:26:18.015   Sample 0: Goertzel=0.3747, SNR=33.1dB, Detected=YES
+15:26:18.249   Sample 10: Goertzel=0.3860, SNR=34.9dB, Detected=YES
+15:26:18.441   Sample 20: Goertzel=0.3627, SNR=34.5dB, Detected=YES
+15:26:18.655   Sample 30: Goertzel=0.3617, SNR=32.9dB, Detected=YES
+15:26:18.889   Sample 40: Goertzel=0.3651, SNR=33.9dB, Detected=YES
+15:26:19.081   Sample 50: Goertzel=0.3817, SNR=33.0dB, Detected=YES
+15:26:19.295   Sample 60: Goertzel=0.3885, SNR=35.0dB, Detected=YES
+15:26:19.529   Sample 70: Goertzel=0.3646, SNR=34.7dB, Detected=YES
+15:26:19.721   Sample 80: Goertzel=0.3622, SNR=32.9dB, Detected=YES
+15:26:19.935   Sample 90: Goertzel=0.3656, SNR=33.8dB, Detected=YES
+15:26:20.169   Sample 100: Goertzel=0.3798, SNR=33.0dB, Detected=YES
+15:26:20.361   Sample 110: Goertzel=0.3907, SNR=34.9dB, Detected=YES
+15:26:20.516   Results: Detection=100.0%, Avg Level=0.3734, Avg SNR=34.0dB, Freq Error=0.14%, Est Cable Loss=4.1dB
+15:26:20.717 
+--- Testing 8500 Hz ---
+15:26:21.247   Sample 0: Goertzel=1.0212, SNR=34.8dB, Detected=YES
+15:26:21.481   Sample 10: Goertzel=1.0135, SNR=32.8dB, Detected=YES
+15:26:21.673   Sample 20: Goertzel=0.9983, SNR=34.7dB, Detected=YES
+15:26:21.887   Sample 30: Goertzel=1.0046, SNR=33.9dB, Detected=YES
+15:26:22.121   Sample 40: Goertzel=1.0300, SNR=32.8dB, Detected=YES
+15:26:22.313   Sample 50: Goertzel=1.0197, SNR=34.8dB, Detected=YES
+15:26:22.527   Sample 60: Goertzel=1.0126, SNR=32.8dB, Detected=YES
+15:26:22.761   Sample 70: Goertzel=0.9983, SNR=34.6dB, Detected=YES
+15:26:22.953   Sample 80: Goertzel=1.0037, SNR=33.9dB, Detected=YES
+15:26:23.167   Sample 90: Goertzel=1.0296, SNR=32.7dB, Detected=YES
+15:26:23.401   Sample 100: Goertzel=1.0194, SNR=34.9dB, Detected=YES
+15:26:23.593   Sample 110: Goertzel=1.0133, SNR=32.9dB, Detected=YES
+15:26:23.749   Results: Detection=100.0%, Avg Level=1.0159, Avg SNR=33.5dB, Freq Error=0.18%, Est Cable Loss=4.2dB
+15:26:23.949 
+--- Testing 9000 Hz ---
+15:26:24.479   Sample 0: Goertzel=1.1981, SNR=33.0dB, Detected=YES
+15:26:24.713   Sample 10: Goertzel=1.2203, SNR=34.5dB, Detected=YES
+15:26:24.905   Sample 20: Goertzel=1.2020, SNR=35.0dB, Detected=YES
+15:26:25.119   Sample 30: Goertzel=1.1606, SNR=37.2dB, Detected=YES
+15:26:25.353   Sample 40: Goertzel=1.1605, SNR=36.9dB, Detected=YES
+15:26:25.545   Sample 50: Goertzel=1.1928, SNR=33.1dB, Detected=YES
+15:26:25.759   Sample 60: Goertzel=1.2194, SNR=34.5dB, Detected=YES
+15:26:25.993   Sample 70: Goertzel=1.2025, SNR=35.0dB, Detected=YES
+15:26:26.185   Sample 80: Goertzel=1.1610, SNR=37.2dB, Detected=YES
+15:26:26.399   Sample 90: Goertzel=1.1584, SNR=36.9dB, Detected=YES
+15:26:26.633   Sample 100: Goertzel=1.1919, SNR=33.1dB, Detected=YES
+15:26:26.825   Sample 110: Goertzel=1.2184, SNR=34.5dB, Detected=YES
+15:26:26.981   Results: Detection=100.0%, Avg Level=1.1857, Avg SNR=35.1dB, Freq Error=0.00%, Est Cable Loss=4.5dB
+15:26:27.181 
+--- Testing 9500 Hz ---
+15:26:27.711   Sample 0: Goertzel=0.5387, SNR=34.3dB, Detected=YES
+15:26:27.945   Sample 10: Goertzel=0.5156, SNR=34.5dB, Detected=YES
+15:26:28.138   Sample 20: Goertzel=0.5240, SNR=32.1dB, Detected=YES
+15:26:28.351   Sample 30: Goertzel=0.5203, SNR=32.8dB, Detected=YES
+15:26:28.585   Sample 40: Goertzel=0.5419, SNR=32.1dB, Detected=YES
+15:26:28.778   Sample 50: Goertzel=0.5464, SNR=34.1dB, Detected=YES
+15:26:28.991   Sample 60: Goertzel=0.5205, SNR=34.2dB, Detected=YES
+15:26:29.225   Sample 70: Goertzel=0.5216, SNR=32.3dB, Detected=YES
+15:26:29.418   Sample 80: Goertzel=0.5222, SNR=32.5dB, Detected=YES
+15:26:29.631   Sample 90: Goertzel=0.5376, SNR=32.3dB, Detected=YES
+15:26:29.865   Sample 100: Goertzel=0.5519, SNR=33.6dB, Detected=YES
+15:26:30.058   Sample 110: Goertzel=0.5236, SNR=34.1dB, Detected=YES
+15:26:30.213   Results: Detection=100.0%, Avg Level=0.5312, Avg SNR=33.3dB, Freq Error=0.16%, Est Cable Loss=4.8dB
+15:26:30.413 
+--- Testing 9871 Hz ---
+15:26:30.944   Sample 0: Goertzel=0.6865, SNR=31.2dB, Detected=YES
+15:26:31.178   Sample 10: Goertzel=0.6554, SNR=33.0dB, Detected=YES
+15:26:31.370   Sample 20: Goertzel=0.6560, SNR=33.1dB, Detected=YES
+15:26:31.584   Sample 30: Goertzel=0.6610, SNR=31.1dB, Detected=YES
+15:26:31.818   Sample 40: Goertzel=0.6828, SNR=32.8dB, Detected=YES
+15:26:32.010   Sample 50: Goertzel=0.6838, SNR=31.5dB, Detected=YES
+15:26:32.224   Sample 60: Goertzel=0.6531, SNR=33.0dB, Detected=YES
+15:26:32.458   Sample 70: Goertzel=0.6518, SNR=33.1dB, Detected=YES
+15:26:32.650   Sample 80: Goertzel=0.6624, SNR=31.1dB, Detected=YES
+15:26:32.864   Sample 90: Goertzel=0.6836, SNR=32.7dB, Detected=YES
+15:26:33.098   Sample 100: Goertzel=0.6868, SNR=31.6dB, Detected=YES
+15:26:33.290   Sample 110: Goertzel=0.6554, SNR=33.0dB, Detected=YES
+15:26:33.445   Results: Detection=100.0%, Avg Level=0.6683, Avg SNR=32.0dB, Freq Error=0.20%, Est Cable Loss=4.9dB
+15:26:33.645 
+--- Testing 10000 Hz ---
+15:26:34.176   Sample 0: Goertzel=1.0242, SNR=34.2dB, Detected=YES
+15:26:34.410   Sample 10: Goertzel=1.0123, SNR=32.0dB, Detected=YES
+15:26:34.602   Sample 20: Goertzel=0.9984, SNR=34.4dB, Detected=YES
+15:26:34.816   Sample 30: Goertzel=1.0006, SNR=34.8dB, Detected=YES
+15:26:35.050   Sample 40: Goertzel=1.0269, SNR=32.6dB, Detected=YES
+15:26:35.242   Sample 50: Goertzel=1.0303, SNR=34.0dB, Detected=YES
+15:26:35.456   Sample 60: Goertzel=1.0126, SNR=32.0dB, Detected=YES
+15:26:35.690   Sample 70: Goertzel=0.9987, SNR=34.4dB, Detected=YES
+15:26:35.882   Sample 80: Goertzel=1.0017, SNR=34.9dB, Detected=YES
+15:26:36.096   Sample 90: Goertzel=1.0234, SNR=32.8dB, Detected=YES
+15:26:36.330   Sample 100: Goertzel=1.0314, SNR=33.6dB, Detected=YES
+15:26:36.522   Sample 110: Goertzel=1.0108, SNR=32.0dB, Detected=YES
+15:26:36.677   Results: Detection=100.0%, Avg Level=1.0119, Avg SNR=33.7dB, Freq Error=0.16%, Est Cable Loss=5.0dB
+15:26:36.877 
+--- Testing 10079 Hz ---
+15:26:37.408   Sample 0: Goertzel=1.1868, SNR=36.0dB, Detected=YES
+15:26:37.642   Sample 10: Goertzel=1.1950, SNR=34.9dB, Detected=YES
+15:26:37.834   Sample 20: Goertzel=1.2032, SNR=34.4dB, Detected=YES
+15:26:38.048   Sample 30: Goertzel=1.1717, SNR=36.8dB, Detected=YES
+15:26:38.282   Sample 40: Goertzel=1.1818, SNR=35.8dB, Detected=YES
+15:26:38.474   Sample 50: Goertzel=1.1757, SNR=36.3dB, Detected=YES
+15:26:38.688   Sample 60: Goertzel=1.1944, SNR=35.0dB, Detected=YES
+15:26:38.922   Sample 70: Goertzel=1.2033, SNR=34.4dB, Detected=YES
+15:26:39.114   Sample 80: Goertzel=1.1716, SNR=36.7dB, Detected=YES
+15:26:39.328   Sample 90: Goertzel=1.1845, SNR=35.6dB, Detected=YES
+15:26:39.562   Sample 100: Goertzel=1.1731, SNR=36.5dB, Detected=YES
+15:26:39.754   Sample 110: Goertzel=1.1941, SNR=35.0dB, Detected=YES
+15:26:39.909   Results: Detection=100.0%, Avg Level=1.1863, Avg SNR=35.7dB, Freq Error=0.01%, Est Cable Loss=5.0dB
+15:26:40.109 
+--- Testing 10301 Hz ---
+15:26:40.640   Sample 0: Goertzel=0.4032, SNR=33.4dB, Detected=YES
+15:26:40.874   Sample 10: Goertzel=0.3782, SNR=35.8dB, Detected=YES
+15:26:41.066   Sample 20: Goertzel=0.3795, SNR=33.8dB, Detected=YES
+15:26:41.280   Sample 30: Goertzel=0.3808, SNR=33.2dB, Detected=YES
+15:26:41.514   Sample 40: Goertzel=0.4106, SNR=34.4dB, Detected=YES
+15:26:41.706   Sample 50: Goertzel=0.4022, SNR=33.2dB, Detected=YES
+15:26:41.920   Sample 60: Goertzel=0.3768, SNR=35.8dB, Detected=YES
+15:26:42.154   Sample 70: Goertzel=0.3810, SNR=33.7dB, Detected=YES
+15:26:42.346   Sample 80: Goertzel=0.3794, SNR=33.2dB, Detected=YES
+15:26:42.560   Sample 90: Goertzel=0.4100, SNR=34.7dB, Detected=YES
+15:26:42.794   Sample 100: Goertzel=0.4025, SNR=33.1dB, Detected=YES
+15:26:42.986   Sample 110: Goertzel=0.3751, SNR=35.8dB, Detected=YES
+15:26:43.141   Results: Detection=100.0%, Avg Level=0.3883, Avg SNR=34.3dB, Freq Error=0.11%, Est Cable Loss=5.2dB
+15:26:43.342 
+--- Testing 10531 Hz ---
+15:26:43.872   Sample 0: Goertzel=0.5592, SNR=34.2dB, Detected=YES
+15:26:44.106   Sample 10: Goertzel=0.5254, SNR=33.8dB, Detected=YES
+15:26:44.298   Sample 20: Goertzel=0.5245, SNR=34.7dB, Detected=YES
+15:26:44.512   Sample 30: Goertzel=0.5296, SNR=32.7dB, Detected=YES
+15:26:44.746   Sample 40: Goertzel=0.5585, SNR=32.2dB, Detected=YES
+15:26:44.938   Sample 50: Goertzel=0.5571, SNR=34.3dB, Detected=YES
+15:26:45.152   Sample 60: Goertzel=0.5281, SNR=33.7dB, Detected=YES
+15:26:45.386   Sample 70: Goertzel=0.5267, SNR=34.7dB, Detected=YES
+15:26:45.578   Sample 80: Goertzel=0.5302, SNR=32.7dB, Detected=YES
+15:26:45.792   Sample 90: Goertzel=0.5574, SNR=32.1dB, Detected=YES
+15:26:46.026   Sample 100: Goertzel=0.5566, SNR=34.3dB, Detected=YES
+15:26:46.218   Sample 110: Goertzel=0.5274, SNR=33.7dB, Detected=YES
+15:26:46.374   Results: Detection=100.0%, Avg Level=0.5393, Avg SNR=33.3dB, Freq Error=0.15%, Est Cable Loss=5.3dB
+15:26:46.574 
+--- Testing 10789 Hz ---
+15:26:47.104   Sample 0: Goertzel=1.1673, SNR=34.0dB, Detected=YES
+15:26:47.338   Sample 10: Goertzel=1.1631, SNR=33.7dB, Detected=YES
+15:26:47.530   Sample 20: Goertzel=1.1333, SNR=35.7dB, Detected=YES
+15:26:47.744   Sample 30: Goertzel=1.1209, SNR=37.1dB, Detected=YES
+15:26:47.978   Sample 40: Goertzel=1.1330, SNR=36.9dB, Detected=YES
+15:26:48.170   Sample 50: Goertzel=1.1653, SNR=34.0dB, Detected=YES
+15:26:48.384   Sample 60: Goertzel=1.1646, SNR=33.7dB, Detected=YES
+15:26:48.618   Sample 70: Goertzel=1.1353, SNR=35.7dB, Detected=YES
+15:26:48.811   Sample 80: Goertzel=1.1207, SNR=37.1dB, Detected=YES
+15:26:49.024   Sample 90: Goertzel=1.1327, SNR=37.0dB, Detected=YES
+15:26:49.258   Sample 100: Goertzel=1.1657, SNR=34.1dB, Detected=YES
+15:26:49.451   Sample 110: Goertzel=1.1649, SNR=33.7dB, Detected=YES
+15:26:49.606   Results: Detection=100.0%, Avg Level=1.1434, Avg SNR=35.4dB, Freq Error=0.07%, Est Cable Loss=5.4dB
+15:26:49.806 
+--- Testing 11000 Hz ---
+15:26:50.337   Sample 0: Goertzel=0.5514, SNR=34.3dB, Detected=YES
+15:26:50.570   Sample 10: Goertzel=0.5220, SNR=33.7dB, Detected=YES
+15:26:50.763   Sample 20: Goertzel=0.5216, SNR=32.3dB, Detected=YES
+15:26:50.976   Sample 30: Goertzel=0.5206, SNR=33.8dB, Detected=YES
+15:26:51.210   Sample 40: Goertzel=0.5474, SNR=31.9dB, Detected=YES
+15:26:51.403   Sample 50: Goertzel=0.5518, SNR=34.3dB, Detected=YES
+15:26:51.617   Sample 60: Goertzel=0.5200, SNR=33.7dB, Detected=YES
+15:26:51.851   Sample 70: Goertzel=0.5215, SNR=32.3dB, Detected=YES
+15:26:52.043   Sample 80: Goertzel=0.5197, SNR=33.8dB, Detected=YES
+15:26:52.257   Sample 90: Goertzel=0.5493, SNR=31.9dB, Detected=YES
+15:26:52.491   Sample 100: Goertzel=0.5529, SNR=34.1dB, Detected=YES
+15:26:52.683   Sample 110: Goertzel=0.5207, SNR=33.8dB, Detected=YES
+15:26:52.838   Results: Detection=100.0%, Avg Level=0.5310, Avg SNR=33.4dB, Freq Error=0.14%, Est Cable Loss=5.5dB
+15:26:53.038 
+--- Testing 11311 Hz ---
+15:26:53.569   Sample 0: Goertzel=1.0306, SNR=34.1dB, Detected=YES
+15:26:53.803   Sample 10: Goertzel=1.0116, SNR=36.1dB, Detected=YES
+15:26:53.995   Sample 20: Goertzel=1.0342, SNR=34.5dB, Detected=YES
+15:26:54.209   Sample 30: Goertzel=1.0603, SNR=33.0dB, Detected=YES
+15:26:54.443   Sample 40: Goertzel=1.0333, SNR=36.0dB, Detected=YES
+15:26:54.635   Sample 50: Goertzel=1.0355, SNR=34.3dB, Detected=YES
+15:26:54.849   Sample 60: Goertzel=1.0127, SNR=36.2dB, Detected=YES
+15:26:55.083   Sample 70: Goertzel=1.0325, SNR=34.5dB, Detected=YES
+15:26:55.275   Sample 80: Goertzel=1.0548, SNR=32.9dB, Detected=YES
+15:26:55.489   Sample 90: Goertzel=1.0356, SNR=35.9dB, Detected=YES
+15:26:55.723   Sample 100: Goertzel=1.0397, SNR=34.3dB, Detected=YES
+15:26:55.915   Sample 110: Goertzel=1.0155, SNR=36.3dB, Detected=YES
+15:26:56.070   Results: Detection=100.0%, Avg Level=1.0363, Avg SNR=34.5dB, Freq Error=0.12%, Est Cable Loss=5.7dB
+15:26:56.270 
+--- Testing 11500 Hz ---
+15:26:56.801   Sample 0: Goertzel=1.0119, SNR=32.4dB, Detected=YES
+15:26:57.035   Sample 10: Goertzel=0.9989, SNR=33.7dB, Detected=YES
+15:26:57.227   Sample 20: Goertzel=0.9792, SNR=36.0dB, Detected=YES
+15:26:57.441   Sample 30: Goertzel=1.0045, SNR=35.6dB, Detected=YES
+15:26:57.675   Sample 40: Goertzel=1.0270, SNR=33.4dB, Detected=YES
+15:26:57.867   Sample 50: Goertzel=1.0130, SNR=32.5dB, Detected=YES
+15:26:58.081   Sample 60: Goertzel=0.9980, SNR=33.5dB, Detected=YES
+15:26:58.315   Sample 70: Goertzel=0.9781, SNR=36.0dB, Detected=YES
+15:26:58.507   Sample 80: Goertzel=1.0067, SNR=35.6dB, Detected=YES
+15:26:58.721   Sample 90: Goertzel=1.0222, SNR=33.5dB, Detected=YES
+15:26:58.955   Sample 100: Goertzel=1.0121, SNR=32.5dB, Detected=YES
+15:26:59.147   Sample 110: Goertzel=1.0003, SNR=33.6dB, Detected=YES
+15:26:59.302   Results: Detection=100.0%, Avg Level=1.0026, Avg SNR=34.1dB, Freq Error=0.14%, Est Cable Loss=5.8dB
+15:26:59.502 
+--- Testing 12000 Hz ---
+15:27:00.033   Sample 0: Goertzel=0.9936, SNR=28.7dB, Detected=YES
+15:27:00.267   Sample 10: Goertzel=0.8635, SNR=26.0dB, Detected=YES
+15:27:00.459   Sample 20: Goertzel=0.9152, SNR=27.8dB, Detected=YES
+15:27:00.673   Sample 30: Goertzel=0.8994, SNR=26.3dB, Detected=YES
+15:27:00.907   Sample 40: Goertzel=1.1674, SNR=42.4dB, Detected=YES
+15:27:01.099   Sample 50: Goertzel=0.8950, SNR=30.8dB, Detected=YES
+15:27:01.313   Sample 60: Goertzel=0.8557, SNR=26.0dB, Detected=YES
+15:27:01.547   Sample 70: Goertzel=0.9171, SNR=27.9dB, Detected=YES
+15:27:01.739   Sample 80: Goertzel=0.9030, SNR=26.5dB, Detected=YES
+15:27:01.953   Sample 90: Goertzel=1.1787, SNR=43.0dB, Detected=YES
+15:27:02.187   Sample 100: Goertzel=0.8963, SNR=30.8dB, Detected=YES
+15:27:02.379   Sample 110: Goertzel=0.8556, SNR=26.0dB, Detected=YES
+15:27:02.534   Results: Detection=100.0%, Avg Level=1.0528, Avg SNR=35.6dB, Freq Error=0.00%, Est Cable Loss=6.0dB
+15:27:02.735 
+--- Testing 12500 Hz ---
+15:27:03.265   Sample 0: Goertzel=0.4969, SNR=35.6dB, Detected=YES
+15:27:03.499   Sample 10: Goertzel=0.5127, SNR=34.3dB, Detected=YES
+15:27:03.691   Sample 20: Goertzel=0.5232, SNR=32.2dB, Detected=YES
+15:27:03.905   Sample 30: Goertzel=0.5527, SNR=34.2dB, Detected=YES
+15:27:04.139   Sample 40: Goertzel=0.5554, SNR=33.3dB, Detected=YES
+15:27:04.331   Sample 50: Goertzel=0.5137, SNR=35.2dB, Detected=YES
+15:27:04.545   Sample 60: Goertzel=0.5140, SNR=34.5dB, Detected=YES
+15:27:04.779   Sample 70: Goertzel=0.5255, SNR=32.1dB, Detected=YES
+15:27:04.971   Sample 80: Goertzel=0.5541, SNR=33.9dB, Detected=YES
+15:27:05.185   Sample 90: Goertzel=0.5553, SNR=33.6dB, Detected=YES
+15:27:05.419   Sample 100: Goertzel=0.5139, SNR=35.1dB, Detected=YES
+15:27:05.611   Sample 110: Goertzel=0.5142, SNR=34.4dB, Detected=YES
+15:27:05.767   Results: Detection=100.0%, Avg Level=0.5297, Avg SNR=33.5dB, Freq Error=0.12%, Est Cable Loss=6.2dB
+15:27:05.967 
+--- Testing 13000 Hz ---
+15:27:06.497   Sample 0: Goertzel=1.0029, SNR=33.5dB, Detected=YES
+15:27:06.731   Sample 10: Goertzel=0.9719, SNR=36.0dB, Detected=YES
+15:27:06.923   Sample 20: Goertzel=0.9801, SNR=34.8dB, Detected=YES
+15:27:07.137   Sample 30: Goertzel=1.0166, SNR=34.3dB, Detected=YES
+15:27:07.371   Sample 40: Goertzel=1.0209, SNR=33.4dB, Detected=YES
+15:27:07.563   Sample 50: Goertzel=1.0027, SNR=33.5dB, Detected=YES
+15:27:07.777   Sample 60: Goertzel=0.9716, SNR=35.9dB, Detected=YES
+15:27:08.011   Sample 70: Goertzel=0.9795, SNR=34.8dB, Detected=YES
+15:27:08.203   Sample 80: Goertzel=1.0119, SNR=34.7dB, Detected=YES
+15:27:08.417   Sample 90: Goertzel=1.0226, SNR=33.2dB, Detected=YES
+15:27:08.651   Sample 100: Goertzel=1.0045, SNR=33.5dB, Detected=YES
+15:27:08.843   Sample 110: Goertzel=0.9710, SNR=35.8dB, Detected=YES
+15:27:08.999   Results: Detection=100.0%, Avg Level=0.9962, Avg SNR=34.4dB, Freq Error=0.12%, Est Cable Loss=6.5dB
+15:27:09.199 
+--- Testing 13500 Hz ---
+15:27:09.729   Sample 0: Goertzel=1.1853, SNR=35.4dB, Detected=YES
+15:27:09.963   Sample 10: Goertzel=1.1839, SNR=35.5dB, Detected=YES
+15:27:10.156   Sample 20: Goertzel=1.1277, SNR=38.2dB, Detected=YES
+15:27:10.369   Sample 30: Goertzel=1.1657, SNR=36.0dB, Detected=YES
+15:27:10.603   Sample 40: Goertzel=1.1294, SNR=37.7dB, Detected=YES
+15:27:10.796   Sample 50: Goertzel=1.1876, SNR=35.4dB, Detected=YES
+15:27:11.009   Sample 60: Goertzel=1.1866, SNR=35.4dB, Detected=YES
+15:27:11.243   Sample 70: Goertzel=1.1288, SNR=38.1dB, Detected=YES
+15:27:11.436   Sample 80: Goertzel=1.1729, SNR=35.7dB, Detected=YES
+15:27:11.649   Sample 90: Goertzel=1.1269, SNR=37.9dB, Detected=YES
+15:27:11.883   Sample 100: Goertzel=1.1869, SNR=35.5dB, Detected=YES
+15:27:12.076   Sample 110: Goertzel=1.1868, SNR=35.4dB, Detected=YES
+15:27:12.231   Results: Detection=100.0%, Avg Level=1.1590, Avg SNR=36.2dB, Freq Error=0.00%, Est Cable Loss=6.8dB
+15:27:12.431 
+--- Testing 14000 Hz ---
+15:27:12.962   Sample 0: Goertzel=0.5092, SNR=35.3dB, Detected=YES
+15:27:13.196   Sample 10: Goertzel=0.5307, SNR=32.6dB, Detected=YES
+15:27:13.388   Sample 20: Goertzel=0.5264, SNR=32.7dB, Detected=YES
+15:27:13.602   Sample 30: Goertzel=0.5545, SNR=33.9dB, Detected=YES
+15:27:13.836   Sample 40: Goertzel=0.5589, SNR=32.2dB, Detected=YES
+15:27:14.028   Sample 50: Goertzel=0.5123, SNR=35.3dB, Detected=YES
+15:27:14.242   Sample 60: Goertzel=0.5301, SNR=32.7dB, Detected=YES
+15:27:14.476   Sample 70: Goertzel=0.5277, SNR=32.6dB, Detected=YES
+15:27:14.668   Sample 80: Goertzel=0.5519, SNR=34.2dB, Detected=YES
+15:27:14.882   Sample 90: Goertzel=0.5592, SNR=32.2dB, Detected=YES
+15:27:15.116   Sample 100: Goertzel=0.5105, SNR=35.3dB, Detected=YES
+15:27:15.308   Sample 110: Goertzel=0.5294, SNR=32.7dB, Detected=YES
+15:27:15.463   Results: Detection=100.0%, Avg Level=0.5296, Avg SNR=33.5dB, Freq Error=0.11%, Est Cable Loss=7.0dB
+15:27:15.663 
+--- Testing 14500 Hz ---
+15:27:16.194   Sample 0: Goertzel=0.9603, SNR=35.4dB, Detected=YES
+15:27:16.428   Sample 10: Goertzel=0.9525, SNR=36.0dB, Detected=YES
+15:27:16.620   Sample 20: Goertzel=0.9962, SNR=33.1dB, Detected=YES
+15:27:16.834   Sample 30: Goertzel=1.0249, SNR=33.3dB, Detected=YES
+15:27:17.068   Sample 40: Goertzel=0.9813, SNR=36.4dB, Detected=YES
+15:27:17.260   Sample 50: Goertzel=0.9648, SNR=35.3dB, Detected=YES
+15:27:17.474   Sample 60: Goertzel=0.9523, SNR=36.1dB, Detected=YES
+15:27:17.708   Sample 70: Goertzel=0.9965, SNR=33.2dB, Detected=YES
+15:27:17.900   Sample 80: Goertzel=1.0262, SNR=33.1dB, Detected=YES
+15:27:18.114   Sample 90: Goertzel=0.9830, SNR=36.3dB, Detected=YES
+15:27:18.348   Sample 100: Goertzel=0.9667, SNR=35.1dB, Detected=YES
+15:27:18.540   Sample 110: Goertzel=0.9523, SNR=36.2dB, Detected=YES
+15:27:18.695   Results: Detection=100.0%, Avg Level=0.9867, Avg SNR=34.5dB, Freq Error=0.11%, Est Cable Loss=7.2dB
+15:27:18.895 
+--- Testing 15000 Hz ---
+15:27:19.426   Sample 0: Goertzel=1.1787, SNR=33.2dB, Detected=YES
+15:27:19.660   Sample 10: Goertzel=1.1087, SNR=35.9dB, Detected=YES
+15:27:19.852   Sample 20: Goertzel=1.0967, SNR=38.0dB, Detected=YES
+15:27:20.066   Sample 30: Goertzel=1.0752, SNR=38.0dB, Detected=YES
+15:27:20.300   Sample 40: Goertzel=1.1611, SNR=33.6dB, Detected=YES
+15:27:20.492   Sample 50: Goertzel=1.1726, SNR=33.2dB, Detected=YES
+15:27:20.706   Sample 60: Goertzel=1.1085, SNR=35.9dB, Detected=YES
+15:27:20.940   Sample 70: Goertzel=1.0964, SNR=38.0dB, Detected=YES
+15:27:21.132   Sample 80: Goertzel=1.0748, SNR=38.0dB, Detected=YES
+15:27:21.346   Sample 90: Goertzel=1.1577, SNR=33.6dB, Detected=YES
+15:27:21.580   Sample 100: Goertzel=1.1719, SNR=33.2dB, Detected=YES
+15:27:21.772   Sample 110: Goertzel=1.1073, SNR=35.9dB, Detected=YES
+15:27:21.927   Results: Detection=100.0%, Avg Level=1.1292, Avg SNR=35.9dB, Freq Error=0.00%, Est Cable Loss=7.5dB
+15:27:22.127 
+--- Testing 15500 Hz ---
+15:27:22.658   Sample 0: Goertzel=0.5168, SNR=33.5dB, Detected=YES
+15:27:22.892   Sample 10: Goertzel=0.5273, SNR=32.3dB, Detected=YES
+15:27:23.084   Sample 20: Goertzel=0.5109, SNR=34.5dB, Detected=YES
+15:27:23.298   Sample 30: Goertzel=0.5628, SNR=32.1dB, Detected=YES
+15:27:23.532   Sample 40: Goertzel=0.5554, SNR=34.4dB, Detected=YES
+15:27:23.724   Sample 50: Goertzel=0.5203, SNR=33.4dB, Detected=YES
+15:27:23.938   Sample 60: Goertzel=0.5261, SNR=32.4dB, Detected=YES
+15:27:24.172   Sample 70: Goertzel=0.5091, SNR=34.6dB, Detected=YES
+15:27:24.364   Sample 80: Goertzel=0.5609, SNR=32.2dB, Detected=YES
+15:27:24.578   Sample 90: Goertzel=0.5529, SNR=34.3dB, Detected=YES
+15:27:24.812   Sample 100: Goertzel=0.5177, SNR=33.5dB, Detected=YES
+15:27:25.004   Sample 110: Goertzel=0.5262, SNR=32.3dB, Detected=YES
+15:27:25.159   Results: Detection=100.0%, Avg Level=0.5289, Avg SNR=33.7dB, Freq Error=0.10%, Est Cable Loss=7.8dB
+15:27:25.360 
+--- Testing 16000 Hz ---
+15:27:25.890   Sample 0: Goertzel=0.6652, SNR=32.7dB, Detected=YES
+15:27:26.124   Sample 10: Goertzel=0.8610, SNR=44.8dB, Detected=YES
+15:27:26.316   Sample 20: Goertzel=0.9344, SNR=39.2dB, Detected=YES
+15:27:26.530   Sample 30: Goertzel=0.9318, SNR=37.3dB, Detected=YES
+15:27:26.764   Sample 40: Goertzel=0.8252, SNR=45.3dB, Detected=YES
+15:27:26.956   Sample 50: Goertzel=0.6649, SNR=44.5dB, Detected=YES
+15:27:27.170   Sample 60: Goertzel=0.8564, SNR=44.6dB, Detected=YES
+15:27:27.404   Sample 70: Goertzel=0.9338, SNR=39.0dB, Detected=YES
+15:27:27.596   Sample 80: Goertzel=0.9303, SNR=37.2dB, Detected=YES
+15:27:27.810   Sample 90: Goertzel=0.8353, SNR=45.8dB, Detected=YES
+15:27:28.044   Sample 100: Goertzel=0.6646, SNR=44.7dB, Detected=YES
+15:27:28.236   Sample 110: Goertzel=0.8494, SNR=44.6dB, Detected=YES
+15:27:28.392   Results: Detection=100.0%, Avg Level=0.8807, Avg SNR=40.2dB, Freq Error=0.10%, Est Cable Loss=8.0dB
+15:27:28.592 
+--- Testing 16500 Hz ---
+15:27:29.122   Sample 0: Goertzel=1.0276, SNR=35.1dB, Detected=YES
+15:27:29.356   Sample 10: Goertzel=1.0656, SNR=38.9dB, Detected=YES
+15:27:29.548   Sample 20: Goertzel=1.0777, SNR=37.9dB, Detected=YES
+15:27:29.762   Sample 30: Goertzel=1.1549, SNR=34.8dB, Detected=YES
+15:27:29.996   Sample 40: Goertzel=1.1891, SNR=35.1dB, Detected=YES
+15:27:30.189   Sample 50: Goertzel=1.1207, SNR=36.8dB, Detected=YES
+15:27:30.402   Sample 60: Goertzel=1.0736, SNR=38.7dB, Detected=YES
+15:27:30.636   Sample 70: Goertzel=1.0806, SNR=37.7dB, Detected=YES
+15:27:30.829   Sample 80: Goertzel=1.1497, SNR=34.9dB, Detected=YES
+15:27:31.042   Sample 90: Goertzel=1.1891, SNR=35.1dB, Detected=YES
+15:27:31.276   Sample 100: Goertzel=1.1182, SNR=36.8dB, Detected=YES
+15:27:31.469   Sample 110: Goertzel=1.0736, SNR=38.6dB, Detected=YES
+15:27:31.624   Results: Detection=100.0%, Avg Level=1.1235, Avg SNR=36.4dB, Freq Error=0.00%, Est Cable Loss=8.2dB
+15:27:31.824 
+--- Testing 17000 Hz ---
+15:27:32.355   Sample 0: Goertzel=0.5277, SNR=32.7dB, Detected=YES
+15:27:32.588   Sample 10: Goertzel=0.5110, SNR=34.2dB, Detected=YES
+15:27:32.781   Sample 20: Goertzel=0.5677, SNR=32.7dB, Detected=YES
+15:27:32.994   Sample 30: Goertzel=0.5557, SNR=33.4dB, Detected=YES
+15:27:33.229   Sample 40: Goertzel=0.5099, SNR=34.5dB, Detected=YES
+15:27:33.421   Sample 50: Goertzel=0.5313, SNR=32.6dB, Detected=YES
+15:27:33.635   Sample 60: Goertzel=0.5115, SNR=34.2dB, Detected=YES
+15:27:33.869   Sample 70: Goertzel=0.5665, SNR=32.8dB, Detected=YES
+15:27:34.061   Sample 80: Goertzel=0.5541, SNR=33.3dB, Detected=YES
+15:27:34.275   Sample 90: Goertzel=0.5090, SNR=34.5dB, Detected=YES
+15:27:34.509   Sample 100: Goertzel=0.5286, SNR=32.6dB, Detected=YES
+15:27:34.701   Sample 110: Goertzel=0.5139, SNR=34.1dB, Detected=YES
+15:27:34.856   Results: Detection=100.0%, Avg Level=0.5279, Avg SNR=33.7dB, Freq Error=0.09%, Est Cable Loss=8.5dB
+15:27:35.056 
+--- Testing 17500 Hz ---
+15:27:35.587   Sample 0: Goertzel=0.9458, SNR=34.8dB, Detected=YES
+15:27:35.821   Sample 10: Goertzel=1.0093, SNR=33.0dB, Detected=YES
+15:27:36.013   Sample 20: Goertzel=0.9658, SNR=36.2dB, Detected=YES
+15:27:36.227   Sample 30: Goertzel=0.9866, SNR=34.8dB, Detected=YES
+15:27:36.461   Sample 40: Goertzel=0.9181, SNR=36.7dB, Detected=YES
+15:27:36.653   Sample 50: Goertzel=0.9482, SNR=35.2dB, Detected=YES
+15:27:36.867   Sample 60: Goertzel=1.0072, SNR=32.9dB, Detected=YES
+15:27:37.101   Sample 70: Goertzel=0.9697, SNR=36.0dB, Detected=YES
+15:27:37.293   Sample 80: Goertzel=0.9847, SNR=35.3dB, Detected=YES
+15:27:37.507   Sample 90: Goertzel=0.9163, SNR=36.4dB, Detected=YES
+15:27:37.741   Sample 100: Goertzel=0.9474, SNR=35.2dB, Detected=YES
+15:27:37.933   Sample 110: Goertzel=1.0070, SNR=33.0dB, Detected=YES
+15:27:38.088   Results: Detection=100.0%, Avg Level=0.9715, Avg SNR=34.8dB, Freq Error=0.09%, Est Cable Loss=8.8dB
+15:27:38.288 
+--- Testing 18000 Hz ---
+15:27:38.819   Sample 0: Goertzel=1.0244, SNR=36.2dB, Detected=YES
+15:27:39.053   Sample 10: Goertzel=1.0927, SNR=38.0dB, Detected=YES
+15:27:39.245   Sample 20: Goertzel=1.0587, SNR=32.7dB, Detected=YES
+15:27:39.459   Sample 30: Goertzel=1.1173, SNR=36.8dB, Detected=YES
+15:27:39.693   Sample 40: Goertzel=1.0674, SNR=32.7dB, Detected=YES
+15:27:39.885   Sample 50: Goertzel=1.0121, SNR=36.8dB, Detected=YES
+15:27:40.099   Sample 60: Goertzel=1.0907, SNR=38.0dB, Detected=YES
+15:27:40.333   Sample 70: Goertzel=1.0498, SNR=33.0dB, Detected=YES
+15:27:40.525   Sample 80: Goertzel=1.1288, SNR=36.5dB, Detected=YES
+15:27:40.739   Sample 90: Goertzel=1.0698, SNR=32.6dB, Detected=YES
+15:27:40.973   Sample 100: Goertzel=1.0119, SNR=36.6dB, Detected=YES
+15:27:41.165   Sample 110: Goertzel=1.0864, SNR=38.1dB, Detected=YES
+15:27:41.320   Results: Detection=100.0%, Avg Level=1.0658, Avg SNR=35.3dB, Freq Error=0.00%, Est Cable Loss=9.0dB
+15:27:41.520 
+--- Testing 18500 Hz ---
+15:27:42.051   Sample 0: Goertzel=0.5021, SNR=33.0dB, Detected=YES
+15:27:42.285   Sample 10: Goertzel=0.4894, SNR=35.7dB, Detected=YES
+15:27:42.477   Sample 20: Goertzel=0.5630, SNR=32.8dB, Detected=YES
+15:27:42.691   Sample 30: Goertzel=0.5536, SNR=34.2dB, Detected=YES
+15:27:42.925   Sample 40: Goertzel=0.5269, SNR=32.2dB, Detected=YES
+15:27:43.117   Sample 50: Goertzel=0.5207, SNR=33.0dB, Detected=YES
+15:27:43.331   Sample 60: Goertzel=0.4901, SNR=35.7dB, Detected=YES
+15:27:43.565   Sample 70: Goertzel=0.5625, SNR=32.6dB, Detected=YES
+15:27:43.757   Sample 80: Goertzel=0.5522, SNR=34.1dB, Detected=YES
+15:27:43.971   Sample 90: Goertzel=0.5248, SNR=32.4dB, Detected=YES
+15:27:44.205   Sample 100: Goertzel=0.5222, SNR=32.9dB, Detected=YES
+15:27:44.397   Sample 110: Goertzel=0.4899, SNR=35.4dB, Detected=YES
+15:27:44.552   Results: Detection=100.0%, Avg Level=0.5278, Avg SNR=33.7dB, Freq Error=0.08%, Est Cable Loss=9.2dB
+15:27:44.753 
+--- Testing 19000 Hz ---
+15:27:45.283   Sample 0: Goertzel=1.0059, SNR=32.4dB, Detected=YES
+15:27:45.517   Sample 10: Goertzel=0.9823, SNR=33.4dB, Detected=YES
+15:27:45.709   Sample 20: Goertzel=0.9529, SNR=36.0dB, Detected=YES
+15:27:45.923   Sample 30: Goertzel=1.0194, SNR=32.7dB, Detected=YES
+15:27:46.157   Sample 40: Goertzel=0.9189, SNR=35.1dB, Detected=YES
+15:27:46.349   Sample 50: Goertzel=1.0027, SNR=32.4dB, Detected=YES
+15:27:46.563   Sample 60: Goertzel=0.9779, SNR=33.2dB, Detected=YES
+15:27:46.797   Sample 70: Goertzel=0.9490, SNR=36.3dB, Detected=YES
+15:27:46.989   Sample 80: Goertzel=1.0205, SNR=32.6dB, Detected=YES
+15:27:47.203   Sample 90: Goertzel=0.9182, SNR=35.2dB, Detected=YES
+15:27:47.437   Sample 100: Goertzel=1.0035, SNR=32.5dB, Detected=YES
+15:27:47.629   Sample 110: Goertzel=0.9862, SNR=33.3dB, Detected=YES
+15:27:47.785   Results: Detection=100.0%, Avg Level=0.9610, Avg SNR=34.8dB, Freq Error=0.08%, Est Cable Loss=9.5dB
+15:27:47.985 
+--- Testing 19500 Hz ---
+15:27:48.515   Sample 0: Goertzel=1.0512, SNR=36.8dB, Detected=YES
+15:27:48.749   Sample 10: Goertzel=1.1785, SNR=34.1dB, Detected=YES
+15:27:48.941   Sample 20: Goertzel=1.1438, SNR=35.7dB, Detected=YES
+15:27:49.155   Sample 30: Goertzel=1.0214, SNR=37.5dB, Detected=YES
+15:27:49.389   Sample 40: Goertzel=1.0310, SNR=37.9dB, Detected=YES
+15:27:49.581   Sample 50: Goertzel=1.0507, SNR=36.8dB, Detected=YES
+15:27:49.795   Sample 60: Goertzel=1.1781, SNR=34.1dB, Detected=YES
+15:27:50.029   Sample 70: Goertzel=1.1474, SNR=35.6dB, Detected=YES
+15:27:50.221   Sample 80: Goertzel=1.0236, SNR=37.4dB, Detected=YES
+15:27:50.435   Sample 90: Goertzel=1.0312, SNR=37.8dB, Detected=YES
+15:27:50.669   Sample 100: Goertzel=1.0498, SNR=36.8dB, Detected=YES
+15:27:50.862   Sample 110: Goertzel=1.1778, SNR=34.1dB, Detected=YES
+15:27:51.017   Results: Detection=100.0%, Avg Level=1.0955, Avg SNR=36.4dB, Freq Error=0.00%, Est Cable Loss=9.8dB
+15:27:51.217 
+--- Testing 20000 Hz ---
+15:27:51.748   Sample 0: Goertzel=0.4855, SNR=34.9dB, Detected=YES
+15:27:51.981   Sample 10: Goertzel=0.4821, SNR=33.7dB, Detected=YES
+15:27:52.174   Sample 20: Goertzel=0.5576, SNR=35.1dB, Detected=YES
+15:27:52.387   Sample 30: Goertzel=0.5836, SNR=32.5dB, Detected=YES
+15:27:52.621   Sample 40: Goertzel=0.5331, SNR=32.8dB, Detected=YES
+15:27:52.814   Sample 50: Goertzel=0.4845, SNR=34.9dB, Detected=YES
+15:27:53.027   Sample 60: Goertzel=0.4768, SNR=33.9dB, Detected=YES
+15:27:53.261   Sample 70: Goertzel=0.5545, SNR=35.3dB, Detected=YES
+15:27:53.454   Sample 80: Goertzel=0.5755, SNR=32.7dB, Detected=YES
+15:27:53.667   Sample 90: Goertzel=0.5389, SNR=32.6dB, Detected=YES
+15:27:53.902   Sample 100: Goertzel=0.4831, SNR=34.9dB, Detected=YES
+15:27:54.094   Sample 110: Goertzel=0.4790, SNR=34.0dB, Detected=YES
+15:27:54.249   Results: Detection=100.0%, Avg Level=0.5258, Avg SNR=33.7dB, Freq Error=0.08%, Est Cable Loss=10.0dB
+15:27:54.473 
+=== Sweep Complete ===
+15:27:54.473 
+=== SUMMARY OF RESULTS ===
+15:27:54.473 
+Top 25 frequencies by detection rate:
+15:27:54.473 Freq(Hz)  Detection%  Avg Level   SNR(dB)  Freq Error%  Cable Loss(dB)
+15:27:54.473 ---------------------------------------------------------------------------
+15:27:54.473    2000      100.0%     0.5203     31.7        0.78            1.0
+15:27:54.473    2357      100.0%     1.0796     32.4        0.56            1.2
+15:27:54.473    2700      100.0%     0.6305     31.0        0.69            1.3
+15:27:54.473    3000      100.0%     1.2214     33.8        0.00            1.5
+15:27:54.473    3181      100.0%     0.2041     33.7        0.20            1.6
+15:27:54.474    3500      100.0%     0.5215     32.0        0.45            1.8
+15:27:54.474    4000      100.0%     1.0057     32.0        0.39            2.0
+15:27:54.474    4231      100.0%     1.0995     33.2        0.29            2.1
+15:27:54.474    4500      100.0%     1.2245     34.4        0.00            2.2
+15:27:54.474    4699      100.0%     1.1140     33.4        0.24            2.3
+15:27:54.474    5000      100.0%     0.5265     32.3        0.31            2.5
+15:27:54.474    5500      100.0%     1.0231     32.8        0.28            2.8
+15:27:54.474    5639      100.0%     1.0610     33.3        0.25            2.8
+15:27:54.474    6000      100.0%     1.1679     33.8        0.00            3.0
+15:27:54.474    6500      100.0%     0.5276     32.6        0.24            3.2
+15:27:54.474    7000      100.0%     1.0210     33.2        0.22            3.5
+15:27:54.474    7040      100.0%     1.1517     34.5        0.12            3.5
+15:27:54.474    7500      100.0%     1.2096     35.2        0.00            3.8
+15:27:54.474    8000      100.0%     0.4996     31.0        0.20            4.0
+15:27:54.474    8192      100.0%     0.3734     34.0        0.14            4.1
+15:27:54.474    8500      100.0%     1.0159     33.5        0.18            4.2
+15:27:54.474    9000      100.0%     1.1857     35.1        0.00            4.5
+15:27:54.475    9500      100.0%     0.5312     33.3        0.16            4.8
+15:27:54.475    9871      100.0%     0.6683     32.0        0.20            4.9
+15:27:54.475   10000      100.0%     1.0119     33.7        0.16            5.0
+15:27:54.475 
+Analysis by frequency range:
+15:27:54.475   Low (2-5kHz): Avg detection=90.9%, Avg SNR=32.9dB
+15:27:54.475   Mid (5-8kHz): Avg detection=100.0%, Avg SNR=33.5dB
+15:27:54.475   Upper (8-12kHz): Avg detection=100.0%, Avg SNR=33.8dB
+15:27:54.475   High (12-20kHz): Avg detection=100.0%, Avg SNR=35.2dB
+15:27:54.475 
+Key frequencies:
+15:27:54.475   5639Hz (original problematic Ariel): 100.0% detection, 33.3dB SNR
+15:27:54.475   7040Hz (current working Ariel): 100.0% detection, 34.5dB SNR
+15:27:54.475   10000Hz (production statue frequency): 100.0% detection, 33.7dB SNR
+15:27:54.475   10079Hz: 100.0% detection, 35.7dB SNR
+15:27:54.475   10301Hz: 100.0% detection, 34.3dB SNR
+15:27:54.475   10531Hz: 100.0% detection, 33.3dB SNR
+15:27:54.475   10789Hz: 100.0% detection, 35.4dB SNR
+15:27:54.475 
+Recommended frequencies for 5 statues (distributed across spectrum):
+15:27:54.476   EROS: 3000Hz (detection=100.0%, SNR=33.8dB, cable loss=1.5dB)
+15:27:54.476   ELEKTRA: 5639Hz (detection=100.0%, SNR=33.3dB, cable loss=2.8dB)
+15:27:54.476   SOPHIA: 9500Hz (detection=100.0%, SNR=33.3dB, cable loss=4.8dB)
+15:27:54.476   ULTIMO: 13500Hz (detection=100.0%, SNR=36.2dB, cable loss=6.8dB)
+15:27:54.476   ARIEL: 19500Hz (detection=100.0%, SNR=36.4dB, cable loss=9.8dB)
+15:27:54.476 
+Frequency separation analysis:
+15:27:54.476   3000Hz → 5639Hz: ratio=1.88:1, separation=88.0%
+15:27:54.476   3000Hz → 9500Hz: ratio=3.17:1, separation=216.7%
+15:27:54.476   3000Hz → 13500Hz: ratio=4.50:1, separation=350.0%
+15:27:54.476   3000Hz → 19500Hz: ratio=6.50:1, separation=550.0%
+15:27:54.476   5639Hz → 9500Hz: ratio=1.68:1, separation=68.5%
+15:27:54.476   5639Hz → 13500Hz: ratio=2.39:1, separation=139.4%
+15:27:54.476   5639Hz → 19500Hz: ratio=3.46:1, separation=245.8%
+15:27:54.476   9500Hz → 13500Hz: ratio=1.42:1, separation=42.1%
+15:27:54.476   9500Hz → 19500Hz: ratio=2.05:1, separation=105.3%
+15:27:54.476   13500Hz → 19500Hz: ratio=1.44:1, separation=44.4%
