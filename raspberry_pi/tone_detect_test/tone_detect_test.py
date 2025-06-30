@@ -46,7 +46,7 @@ tones_hz = {
     Statue.ELEKTRA: 2357,   # Prime-based
     Statue.SOPHIA: 3181,    # Prime-based
     Statue.ULTIMO: 4231,    # Avoiding harmonics
-    Statue.ARIEL: 5639,     # Prime-based
+    Statue.ARIEL: 7040,     # Prime-based
 }
 tone_streams = {}
 
