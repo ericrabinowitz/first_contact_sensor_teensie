@@ -4,6 +4,16 @@
 # Default SSH target for Raspberry Pi commands
 SSH_TARGET ?= rpi5
 
+# Project directories
+PROJECT_ROOT := ~/workspace/first_contact_sensor_teensie
+PI_CODE_ROOT := $(PROJECT_ROOT)/raspberry_pi
+AUDIO_DIR := $(PI_CODE_ROOT)/audio
+TONE_DIR := $(PI_CODE_ROOT)/tone_detect_test
+CONTROLLER_DIR := $(PI_CODE_ROOT)/controller
+
+# Python unbuffered output options
+PYTHON_UNBUF := PYTHONUNBUFFERED=1 stdbuf -o0 -e0
+
 # Default target shows help
 .DEFAULT_GOAL := help
 
@@ -31,13 +41,13 @@ audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
 	@ssh $(SSH_TARGET) "sudo apt update && sudo apt install -y libportaudio2 portaudio19-dev"
 
 tone-test: sync ## Play test tone on USB audio devices (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && PYTHONUNBUFFERED=1 stdbuf -o0 -e0 ./tone_test.py'"
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./tone_test.py'"
 
 tone-detect-test: sync ## Run tone detection test with ELEKTRA->EROS wiring (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && PYTHONUNBUFFERED=1 stdbuf -o0 -e0 ./tone_detect_test.py'"
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./tone_detect_test.py'"
 
 audio-test: sync ## Run multi-channel audio playback test (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/audio_test && PYTHONUNBUFFERED=1 stdbuf -o0 -e0 ./audio_test.py'"
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_UNBUF) ./audio_test.py'"
 
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
