@@ -15,10 +15,9 @@ USB_ADAPTER = "usb"  # Match any USB device
 class Statue(Enum):
     EROS = "eros"
     ELEKTRA = "elektra"
-    PSYCHE = "psyche"
-    APOLLO = "apollo"
-    ARTEMIS = "artemis"
-    ATHENA = "athena"
+    SOPHIA = "sophia"
+    ULTIMO = "ultimo"
+    ARIEL = "ariel"
 
 
 # ALSA system has a default limit of 32 cards
@@ -111,10 +110,10 @@ def configure_devices(max_devices=None):
         if i >= len(statue_list):
             print(f"WARNING: More USB devices than defined statues. Device {i} skipped.")
             break
-        
+
         statue = statue_list[i]
         print(f"\nConfiguring {statue.value.upper()} with device {usb_device['index']}: {usb_device['name']}")
-        
+
         # Configure input if available
         if usb_device["max_input"] > 0 and i == 0:  # Only first device needs input for detection
             print(f"  {statue.value} (detect): input channel")
@@ -128,7 +127,7 @@ def configure_devices(max_devices=None):
         if usb_device["max_output"] > 0:
             print(f"  {statue.value} (audio): left channel")
             print(f"  {statue.value} (tone): right channel")
-            
+
             # Audio on left channel (0) - TRS Tip
             dynConfig[statue.value]["audio"]["device_index"] = usb_device["index"]
             dynConfig[statue.value]["audio"]["device_id"] = usb_device["device_id"]
@@ -142,7 +141,7 @@ def configure_devices(max_devices=None):
             dynConfig[statue.value]["tone"]["sample_rate"] = usb_device["sample_rate"]
             dynConfig[statue.value]["tone"]["device_type"] = usb_device["name"]
             dynConfig[statue.value]["tone"]["channel"] = 1  # right channel (TRS ring)
-            
+
             configured_devices.append({
                 "statue": statue,
                 "device_index": usb_device["index"],
@@ -161,7 +160,7 @@ def configure_devices(max_devices=None):
 def get_audio_devices():
     """Return a list of configured audio devices with their statue assignments."""
     audio_devices = []
-    
+
     for statue in Statue:
         config = dynConfig.get(statue.value, {}).get("audio", {})
         if config.get("device_index", -1) != -1:
@@ -171,5 +170,5 @@ def get_audio_devices():
                 "sample_rate": config["sample_rate"],
                 "channel": config["channel"]
             })
-    
+
     return audio_devices
