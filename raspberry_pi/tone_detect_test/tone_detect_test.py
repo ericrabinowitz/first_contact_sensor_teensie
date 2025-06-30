@@ -21,7 +21,7 @@ import numpy as np
 import sounddevice as sd
 
 # Import device configuration from audio module
-from audio.devices import USB_ADAPTER, Statue, dynConfig, configure_devices
+from audio.devices import Statue, dynConfig, configure_devices
 from audio.music import play_audio
 
 
@@ -206,7 +206,8 @@ if __name__ == "__main__":
     print("=== Missing Link Tone Detection Test ===")
     print("Press Ctrl+C to stop\n")
 
-    if not configure_devices():
+    devices = configure_devices(max_devices=2)  # Only need 2 devices for this test
+    if not devices:
         print("Device configuration failed!")
         exit(1)
     

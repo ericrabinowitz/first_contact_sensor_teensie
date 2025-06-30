@@ -1,50 +1,81 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["just-playback"]
+# dependencies = ["numpy", "sounddevice", "soundfile"]
 # ///
-
-# Install
-# wget -qO- https://astral.sh/uv/install.sh | sh
 
 # Execute
 # ./audio_test.py
 
 import os
+import sys
 import time
 
-from just_playback import Playback
+# Add parent directory to path for imports
+sys.path.append('../')
+
+from audio.devices import configure_devices
+from audio.music import play_multichannel_audio
 
 
-# ### Reference docs
-# https://github.com/cheofusi/just_playback
-
-
-# Folder for audio files
-SONG_DIR = "/run/audio_files"
-
-
-def play_song(songFile: str):
-    path = os.path.join(SONG_DIR, songFile)
-    if not songFile.endswith(".wav"):
-        raise Exception(f"Error: '{path}' is not a valid .wav file.")
-    if not os.path.isfile(path):
-        raise Exception(f"Error: '{path}' is not a valid file.")
-
-    # Manages playback of a single audio file
-    playback = Playback(path)
-    playback.loop_at_end(True)
-    playback.set_volume(1.0)
-    print(f"Playing {path}...")
-    playback.play()
-
+def main():
+    print("=== Missing Link Multi-Channel Audio Test ===\n")
+    
+    # Configure all available USB devices (up to 6)
+    devices = configure_devices(max_devices=6)
+    if not devices:
+        print("No USB audio devices found!")
+        return
+    
+    print(f"\nConfigured {len(devices)} devices for multi-channel playback")
+    
+    # Default to 6-channel test file
+    audio_file = "../../audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav"
+    
+    # Check if file exists, otherwise use a different one
+    if not os.path.exists(audio_file):
+        print(f"6-channel file not found, trying stereo file...")
+        audio_file = "../../audio_files/Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav"
+        if not os.path.exists(audio_file):
+            print("ERROR: No test audio files found")
+            return
+    
+    print(f"\nPlaying: {os.path.basename(audio_file)}")
+    
+    # Play multi-channel audio
+    playback = play_multichannel_audio(audio_file, devices)
+    if not playback:
+        return
+    
+    # Control playback demonstration
+    print("\nPlayback controls demonstration:")
+    print("  Playing for 5 seconds...")
     time.sleep(5)
+    
     playback.pause()
+    print("  Paused for 2 seconds...")
     time.sleep(2)
+    
     playback.resume()
+    print("  Resumed for 5 seconds...")
     time.sleep(5)
-    playback.stop()
-    print("stopped playing")
+    
+    # Check if still playing
+    if playback.is_active():
+        print("  Stopping playback...")
+        playback.stop()
+    else:
+        print("  Playback completed")
+        playback.stop()
+    
+    print("\nTest complete!")
 
 
 if __name__ == "__main__":
-    play_song("Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav")
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user")
+    except Exception as e:
+        print(f"\nError: {e}")
+        import traceback
+        traceback.print_exc()

@@ -15,6 +15,10 @@ USB_ADAPTER = "usb"  # Match any USB device
 class Statue(Enum):
     EROS = "eros"
     ELEKTRA = "elektra"
+    PSYCHE = "psyche"
+    APOLLO = "apollo"
+    ARTEMIS = "artemis"
+    ATHENA = "athena"
 
 
 # ALSA system has a default limit of 32 cards
@@ -28,62 +32,42 @@ class Statue(Enum):
 #     "sample_rate": 44100.0,
 #     "device_type": "usb audio device",
 # }
+# Initialize dynConfig with all statues
 dynConfig = {
     "debug": True,
     "block_size": 1024,
     "touch_threshold": 0.1,
-    Statue.EROS.value: {
-        "audio": {
-            "device_id": "",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
-        "tone": {
-            "device_id": "",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
-        "detect": {
-            "device_id": "",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
-        "tone_freq": -1,  # Hz
-    },
-    Statue.ELEKTRA.value: {
-        "audio": {
-            "device_id": "",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
-        "tone": {
-            "device_id": "",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
-        "detect": {
-            "device_id": "",
-            "device_index": -1,
-            "channel": -1,
-            "sample_rate": -1,
-            "device_type": "",
-        },
-        "tone_freq": -1,  # Hz
-    },
 }
 
+# Add configuration for each statue
+for statue in Statue:
+    dynConfig[statue.value] = {
+        "audio": {
+            "device_id": "",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "tone": {
+            "device_id": "",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "detect": {
+            "device_id": "",
+            "device_index": -1,
+            "channel": -1,
+            "sample_rate": -1,
+            "device_type": "",
+        },
+        "tone_freq": -1,  # Hz
+    }
 
-def configure_devices():
+
+def configure_devices(max_devices=None):
     devices = sd.query_devices()
     if dynConfig["debug"]:
         print("Available audio devices:")
@@ -106,66 +90,86 @@ def configure_devices():
                 "sample_rate": int(device["default_samplerate"])
             })
 
-    if len(usb_devices) < 2:
-        print(f"ERROR: Need at least 2 USB devices, found {len(usb_devices)}")
-        return False
+    if len(usb_devices) == 0:
+        print("ERROR: No USB audio devices found")
+        return []
+
+    # Limit devices to max_devices if specified
+    if max_devices is not None:
+        usb_devices = usb_devices[:max_devices]
 
     print(f"\nFound {len(usb_devices)} USB audio devices")
-    print("Configuring devices based on wiring: ELEKTRA output → EROS input")
     print("Channel assignment: Left=Audio, Right=Tone")
     print("TRS Jack mapping: Tip=Left (Ch 0), Ring=Right (Ch 1)")
 
-    # First USB device - EROS uses INPUT for detection, OUTPUT for audio+tone
-    eros_device = usb_devices[0]
-    if eros_device["max_input"] > 0:
-        print(f"  EROS (detect): {eros_device['name']} [device {eros_device['index']}] input")
-        dynConfig[Statue.EROS.value]["detect"]["device_index"] = eros_device["index"]
-        dynConfig[Statue.EROS.value]["detect"]["device_id"] = eros_device["device_id"]
-        dynConfig[Statue.EROS.value]["detect"]["sample_rate"] = eros_device["sample_rate"]
-        dynConfig[Statue.EROS.value]["detect"]["device_type"] = eros_device["name"]
-        dynConfig[Statue.EROS.value]["detect"]["channel"] = 1  # mono input
+    # Get list of available statues
+    statue_list = list(Statue)
+    configured_devices = []
 
-    if eros_device["max_output"] > 0:
-        print(f"  EROS (audio): {eros_device['name']} [device {eros_device['index']}] left channel")
-        print(f"  EROS (tone): {eros_device['name']} [device {eros_device['index']}] right channel")
-        # Audio on left channel (0) - TRS Tip
-        dynConfig[Statue.EROS.value]["audio"]["device_index"] = eros_device["index"]
-        dynConfig[Statue.EROS.value]["audio"]["device_id"] = eros_device["device_id"]
-        dynConfig[Statue.EROS.value]["audio"]["sample_rate"] = eros_device["sample_rate"]
-        dynConfig[Statue.EROS.value]["audio"]["device_type"] = eros_device["name"]
-        dynConfig[Statue.EROS.value]["audio"]["channel"] = 0  # left channel (TRS tip)
+    # Configure each USB device with a statue
+    for i, usb_device in enumerate(usb_devices):
+        if i >= len(statue_list):
+            print(f"WARNING: More USB devices than defined statues. Device {i} skipped.")
+            break
+        
+        statue = statue_list[i]
+        print(f"\nConfiguring {statue.value.upper()} with device {usb_device['index']}: {usb_device['name']}")
+        
+        # Configure input if available
+        if usb_device["max_input"] > 0 and i == 0:  # Only first device needs input for detection
+            print(f"  {statue.value} (detect): input channel")
+            dynConfig[statue.value]["detect"]["device_index"] = usb_device["index"]
+            dynConfig[statue.value]["detect"]["device_id"] = usb_device["device_id"]
+            dynConfig[statue.value]["detect"]["sample_rate"] = usb_device["sample_rate"]
+            dynConfig[statue.value]["detect"]["device_type"] = usb_device["name"]
+            dynConfig[statue.value]["detect"]["channel"] = 1  # mono input
 
-        # Tone on right channel (1) - TRS Ring
-        dynConfig[Statue.EROS.value]["tone"]["device_index"] = eros_device["index"]
-        dynConfig[Statue.EROS.value]["tone"]["device_id"] = eros_device["device_id"]
-        dynConfig[Statue.EROS.value]["tone"]["sample_rate"] = eros_device["sample_rate"]
-        dynConfig[Statue.EROS.value]["tone"]["device_type"] = eros_device["name"]
-        dynConfig[Statue.EROS.value]["tone"]["channel"] = 1  # right channel (TRS ring)
+        # Configure output channels
+        if usb_device["max_output"] > 0:
+            print(f"  {statue.value} (audio): left channel")
+            print(f"  {statue.value} (tone): right channel")
+            
+            # Audio on left channel (0) - TRS Tip
+            dynConfig[statue.value]["audio"]["device_index"] = usb_device["index"]
+            dynConfig[statue.value]["audio"]["device_id"] = usb_device["device_id"]
+            dynConfig[statue.value]["audio"]["sample_rate"] = usb_device["sample_rate"]
+            dynConfig[statue.value]["audio"]["device_type"] = usb_device["name"]
+            dynConfig[statue.value]["audio"]["channel"] = 0  # left channel (TRS tip)
 
-    # Second USB device - ELEKTRA uses OUTPUT for audio+tone
-    elektra_device = usb_devices[1]
-    if elektra_device["max_output"] > 0:
-        print(f"  ELEKTRA (audio): {elektra_device['name']} [device {elektra_device['index']}] left channel")
-        print(f"  ELEKTRA (tone): {elektra_device['name']} [device {elektra_device['index']}] right channel")
-        # Audio on left channel (0) - TRS Tip
-        dynConfig[Statue.ELEKTRA.value]["audio"]["device_index"] = elektra_device["index"]
-        dynConfig[Statue.ELEKTRA.value]["audio"]["device_id"] = elektra_device["device_id"]
-        dynConfig[Statue.ELEKTRA.value]["audio"]["sample_rate"] = elektra_device["sample_rate"]
-        dynConfig[Statue.ELEKTRA.value]["audio"]["device_type"] = elektra_device["name"]
-        dynConfig[Statue.ELEKTRA.value]["audio"]["channel"] = 0  # left channel (TRS tip)
+            # Tone on right channel (1) - TRS Ring
+            dynConfig[statue.value]["tone"]["device_index"] = usb_device["index"]
+            dynConfig[statue.value]["tone"]["device_id"] = usb_device["device_id"]
+            dynConfig[statue.value]["tone"]["sample_rate"] = usb_device["sample_rate"]
+            dynConfig[statue.value]["tone"]["device_type"] = usb_device["name"]
+            dynConfig[statue.value]["tone"]["channel"] = 1  # right channel (TRS ring)
+            
+            configured_devices.append({
+                "statue": statue,
+                "device_index": usb_device["index"],
+                "sample_rate": usb_device["sample_rate"]
+            })
 
-        # Tone on right channel (1) - TRS Ring
-        dynConfig[Statue.ELEKTRA.value]["tone"]["device_index"] = elektra_device["index"]
-        dynConfig[Statue.ELEKTRA.value]["tone"]["device_id"] = elektra_device["device_id"]
-        dynConfig[Statue.ELEKTRA.value]["tone"]["sample_rate"] = elektra_device["sample_rate"]
-        dynConfig[Statue.ELEKTRA.value]["tone"]["device_type"] = elektra_device["name"]
-        dynConfig[Statue.ELEKTRA.value]["tone"]["channel"] = 1  # right channel (TRS ring)
-
-    # Note: tone frequencies are set by the calling script
     if dynConfig["debug"]:
-        print("\nConfiguration summary:")
-        print(f"  Devices configured successfully")
-        print(f"  EROS device: {eros_device['index']}")
-        print(f"  ELEKTRA device: {elektra_device['index']}")
+        print(f"\nConfiguration summary:")
+        print(f"  {len(configured_devices)} devices configured successfully")
+        for dev in configured_devices:
+            print(f"  {dev['statue'].value}: device {dev['device_index']}")
 
-    return True
+    return configured_devices
+
+
+def get_audio_devices():
+    """Return a list of configured audio devices with their statue assignments."""
+    audio_devices = []
+    
+    for statue in Statue:
+        config = dynConfig.get(statue.value, {}).get("audio", {})
+        if config.get("device_index", -1) != -1:
+            audio_devices.append({
+                "statue": statue,
+                "device_index": config["device_index"],
+                "sample_rate": config["sample_rate"],
+                "channel": config["channel"]
+            })
+    
+    return audio_devices

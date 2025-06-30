@@ -36,6 +36,9 @@ tone-test: sync ## Play test tone on USB audio devices (syncs files first)
 tone-detect-test: sync ## Run tone detection test with ELEKTRA->EROS wiring (syncs files first)
 	@ssh -t $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/tone_detect_test && PYTHONUNBUFFERED=1 stdbuf -o0 -e0 ./tone_detect_test.py'"
 
+audio-test: sync ## Run multi-channel audio playback test (syncs files first)
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd ~/workspace/first_contact_sensor_teensie/raspberry_pi/audio_test && PYTHONUNBUFFERED=1 stdbuf -o0 -e0 ./audio_test.py'"
+
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
 	@echo "Stopping running test scripts on $(SSH_TARGET)..."
@@ -65,4 +68,4 @@ help: ## Show this help message
 	@echo '  make audio-status'
 	@echo '  SSH_TARGET=pi@192.168.4.1 make audio-list'
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test stop kill-all help
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test audio-test stop kill-all help
