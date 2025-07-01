@@ -77,8 +77,19 @@ def play_and_detect_tones(devices, link_tracker, status_display=None):
 
 def main():
     """Main function for tone detection demo."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Missing Link Tone Detection Demo')
+    parser.add_argument('--timeout', type=int, default=0,
+                        help='Auto-exit after N seconds (0 = run forever)')
+    args = parser.parse_args()
+    
     print("=== Missing Link Tone Detection Demo ===")
-    print("Press Ctrl+C to stop\n")
+    if args.timeout > 0:
+        print(f"Will exit after {args.timeout} seconds")
+    else:
+        print("Press Ctrl+C to stop")
+    print()
 
     devices = configure_devices(max_devices=5)  # Configure up to 5 devices for all statues
     if not devices:
@@ -115,17 +126,25 @@ def main():
     play_and_detect_tones(devices, link_tracker, status_display)
 
     try:
+        start_time = time.time()
         while True:
             time.sleep(1)
+            # Check timeout
+            if args.timeout > 0 and (time.time() - start_time) >= args.timeout:
+                print("\nTimeout reached, shutting down...")
+                break
     except KeyboardInterrupt:
-        status_display.stop()
-        print("\n\nShutting down...")
-        # Stop audio playback
-        if audio_playback:
-            audio_playback.stop()
-            print("Audio playback stopped")
-        time.sleep(0.5)
-        print("Done")
+        print("\nInterrupted by user...")
+    
+    # Cleanup
+    status_display.stop()
+    print("\nShutting down...")
+    # Stop audio playback
+    if audio_playback:
+        audio_playback.stop()
+        print("Audio playback stopped")
+    time.sleep(0.5)
+    print("Done")
     
     return 0
 

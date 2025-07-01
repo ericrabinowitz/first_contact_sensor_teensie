@@ -126,18 +126,21 @@ class StatusDisplay:
         print("                    TRANSMITTER (Playing Tone)\r", flush=True)
         
         # Header row with statue names and frequencies
-        header_line1 = "  DETECTOR     "
-        header_line2 = "  (Listening)  "
+        # Row label format is: "  {detector.value.upper():8s} │" = 13 chars total
+        header_line1 = "  DETECTOR   │"  # Match the row label format
+        header_line2 = "  (Listening)│"  # Match the row label format
+        
         for d in self.devices:
             statue = d['statue']
             name = statue.value.upper()
             freq = TONE_FREQUENCIES.get(statue, 0)
+            # Each cell is: " {cell} " where cell is 9 chars = 11 chars total
             header_line1 += f" {name:^9} "
             header_line2 += f" {freq:^9.0f} "
         
         print(header_line1 + "\r", flush=True)
         print(header_line2 + "Hz\r", flush=True)
-        print("  " + "─" * 13 + "─" * (len(self.devices) * 11) + "\r", flush=True)
+        print("  ─────────────" + "─" * (len(self.devices) * 11) + "\r", flush=True)
         
         with self.lock:
             # For each detector (row)

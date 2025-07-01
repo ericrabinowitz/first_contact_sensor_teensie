@@ -46,6 +46,9 @@ tone-test: sync ## Play test tone on USB audio devices (syncs files first)
 tone-detect-demo: sync ## Run tone detection demo with multi-statue detection (syncs files first)
 	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./tone_detect_demo.py'"
 
+tone-detect-test: sync ## Run tone detection demo with 5-second timeout for testing
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./tone_detect_demo.py --timeout 5'"
+
 audio-test: sync ## Run multi-channel audio playback test (syncs files first)
 	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_UNBUF) ./audio_test.py'"
 
