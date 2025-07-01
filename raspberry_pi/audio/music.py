@@ -28,13 +28,14 @@ Example:
 
 import threading
 import time
+from typing import Dict, List, Optional, Callable, Any
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-from .devices import dynConfig, get_audio_devices
+from .devices import dynConfig, get_audio_devices, Statue
 
 
-def play_audio(statue, audio_file):
+def play_audio(statue: Statue, audio_file: str) -> None:
     """Play a WAV file on the audio channel for the specified statue.
     
     This is a simple single-statue playback function, primarily used
@@ -94,7 +95,7 @@ def play_audio(statue, audio_file):
 class MultiChannelPlayback:
     """Manages synchronized multi-channel audio playback across multiple devices."""
 
-    def __init__(self, audio_data, sample_rate, devices):
+    def __init__(self, audio_data: np.ndarray, sample_rate: int, devices: List[Dict[str, Any]]) -> None:
         self.audio_data = audio_data
         self.sample_rate = sample_rate
         self.devices = devices
@@ -104,7 +105,7 @@ class MultiChannelPlayback:
         self.frame_index = 0
         self.lock = threading.Lock()
 
-    def _create_callback(self, channel_index):
+    def _create_callback(self, channel_index: int) -> Callable:
         """Create a callback function for a specific channel.
         
         Each device gets its own callback that reads from the shared

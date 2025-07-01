@@ -26,9 +26,13 @@ Example:
 """
 
 import sys
+from typing import Dict, Set, Optional, List, TYPE_CHECKING
 sys.path.append('../')
 
 from audio.devices import Statue
+
+if TYPE_CHECKING:
+    from audio.music import ToggleableMultiChannelPlayback
 
 
 class LinkStateTracker:
@@ -51,7 +55,7 @@ class LinkStateTracker:
         quiet (bool): Suppress console output when True
     """
 
-    def __init__(self, playback=None, quiet=False):
+    def __init__(self, playback: Optional['ToggleableMultiChannelPlayback'] = None, quiet: bool = False) -> None:
         """Initialize link state tracker.
         
         Args:
@@ -74,7 +78,7 @@ class LinkStateTracker:
         # Quiet mode suppresses print statements
         self.quiet = quiet
 
-    def _update_audio_channel(self, statue, is_linked):
+    def _update_audio_channel(self, statue: Statue, is_linked: bool) -> None:
         """Helper to update audio channel based on link state."""
         if self.playback and statue in self.statue_to_channel:
             channel = self.statue_to_channel[statue]
@@ -89,7 +93,7 @@ class LinkStateTracker:
                 if not self.quiet:
                     print(f"  ♪ Audio channel {channel} OFF for {statue.value}")
 
-    def update_link(self, detector_statue, source_statue, is_linked):
+    def update_link(self, detector_statue: Statue, source_statue: Statue, is_linked: bool) -> bool:
         """Update link state between two statues.
         
         This is the main entry point for the detection system. When a statue
@@ -158,7 +162,7 @@ class LinkStateTracker:
 
         return changed
 
-    def get_link_summary(self):
+    def get_link_summary(self) -> str:
         """Return human-readable link summary."""
         summary = []
         summary.append("=== Current Link Status ===")

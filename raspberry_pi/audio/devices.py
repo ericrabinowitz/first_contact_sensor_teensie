@@ -33,10 +33,11 @@ Example:
 
 from enum import Enum
 import re
+from typing import Dict, List, Any, Optional, Union
 import sounddevice as sd
 
 
-USB_ADAPTER = "usb"  # Match any USB device
+USB_ADAPTER: str = "usb"  # Match any USB device
 
 
 class Statue(Enum):
@@ -64,7 +65,7 @@ class Statue(Enum):
 #     "device_type": "usb audio device",
 # }
 # Initialize dynConfig with all statues
-dynConfig = {
+dynConfig: Dict[str, Any] = {
     "debug": True,
     "block_size": 1024,
     "touch_threshold": 0.1,
@@ -98,7 +99,7 @@ for statue in Statue:
     }
 
 
-def configure_devices(max_devices=None):
+def configure_devices(max_devices: Optional[int] = None) -> List[Dict[str, Any]]:
     """Configure USB audio devices for statue assignments.
     
     This is the main entry point for device configuration. It:
@@ -215,7 +216,7 @@ def configure_devices(max_devices=None):
     return configured_devices
 
 
-def get_audio_devices():
+def get_audio_devices() -> List[Dict[str, Any]]:
     """Return a list of configured audio devices with their statue assignments.
     
     This function reads from the global dynConfig to get device assignments
@@ -234,13 +235,15 @@ def get_audio_devices():
     audio_devices = []
 
     for statue in Statue:
-        config = dynConfig.get(statue.value, {}).get("audio", {})
-        if config.get("device_index", -1) != -1:
-            audio_devices.append({
-                "statue": statue,
-                "device_index": config["device_index"],
-                "sample_rate": config["sample_rate"],
-                "channel": config["channel"]
-            })
+        statue_config = dynConfig.get(statue.value, {})
+        if isinstance(statue_config, dict):
+            audio_config = statue_config.get("audio", {})
+            if isinstance(audio_config, dict) and audio_config.get("device_index", -1) != -1:
+                audio_devices.append({
+                    "statue": statue,
+                    "device_index": audio_config["device_index"],
+                    "sample_rate": audio_config["sample_rate"],
+                    "channel": audio_config["channel"]
+                })
 
     return audio_devices

@@ -87,4 +87,13 @@ help: ## Show this help message
 	@echo '  make audio-status'
 	@echo '  SSH_TARGET=pi@192.168.4.1 make audio-list'
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test stop kill-all help
+## Type Checking
+typecheck: ## Run pytype type checker on Python code
+	@echo "Running pytype type checker..."
+	@cd raspberry_pi && pytype --config=../pytype.cfg .
+
+typecheck-install: ## Install pytype
+	@echo "Installing pytype..."
+	@pip3 install pytype
+
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test stop kill-all help typecheck typecheck-install

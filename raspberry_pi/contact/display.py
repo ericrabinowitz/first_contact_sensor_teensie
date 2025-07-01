@@ -38,11 +38,15 @@ Example Display:
 import sys
 import threading
 import time
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 sys.path.append('../')
 
-from audio.devices import dynConfig
+from audio.devices import dynConfig, Statue
 from .config import TONE_FREQUENCIES
+
+if TYPE_CHECKING:
+    from .link_state import LinkStateTracker
 
 
 class StatusDisplay:
@@ -64,7 +68,7 @@ class StatusDisplay:
         running (bool): Controls the display update loop
     """
 
-    def __init__(self, link_tracker, devices):
+    def __init__(self, link_tracker: 'LinkStateTracker', devices: List[Dict[str, Any]]) -> None:
         """Initialize the status display.
         
         Args:
@@ -92,7 +96,7 @@ class StatusDisplay:
                         'freq': TONE_FREQUENCIES.get(target, 0)
                     }
 
-    def update_metrics(self, detector, target, level, snr=None):
+    def update_metrics(self, detector: Statue, target: Statue, level: float, snr: Optional[float] = None) -> None:
         """Update detection metrics for a detector-target pair.
         
         Called by detection threads to update the signal level between
@@ -111,7 +115,7 @@ class StatusDisplay:
                 if snr is not None:
                     metrics['snr'] = snr
 
-    def format_cell(self, level, is_self=False):
+    def format_cell(self, level: float, is_self: bool = False) -> str:
         """Format a single cell with level and box indicators."""
         if is_self:
             return "  ---  "
@@ -128,7 +132,7 @@ class StatusDisplay:
             # NO SIGNAL - just value
             return f"{level_str:^7}"
 
-    def clear_screen(self):
+    def clear_screen(self) -> None:
         """Clear terminal screen."""
         print("\033[2J\033[H", end='', flush=True)
 
@@ -144,7 +148,7 @@ class StatusDisplay:
         """Move cursor to home position without clearing."""
         print("\033[H", end='', flush=True)
 
-    def draw_interface(self):
+    def draw_interface(self) -> None:
         """Draw the status interface."""
         if self.first_draw:
             self.clear_screen()
@@ -246,7 +250,7 @@ class StatusDisplay:
         # Add some blank lines to ensure we overwrite any previous content
         print("\r\n" * 3, end='', flush=True)
 
-    def run(self):
+    def run(self) -> None:
         """Run the display update loop."""
         self.hide_cursor()
         while self.running:
@@ -257,7 +261,7 @@ class StatusDisplay:
                 # Don't crash the display thread
                 pass
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the display."""
         self.running = False
         time.sleep(0.2)  # Give display thread time to exit

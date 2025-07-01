@@ -30,16 +30,22 @@ Detection Thresholds:
 """
 
 import sys
+import threading
+from typing import List, Optional, Callable, TYPE_CHECKING
 import numpy as np
 import sounddevice as sd
 import fastgoertzel as G
 
 sys.path.append('../')
 
-from audio.devices import dynConfig
+from audio.devices import dynConfig, Statue
+
+if TYPE_CHECKING:
+    from .link_state import LinkStateTracker
+    from .display import StatusDisplay
 
 
-def create_tone_generator(frequency, sample_rate):
+def create_tone_generator(frequency: float, sample_rate: int) -> Callable[[int], np.ndarray]:
     """Create a tone generator closure for the given frequency.
     
     This function returns a closure that maintains phase continuity
@@ -76,7 +82,9 @@ def create_tone_generator(frequency, sample_rate):
     return generate_tone
 
 
-def detect_tone(statue, other_statues, link_tracker, status_display=None, shutdown_event=None):
+def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'LinkStateTracker', 
+                status_display: Optional['StatusDisplay'] = None, 
+                shutdown_event: Optional[threading.Event] = None) -> None:
     """Detect tones from other statues using the Goertzel algorithm.
     
     This function runs in a separate thread for each statue, continuously

@@ -12,6 +12,7 @@ showing real-time connection status and audio playback control.
 import threading
 import time
 import sys
+from typing import List, Dict, Any, Optional
 
 # Add parent directory to path for imports
 sys.path.append('../')
@@ -28,7 +29,9 @@ from contact import (
 )
 
 
-def play_and_detect_tones(devices, link_tracker, status_display=None, shutdown_event=None):
+def play_and_detect_tones(devices: List[Dict[str, Any]], link_tracker: LinkStateTracker, 
+                          status_display: Optional[StatusDisplay] = None, 
+                          shutdown_event: Optional[threading.Event] = None) -> List[threading.Thread]:
     """
     Start tone generation and detection for all configured statues.
     Each statue plays its unique tone and detects all other statue tones.
@@ -77,7 +80,7 @@ def play_and_detect_tones(devices, link_tracker, status_display=None, shutdown_e
     return detection_threads
 
 
-def main():
+def main() -> int:
     """Main function for tone detection demo.
     
     This function orchestrates the complete demo:
