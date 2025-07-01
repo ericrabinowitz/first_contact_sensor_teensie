@@ -21,7 +21,7 @@ Example:
     🔗 Link established: eros ↔ elektra
       → eros is now linked
       ♪ Audio channel 0 ON for eros
-      → elektra is now linked  
+      → elektra is now linked
       ♪ Audio channel 1 ON for elektra
 """
 
@@ -37,16 +37,16 @@ if TYPE_CHECKING:
 
 class LinkStateTracker:
     """Tracks link states between statues and manages audio activation.
-    
+
     This class maintains the connection graph between statues and automatically
     controls audio playback channels based on link states. When any statue
     becomes linked (has at least one connection), its audio channel is enabled.
-    
+
     The tracker ensures consistency by:
     - Maintaining bidirectional links (A→B implies B→A)
     - Updating audio channels atomically with link changes
     - Providing both detailed and summary views of connection state
-    
+
     Attributes:
         links (dict): Maps each statue to set of connected statues
         has_links (dict): Quick lookup for whether statue has any links
@@ -57,7 +57,7 @@ class LinkStateTracker:
 
     def __init__(self, playback: Optional['ToggleableMultiChannelPlayback'] = None, quiet: bool = False) -> None:
         """Initialize link state tracker.
-        
+
         Args:
             playback (ToggleableMultiChannelPlayback, optional): Audio controller
                 for automatic channel management. If None, only tracks state.
@@ -95,23 +95,23 @@ class LinkStateTracker:
 
     def update_link(self, detector_statue: Statue, source_statue: Statue, is_linked: bool) -> bool:
         """Update link state between two statues.
-        
+
         This is the main entry point for the detection system. When a statue
         detects (or stops detecting) another statue's tone, this method updates
         the connection graph and manages audio channels.
-        
+
         The method ensures bidirectional consistency: if EROS detects ELEKTRA,
         then ELEKTRA is also marked as detecting EROS. This reflects the
         physical reality of the installation where connections are symmetric.
-        
+
         Args:
             detector_statue (Statue): The statue that detected the tone
             source_statue (Statue): The statue whose tone was detected
             is_linked (bool): True if tone detected, False if lost
-            
+
         Returns:
             bool: True if any state changed, False if no change
-            
+
         Side Effects:
             - Updates internal link graph
             - May toggle audio channels via playback controller

@@ -17,11 +17,11 @@ from .tone_detect import create_tone_generator
 
 def initialize_audio_playback(devices, audio_file=None):
     """Initialize 6-channel audio playback for link detection with tone generation.
-    
+
     Args:
         devices: List of device configurations from configure_devices()
         audio_file: Optional path to audio file (defaults to DEFAULT_AUDIO_FILE)
-        
+
     Returns:
         ToggleableMultiChannelPlayback instance or None if initialization fails
     """

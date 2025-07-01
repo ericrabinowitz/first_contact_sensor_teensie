@@ -281,12 +281,12 @@ class FrequencySweeper:
         self.log("\nRecommended frequencies for 5 statues (distributed across spectrum):")
         recommended = self.find_optimal_frequencies(5, prefer_high=True)
         statue_names = ["EROS", "ELEKTRA", "SOPHIA", "ULTIMO", "ARIEL"]
-        
+
         for i, (freq, score) in enumerate(recommended):
             r = test_results[freq]
             self.log(f"  {statue_names[i]}: {freq}Hz (detection={r['detection_rate']:.1f}%, "
                    f"SNR={r['avg_snr_db']:.1f}dB, cable loss={r['est_cable_attenuation_db']:.1f}dB)")
-        
+
         # Show frequency separation analysis
         if len(recommended) > 1:
             self.log("\nFrequency separation analysis:")
@@ -304,27 +304,27 @@ class FrequencySweeper:
         excellent_freqs = [(f, test_results[f]) for f in test_results
                           if test_results[f]['detection_rate'] >= 98 and
                           test_results[f]['avg_snr_db'] >= 25]
-        
+
         # Define zones to ensure frequency distribution
         zones = [
             (2000, 4000, "Low"),
-            (4000, 7000, "Mid-Low"),  
+            (4000, 7000, "Mid-Low"),
             (7000, 10000, "Mid"),
             (10000, 14000, "Mid-High"),
             (14000, 20000, "High")
         ]
-        
+
         selected = []
         zone_counts = {i: 0 for i in range(len(zones))}
-        
+
         # First pass: Try to get one frequency from each zone
         for zone_idx, (zone_min, zone_max, zone_name) in enumerate(zones):
-            zone_candidates = [(f, r) for f, r in excellent_freqs 
+            zone_candidates = [(f, r) for f, r in excellent_freqs
                              if zone_min <= f < zone_max]
-            
+
             if not zone_candidates:
                 continue
-            
+
             # Score candidates (prefer middle of zone and good metrics)
             zone_center = (zone_min + zone_max) / 2
             scored_candidates = []
@@ -337,52 +337,52 @@ class FrequencySweeper:
                 if f in [7040, 10000, 10079]:
                     score += 5
                 scored_candidates.append((f, score))
-            
+
             scored_candidates.sort(key=lambda x: x[1], reverse=True)
-            
+
             # Try candidates until we find one that's non-harmonic
             for freq, score in scored_candidates:
                 is_valid = True
-                
+
                 for sel_freq, _ in selected:
                     ratio = max(freq, sel_freq) / min(freq, sel_freq)
                     # Check harmonic ratios and minimum separation
-                    if ratio < 1.2 or any(abs(ratio - r) < 0.05 
+                    if ratio < 1.2 or any(abs(ratio - r) < 0.05
                                          for r in [2.0, 1.5, 1.33, 1.25, 3.0, 4.0, 5.0]):
                         is_valid = False
                         break
-                
+
                 if is_valid:
                     selected.append((freq, score))
                     zone_counts[zone_idx] += 1
                     break
-        
+
         # Second pass: Fill remaining slots with best frequencies
         if len(selected) < count:
             # Get all candidates not yet selected
-            remaining = [(f, r['detection_rate'] + r['avg_snr_db']) 
+            remaining = [(f, r['detection_rate'] + r['avg_snr_db'])
                         for f, r in excellent_freqs
                         if not any(f == sel_f for sel_f, _ in selected)]
             remaining.sort(key=lambda x: x[1], reverse=True)
-            
+
             for freq, score in remaining:
                 is_valid = True
-                
+
                 for sel_freq, _ in selected:
                     ratio = max(freq, sel_freq) / min(freq, sel_freq)
-                    if ratio < 1.2 or any(abs(ratio - r) < 0.05 
+                    if ratio < 1.2 or any(abs(ratio - r) < 0.05
                                          for r in [2.0, 1.5, 1.33, 1.25, 3.0, 4.0, 5.0]):
                         is_valid = False
                         break
-                
+
                 if is_valid:
                     selected.append((freq, score))
                     if len(selected) >= count:
                         break
-        
+
         # Sort by frequency for consistent assignment
         selected.sort(key=lambda x: x[0])
-        
+
         return selected
 
     def close(self):

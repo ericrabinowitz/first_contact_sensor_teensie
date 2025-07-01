@@ -18,7 +18,7 @@ making it ideal for our single-tone detection needs.
 Frequency Selection:
 Tones are carefully chosen to be non-harmonic to avoid interference:
 - EROS: 3000 Hz
-- ELEKTRA: 7000 Hz 
+- ELEKTRA: 7000 Hz
 - SOPHIA: 9500 Hz
 - ULTIMO: 13500 Hz
 - ARIEL: 19500 Hz
@@ -47,22 +47,22 @@ if TYPE_CHECKING:
 
 def create_tone_generator(frequency: float, sample_rate: int) -> Callable[[int], np.ndarray]:
     """Create a tone generator closure for the given frequency.
-    
+
     This function returns a closure that maintains phase continuity
     across buffer boundaries, ensuring a smooth continuous sine wave
     without clicks or discontinuities.
-    
+
     The generated tone has amplitude 0.5 to leave headroom and avoid
     clipping when mixed with other audio.
-    
+
     Args:
         frequency (float): Frequency in Hz of the tone to generate
         sample_rate (int): Sample rate in Hz for audio generation
-        
+
     Returns:
         function: A generator function that takes frame count and returns
                  a numpy array of sine wave samples
-    
+
     Example:
         >>> gen = create_tone_generator(1000, 44100)
         >>> samples = gen(1024)  # Generate 1024 samples
@@ -82,29 +82,29 @@ def create_tone_generator(frequency: float, sample_rate: int) -> Callable[[int],
     return generate_tone
 
 
-def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'LinkStateTracker', 
-                status_display: Optional['StatusDisplay'] = None, 
+def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'LinkStateTracker',
+                status_display: Optional['StatusDisplay'] = None,
                 shutdown_event: Optional[threading.Event] = None) -> None:
     """Detect tones from other statues using the Goertzel algorithm.
-    
+
     This function runs in a separate thread for each statue, continuously
     monitoring the audio input for tones from other statues. When a tone
     is detected above the threshold, it updates the link state.
-    
+
     The detection process:
     1. Read audio samples from the input device
     2. Apply Goertzel algorithm to detect each target frequency
     3. Calculate signal-to-noise ratio (SNR) for reliability
     4. Update link state if detection threshold is crossed
     5. Update display metrics for visualization
-    
+
     Args:
         statue (Statue): The statue doing the detection (detector)
         other_statues (list[Statue]): List of other statues to detect
         link_tracker (LinkStateTracker): Tracks connection states
         status_display (StatusDisplay, optional): Updates UI metrics
         shutdown_event (threading.Event, optional): Signals thread shutdown
-    
+
     Note:
         This function runs indefinitely until shutdown_event is set or
         an error occurs. It should be run in a daemon thread.
@@ -138,7 +138,7 @@ def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'Link
         # Check for shutdown signal
         if shutdown_event and shutdown_event.is_set():
             break
-            
+
         try:
             audio, overflowed = stream.read(dynConfig["block_size"])
             if overflowed:
@@ -149,7 +149,7 @@ def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'Link
 
             # Calculate overall signal power for noise estimation
             total_power = np.mean(audio_data ** 2)
-            
+
             # Check for each other statue's tone
             for s in other_statues:
                 freq = dynConfig[s.value]["tone_freq"]
@@ -161,7 +161,7 @@ def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'Link
                     snr_db = 10 * np.log10(level / total_power) if level > 0 else -20
                 else:
                     snr_db = 0
-                
+
                 # Update status display if available
                 if status_display:
                     status_display.update_metrics(statue, s, level, snr_db)
@@ -190,6 +190,6 @@ def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'Link
     except:
         # Ignore errors during cleanup
         pass
-        
+
     if not link_tracker.quiet:
         print(f"Detection stopped for {statue.value}")
