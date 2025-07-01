@@ -132,12 +132,12 @@ class StatusDisplay:
             statue = d['statue']
             name = statue.value.upper()
             freq = TONE_FREQUENCIES.get(statue, 0)
-            header_line1 += f"{name:^9}"
-            header_line2 += f"{freq:^9.0f}"
+            header_line1 += f" {name:^9} "
+            header_line2 += f" {freq:^9.0f} "
         
         print(header_line1 + "\r", flush=True)
         print(header_line2 + "Hz\r", flush=True)
-        print("  " + "─" * 13 + "─" * (len(self.devices) * 9) + "\r", flush=True)
+        print("  " + "─" * 13 + "─" * (len(self.devices) * 11) + "\r", flush=True)
         
         with self.lock:
             # For each detector (row)
