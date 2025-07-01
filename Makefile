@@ -8,7 +8,7 @@ SSH_TARGET ?= rpi5
 PROJECT_ROOT := ~/workspace/first_contact_sensor_teensie
 PI_CODE_ROOT := $(PROJECT_ROOT)/raspberry_pi
 AUDIO_DIR := $(PI_CODE_ROOT)/audio
-TONE_DIR := $(PI_CODE_ROOT)/tone_detect_test
+TONE_DIR := $(PI_CODE_ROOT)/contact
 CONTROLLER_DIR := $(PI_CODE_ROOT)/controller
 
 # Python unbuffered output options
