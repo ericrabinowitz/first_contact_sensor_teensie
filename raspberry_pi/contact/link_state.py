@@ -1,7 +1,28 @@
 """Link state tracking for statue connections.
 
-This module provides the LinkStateTracker class which monitors
-connection states between statues and manages audio channel activation.
+This module provides the LinkStateTracker class which monitors connection
+states between statues and manages audio channel activation. It serves as
+the bridge between the contact detection system and the audio playback system.
+
+Key Concepts:
+- Links are bidirectional: If A detects B, then B also detects A
+- Each statue can be linked to multiple other statues simultaneously
+- Audio channels are activated when a statue has ANY active links
+- The system maintains both detailed link information and summary states
+
+State Management:
+- links: Detailed tracking of which statues are connected to which
+- has_links: Simple boolean state for audio channel control
+- Audio channels toggle automatically based on link state changes
+
+Example:
+    >>> tracker = LinkStateTracker(playback_controller)
+    >>> tracker.update_link(Statue.EROS, Statue.ELEKTRA, True)
+    🔗 Link established: eros ↔ elektra
+      → eros is now linked
+      ♪ Audio channel 0 ON for eros
+      → elektra is now linked  
+      ♪ Audio channel 1 ON for elektra
 """
 
 import sys
@@ -11,9 +32,33 @@ from audio.devices import Statue
 
 
 class LinkStateTracker:
-    """Tracks link states between statues and detects changes."""
+    """Tracks link states between statues and manages audio activation.
+    
+    This class maintains the connection graph between statues and automatically
+    controls audio playback channels based on link states. When any statue
+    becomes linked (has at least one connection), its audio channel is enabled.
+    
+    The tracker ensures consistency by:
+    - Maintaining bidirectional links (A→B implies B→A)
+    - Updating audio channels atomically with link changes
+    - Providing both detailed and summary views of connection state
+    
+    Attributes:
+        links (dict): Maps each statue to set of connected statues
+        has_links (dict): Quick lookup for whether statue has any links
+        playback: Optional ToggleableMultiChannelPlayback instance
+        statue_to_channel (dict): Maps statue to audio channel index
+        quiet (bool): Suppress console output when True
+    """
 
     def __init__(self, playback=None, quiet=False):
+        """Initialize link state tracker.
+        
+        Args:
+            playback (ToggleableMultiChannelPlayback, optional): Audio controller
+                for automatic channel management. If None, only tracks state.
+            quiet (bool): Suppress console output for silent operation
+        """
         # Track which statues are linked to which
         self.links = {}  # {statue: set(linked_statues)}
         # Track link state for each statue (any links at all)
@@ -45,9 +90,28 @@ class LinkStateTracker:
                     print(f"  ♪ Audio channel {channel} OFF for {statue.value}")
 
     def update_link(self, detector_statue, source_statue, is_linked):
-        """
-        Update link state and return True if state changed.
-        Links are bidirectional.
+        """Update link state between two statues.
+        
+        This is the main entry point for the detection system. When a statue
+        detects (or stops detecting) another statue's tone, this method updates
+        the connection graph and manages audio channels.
+        
+        The method ensures bidirectional consistency: if EROS detects ELEKTRA,
+        then ELEKTRA is also marked as detecting EROS. This reflects the
+        physical reality of the installation where connections are symmetric.
+        
+        Args:
+            detector_statue (Statue): The statue that detected the tone
+            source_statue (Statue): The statue whose tone was detected
+            is_linked (bool): True if tone detected, False if lost
+            
+        Returns:
+            bool: True if any state changed, False if no change
+            
+        Side Effects:
+            - Updates internal link graph
+            - May toggle audio channels via playback controller
+            - Prints status messages (unless quiet=True)
         """
         changed = False
 

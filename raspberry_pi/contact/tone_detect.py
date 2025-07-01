@@ -1,7 +1,32 @@
-"""Tone detection and generation for contact sensing.
+"""Tone detection and generation for statue contact sensing.
 
-This module provides both tone generation and detection functionality
-using the Goertzel algorithm for efficient single-frequency detection.
+This module implements the core contact detection system for the Missing Link
+installation. Each statue generates a unique sine wave tone and listens for
+tones from other statues to detect when humans form a chain between them.
+
+Key Components:
+- Tone Generation: Creates continuous sine waves at specific frequencies
+- Tone Detection: Uses Goertzel algorithm for efficient frequency detection
+- Link Tracking: Updates connection states based on detected tones
+
+The Goertzel Algorithm:
+The Goertzel algorithm is a digital signal processing technique that efficiently
+detects the presence of a specific frequency in a signal. Unlike FFT which
+calculates all frequencies, Goertzel only computes the frequencies of interest,
+making it ideal for our single-tone detection needs.
+
+Frequency Selection:
+Tones are carefully chosen to be non-harmonic to avoid interference:
+- EROS: 3000 Hz
+- ELEKTRA: 7000 Hz 
+- SOPHIA: 9500 Hz
+- ULTIMO: 13500 Hz
+- ARIEL: 19500 Hz
+
+Detection Thresholds:
+- Link established: Signal level > 0.1 (10% of max)
+- Link broken: Signal level < 0.1
+- SNR typically > 30dB for reliable detection
 """
 
 import sys
@@ -17,12 +42,26 @@ from audio.devices import dynConfig
 def create_tone_generator(frequency, sample_rate):
     """Create a tone generator closure for the given frequency.
     
+    This function returns a closure that maintains phase continuity
+    across buffer boundaries, ensuring a smooth continuous sine wave
+    without clicks or discontinuities.
+    
+    The generated tone has amplitude 0.5 to leave headroom and avoid
+    clipping when mixed with other audio.
+    
     Args:
-        frequency: Frequency in Hz of the tone to generate
-        sample_rate: Sample rate in Hz for audio generation
+        frequency (float): Frequency in Hz of the tone to generate
+        sample_rate (int): Sample rate in Hz for audio generation
         
     Returns:
-        A function that generates tone samples when called with frame count
+        function: A generator function that takes frame count and returns
+                 a numpy array of sine wave samples
+    
+    Example:
+        >>> gen = create_tone_generator(1000, 44100)
+        >>> samples = gen(1024)  # Generate 1024 samples
+        >>> samples.shape
+        (1024,)
     """
     phase = 0
 
@@ -40,12 +79,27 @@ def create_tone_generator(frequency, sample_rate):
 def detect_tone(statue, other_statues, link_tracker, status_display=None, shutdown_event=None):
     """Detect tones from other statues using the Goertzel algorithm.
     
+    This function runs in a separate thread for each statue, continuously
+    monitoring the audio input for tones from other statues. When a tone
+    is detected above the threshold, it updates the link state.
+    
+    The detection process:
+    1. Read audio samples from the input device
+    2. Apply Goertzel algorithm to detect each target frequency
+    3. Calculate signal-to-noise ratio (SNR) for reliability
+    4. Update link state if detection threshold is crossed
+    5. Update display metrics for visualization
+    
     Args:
-        statue: The statue doing the detection (detector)
-        other_statues: List of other statues to detect (targets)
-        link_tracker: LinkStateTracker instance for updating connections
-        status_display: Optional StatusDisplay instance for metrics updates
-        shutdown_event: Optional threading.Event to signal shutdown
+        statue (Statue): The statue doing the detection (detector)
+        other_statues (list[Statue]): List of other statues to detect
+        link_tracker (LinkStateTracker): Tracks connection states
+        status_display (StatusDisplay, optional): Updates UI metrics
+        shutdown_event (threading.Event, optional): Signals thread shutdown
+    
+    Note:
+        This function runs indefinitely until shutdown_event is set or
+        an error occurs. It should be run in a daemon thread.
     """
     config = dynConfig[statue.value]["detect"]  # Use detect config, not tone
 

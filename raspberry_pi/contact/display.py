@@ -1,7 +1,38 @@
 """Terminal display for tone detection status.
 
-This module provides a real-time terminal interface showing
-connection status, audio playback state, and detection metrics.
+This module provides a real-time terminal interface showing connection status,
+audio playback state, and detection metrics in an easy-to-read format.
+
+Display Components:
+1. Connection Status: Shows each statue's link state with visual indicators
+2. Audio Status: Displays playback progress and active channel count
+3. Detection Matrix: 2D grid showing signal levels between all statue pairs
+
+The detection matrix uses visual encoding to quickly identify connections:
+- "---": Self-detection (diagonal)
+- Numeric values: Signal strength (0.000-1.000)
+- Color/box indicators could be added for different signal strengths
+
+Terminal Control:
+- Uses ANSI escape sequences for cursor control
+- Updates in-place without flickering
+- Hides cursor during operation for clean display
+- Handles graceful shutdown with cursor restoration
+
+Example Display:
+    === Missing Link Tone Detection ===
+    
+    CONNECTION STATUS:
+    eros     [ON]  ━━━━━━━━━━━━  Linked to: elektra
+    elektra  [ON]  ━━━━━━━━━━━━  Linked to: eros
+    sophia   [OFF] ────────────  Not linked
+    
+    TONE DETECTION MATRIX:
+    DETECTOR    │   EROS    ELEKTRA  SOPHIA
+    ────────────┼─────────────────────────────
+    EROS        │    ---     0.152    0.001
+    ELEKTRA     │   0.148     ---     0.000
+    SOPHIA      │   0.000    0.001     ---
 """
 
 import sys
@@ -15,9 +46,31 @@ from .config import TONE_FREQUENCIES
 
 
 class StatusDisplay:
-    """Terminal-based status display for tone detection."""
+    """Terminal-based status display for tone detection.
+    
+    This class manages a real-time terminal display that shows:
+    - Individual statue connection states
+    - Audio playback status and channel activity
+    - Full detection matrix with signal levels
+    
+    The display updates every 100ms and uses terminal control sequences
+    to update in-place without scrolling. The detection matrix provides
+    a comprehensive view of all statue-to-statue signal levels.
+    
+    Attributes:
+        link_tracker (LinkStateTracker): Provides connection state info
+        devices (list): Device configurations for all statues
+        detection_metrics (dict): 2D dictionary of signal levels
+        running (bool): Controls the display update loop
+    """
 
     def __init__(self, link_tracker, devices):
+        """Initialize the status display.
+        
+        Args:
+            link_tracker (LinkStateTracker): Connection state tracker
+            devices (list): List of device configurations with statue info
+        """
         self.link_tracker = link_tracker
         self.devices = devices
         self.running = True
@@ -40,7 +93,17 @@ class StatusDisplay:
                     }
 
     def update_metrics(self, detector, target, level, snr=None):
-        """Update detection metrics for a detector-target pair."""
+        """Update detection metrics for a detector-target pair.
+        
+        Called by detection threads to update the signal level between
+        a specific pair of statues. Thread-safe via internal locking.
+        
+        Args:
+            detector (Statue): The detecting statue
+            target (Statue): The target statue being detected
+            level (float): Signal level (0.0-1.0)
+            snr (float, optional): Signal-to-noise ratio in dB
+        """
         with self.lock:
             if detector in self.detection_metrics and target in self.detection_metrics[detector]:
                 metrics = self.detection_metrics[detector][target]

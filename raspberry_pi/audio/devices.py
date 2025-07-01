@@ -1,7 +1,34 @@
 #!/usr/bin/env python3
-"""
-Audio device configuration module for Missing Link project.
-Handles USB audio device detection and configuration for statue connections.
+"""Audio device configuration for Missing Link statues.
+
+This module handles the detection and configuration of USB audio devices
+for the Missing Link art installation. Each statue has a dedicated USB
+audio device that handles both audio playback and tone generation.
+
+The Missing Link installation consists of 5 life-sized statues that light up
+and play music when humans form a chain between them. Each statue requires:
+- USB audio device for sound input/output
+- Contact detection via sine wave tones
+- Synchronized multi-channel audio playback
+
+Device Configuration:
+- Each statue gets one USB audio device (C-Media USB Headphone Set)
+- Devices are assigned in enumeration order (first device = EROS, etc.)
+- Stereo output channels are split:
+  - Left channel (Tip): Audio playback (music)
+  - Right channel (Ring): Tone generation for contact detection
+- Mono input channel: Tone detection from other statues
+
+Example:
+    >>> from audio.devices import configure_devices, Statue
+    >>> devices = configure_devices()
+    >>> for d in devices:
+    ...     print(f"{d['statue'].value}: device {d['device_index']}")
+    eros: device 0
+    elektra: device 1
+    sophia: device 2
+    ultimo: device 3
+    ariel: device 4
 """
 
 from enum import Enum
@@ -13,6 +40,11 @@ USB_ADAPTER = "usb"  # Match any USB device
 
 
 class Statue(Enum):
+    """Enumeration of the five Missing Link statues.
+    
+    Each statue represents a figure in the art installation and requires
+    its own USB audio device for contact sensing and audio playback.
+    """
     EROS = "eros"
     ELEKTRA = "elektra"
     SOPHIA = "sophia"
@@ -67,6 +99,32 @@ for statue in Statue:
 
 
 def configure_devices(max_devices=None):
+    """Configure USB audio devices for statue assignments.
+    
+    This is the main entry point for device configuration. It:
+    1. Enumerates all available audio devices
+    2. Filters for USB audio devices matching expected pattern
+    3. Assigns devices to statues in enumeration order
+    4. Configures audio/tone/detect channels for each device
+    
+    Channel assignments follow the TRS jack standard:
+    - Tip (Left/Ch0): Audio playback channel
+    - Ring (Right/Ch1): Tone generation channel
+    - Input: Tone detection from other statues
+    
+    Args:
+        max_devices (int, optional): Limit number of devices configured.
+            Useful for testing with fewer than 5 devices.
+    
+    Returns:
+        list: Configured device dictionaries containing:
+            - statue (Statue): The statue enum value
+            - device_index (int): PortAudio device index
+            - sample_rate (int): Sample rate in Hz
+    
+    Side Effects:
+        Updates the global dynConfig with device assignments
+    """
     devices = sd.query_devices()
     if dynConfig["debug"]:
         print("Available audio devices:")
@@ -158,7 +216,21 @@ def configure_devices(max_devices=None):
 
 
 def get_audio_devices():
-    """Return a list of configured audio devices with their statue assignments."""
+    """Return a list of configured audio devices with their statue assignments.
+    
+    This function reads from the global dynConfig to get device assignments
+    that were configured by configure_devices().
+    
+    Returns:
+        list: Audio device configurations, each containing:
+            - statue (Statue): The statue enum
+            - device_index (int): PortAudio device index
+            - sample_rate (int): Sample rate in Hz
+            - channel (int): Audio output channel (0=left)
+    
+    Note:
+        Returns empty list if configure_devices() hasn't been called.
+    """
     audio_devices = []
 
     for statue in Statue:

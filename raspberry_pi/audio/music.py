@@ -1,7 +1,29 @@
 #!/usr/bin/env python3
-"""
-Audio playback module for Missing Link project.
-Handles WAV file playback with channel routing for statue audio output.
+"""Multi-channel audio playback system for Missing Link statues.
+
+This module provides synchronized audio playback across multiple USB audio
+devices, with support for channel toggling based on statue connection states.
+
+Key Features:
+- Synchronized playback across up to 6 audio channels
+- Real-time channel muting/unmuting based on link state
+- Support for multi-channel WAV files
+- Integration with tone generation for contact detection
+
+Architecture:
+- MultiChannelPlayback: Base class for synchronized playback
+- ToggleableMultiChannelPlayback: Extends base with channel control
+- Each statue gets one channel from the source audio file
+- Playback callbacks can include tone generators for right channel
+
+Example:
+    >>> from audio.music import ToggleableMultiChannelPlayback
+    >>> playback = ToggleableMultiChannelPlayback(
+    ...     audio_data, sample_rate, devices,
+    ...     right_channel_callbacks=tone_generators
+    ... )
+    >>> playback.start()
+    >>> playback.toggle_channel(0)  # Enable first channel
 """
 
 import threading
@@ -13,7 +35,19 @@ from .devices import dynConfig, get_audio_devices
 
 
 def play_audio(statue, audio_file):
-    """Play a WAV file on the audio channel for the specified statue."""
+    """Play a WAV file on the audio channel for the specified statue.
+    
+    This is a simple single-statue playback function, primarily used
+    for testing. For production use, see MultiChannelPlayback classes.
+    
+    Args:
+        statue (Statue): The statue to play audio on
+        audio_file (str): Path to WAV file to play
+        
+    Note:
+        Audio is routed to the left channel (TRS tip) of the statue's
+        assigned USB device. The right channel remains silent.
+    """
     config = dynConfig[statue.value]["audio"]
 
     if config["device_index"] == -1:
@@ -71,7 +105,18 @@ class MultiChannelPlayback:
         self.lock = threading.Lock()
 
     def _create_callback(self, channel_index):
-        """Create a callback function for a specific channel."""
+        """Create a callback function for a specific channel.
+        
+        Each device gets its own callback that reads from the shared
+        frame index. Only the first device updates the index to maintain
+        synchronization.
+        
+        Args:
+            channel_index (int): Index of the channel in the audio data
+            
+        Returns:
+            function: Callback function for sounddevice stream
+        """
         def callback(outdata, frames, time_info, status):
             if status:
                 print(f"Stream status for channel {channel_index}: {status}")
@@ -165,9 +210,33 @@ class MultiChannelPlayback:
 
 
 class ToggleableMultiChannelPlayback(MultiChannelPlayback):
-    """Extended playback class with per-channel mute control."""
+    """Extended playback class with per-channel mute control.
+    
+    This class extends MultiChannelPlayback with the ability to dynamically
+    enable/disable individual channels during playback. This is used to turn
+    statue audio on/off based on whether they are linked in the contact
+    detection system.
+    
+    Additionally supports right channel callbacks for tone generation,
+    allowing the same device to output both audio (left) and detection
+    tones (right) simultaneously.
+    
+    Attributes:
+        channel_enabled (list): Boolean flags for each channel
+        active_count (int): Number of currently active channels
+        right_channel_callbacks (dict): Optional tone generators by statue
+    """
 
     def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None):
+        """Initialize toggleable playback with optional tone generators.
+        
+        Args:
+            audio_data (np.ndarray): Multi-channel audio data
+            sample_rate (int): Sample rate in Hz
+            devices (list): Device configurations
+            right_channel_callbacks (dict, optional): Tone generators by statue.
+                Maps Statue enum to generator function that returns samples.
+        """
         super().__init__(audio_data, sample_rate, devices)
         # Initialize all channels as disabled
         self.channel_enabled = [False] * len(devices)
@@ -226,7 +295,18 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
         return callback
 
     def toggle_channel(self, channel_index):
-        """Toggle a channel on/off."""
+        """Toggle a channel on/off.
+        
+        When a statue becomes linked/unlinked, this method is called to
+        enable/disable its audio channel. The audio fades in/out smoothly
+        to avoid clicks.
+        
+        Args:
+            channel_index (int): Index of the channel to toggle
+            
+        Returns:
+            bool: True if toggle successful, False if invalid index
+        """
         if 0 <= channel_index < len(self.channel_enabled):
             with self.lock:
                 self.channel_enabled[channel_index] = not self.channel_enabled[channel_index]

@@ -78,7 +78,25 @@ def play_and_detect_tones(devices, link_tracker, status_display=None, shutdown_e
 
 
 def main():
-    """Main function for tone detection demo."""
+    """Main function for tone detection demo.
+    
+    This function orchestrates the complete demo:
+    1. Parse command line arguments
+    2. Configure USB audio devices (up to 5 for full installation)
+    3. Set up tone frequencies for each statue
+    4. Initialize multi-channel audio playback with tone generators
+    5. Create link state tracker and status display
+    6. Start detection threads for all statues
+    7. Run until interrupted or timeout expires
+    8. Perform clean shutdown of all components
+    
+    The demo requires at least one USB audio device to function.
+    With 5 devices, it demonstrates the full 5-statue installation.
+    
+    Exit codes:
+        0: Success
+        1: Configuration or initialization failure
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description='Missing Link Tone Detection Demo')
