@@ -196,6 +196,23 @@ class StatusDisplay:
                 if snr is not None:
                     metrics['snr'] = snr
     
+    def format_cell(self, level, is_self=False):
+        """Format a single cell with level and box indicators."""
+        if is_self:
+            return "   ---   "
+        
+        level_str = f"{level:.3f}"
+        
+        if level > dynConfig["touch_threshold"]:
+            # LINKED - double box around value
+            return f"╔{level_str:^5}╗"
+        elif level > dynConfig["touch_threshold"] * 0.5:
+            # WEAK - single box around value
+            return f"┌{level_str:^5}┐"
+        else:
+            # NO SIGNAL - just value
+            return f" {level_str:^5} "
+    
     def clear_screen(self):
         """Clear terminal screen."""
         print("\033[2J\033[H", end='')
@@ -236,35 +253,51 @@ class StatusDisplay:
         
         # Tone Detection Matrix
         print("\r\nTONE DETECTION MATRIX:\r")
-        print("Detector→Target  Level    SNR(dB)  Status\r")
-        print("─" * 45 + "\r")
+        print("                    TRANSMITTER (Playing Tone)\r")
+        
+        # Header row with statue names
+        statue_names = [d['statue'].value.upper() for d in self.devices]
+        header = "  DETECTOR     " + "".join(f"{name:^9}" for name in statue_names)
+        print(header + "\r")
+        print("  (Listening)  " + "─" * (len(statue_names) * 9) + "\r")
         
         with self.lock:
+            # For each detector (row)
             for detector_device in self.devices:
                 detector = detector_device['statue']
-                if detector not in self.detection_metrics:
-                    continue
-                    
+                
+                # Row label
+                row_label = f"  {detector.value.upper():8s}│ "
+                row_line = row_label
+                
+                # For each target/transmitter (column)
                 for target_device in self.devices:
                     target = target_device['statue']
-                    if target == detector:
-                        continue  # Skip self-detection
-                        
-                    if target in self.detection_metrics[detector]:
-                        metrics = self.detection_metrics[detector][target]
-                        level = metrics['level']
-                        snr = metrics.get('snr', 0)
-                        
-                        # Status based on threshold
-                        if level > dynConfig["touch_threshold"]:
-                            status = "LINKED"
-                        elif level > dynConfig["touch_threshold"] * 0.5:
-                            status = "WEAK  "
-                        else:
-                            status = "------"
-                        
-                        print(f"{detector.value:6s}→{target.value:6s}  "
-                              f"{level:6.4f}  {snr:7.1f}  {status}\r")
+                    
+                    if detector == target:
+                        # Self-detection
+                        cell = self.format_cell(0, is_self=True)
+                    else:
+                        # Get detection level
+                        level = 0.0
+                        if detector in self.detection_metrics and target in self.detection_metrics[detector]:
+                            level = self.detection_metrics[detector][target]['level']
+                        cell = self.format_cell(level)
+                    
+                    # Add cell to row with spacing
+                    row_line += f" {cell} "
+                
+                # Print the row
+                print(row_line + "\r")
+                
+                if detector != self.devices[-1]['statue']:  # Don't print separator after last row
+                    print("            │\r")  # Blank line between rows
+        
+        # Legend
+        threshold = dynConfig["touch_threshold"]
+        print(f"\r\nLegend: ╔═╗ LINKED (>{threshold:.2f})  "
+              f"┌─┐ WEAK (>{threshold*0.5:.2f})  "
+              f"Plain text: NO SIGNAL (<{threshold*0.5:.2f})\r")
         
         print("\r\nPress Ctrl+C to stop\r")
     
