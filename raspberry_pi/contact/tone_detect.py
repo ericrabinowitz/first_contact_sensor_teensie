@@ -1,7 +1,7 @@
-"""Tone detection functions for contact sensing.
+"""Tone detection and generation for contact sensing.
 
-This module provides the core tone detection functionality using
-the Goertzel algorithm for efficient single-frequency detection.
+This module provides both tone generation and detection functionality
+using the Goertzel algorithm for efficient single-frequency detection.
 """
 
 import sys
@@ -12,6 +12,29 @@ import fastgoertzel as G
 sys.path.append('../')
 
 from audio.devices import dynConfig
+
+
+def create_tone_generator(frequency, sample_rate):
+    """Create a tone generator closure for the given frequency.
+    
+    Args:
+        frequency: Frequency in Hz of the tone to generate
+        sample_rate: Sample rate in Hz for audio generation
+        
+    Returns:
+        A function that generates tone samples when called with frame count
+    """
+    phase = 0
+
+    def generate_tone(frames):
+        nonlocal phase
+        t = (np.arange(frames) + phase) / sample_rate
+        tone = 0.5 * np.sin(2 * np.pi * frequency * t)
+        # Update phase for continuity
+        phase = (phase + frames) % int(sample_rate / frequency)
+        return tone
+
+    return generate_tone
 
 
 def detect_tone(statue, other_statues, link_tracker, status_display=None):

@@ -12,7 +12,7 @@ sys.path.append('../')
 
 from audio.music import ToggleableMultiChannelPlayback
 from .config import TONE_FREQUENCIES, DEFAULT_AUDIO_FILE
-from .tone_generation import create_tone_generator
+from .tone_detect import create_tone_generator
 
 
 def initialize_audio_playback(devices, audio_file=None):

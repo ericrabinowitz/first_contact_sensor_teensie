@@ -7,8 +7,7 @@ including audio playback control and real-time status display.
 from .config import TONE_FREQUENCIES, AUDIO_JACK, DEFAULT_AUDIO_FILE
 from .link_state import LinkStateTracker
 from .display import StatusDisplay
-from .tone_generation import create_tone_generator
-from .detection import detect_tone
+from .tone_detect import create_tone_generator, detect_tone
 from .audio_setup import initialize_audio_playback
 
 __all__ = [
