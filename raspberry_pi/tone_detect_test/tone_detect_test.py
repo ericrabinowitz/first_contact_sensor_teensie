@@ -20,10 +20,11 @@ sys.path.append('../')
 import fastgoertzel as G
 import numpy as np
 import sounddevice as sd
+import soundfile as sf
 
 # Import device configuration from audio module
 from audio.devices import Statue, dynConfig, configure_devices
-from audio.music import play_audio
+from audio.music import play_audio, ToggleableMultiChannelPlayback
 
 
 # TODOs
@@ -49,12 +50,13 @@ tones_hz = {
     Statue.ARIEL: 7040,     # Prime-based. Skip 5639 which has issues.
 }
 tone_streams = {}
+audio_playback = None  # Global audio playback instance
 
 
 class LinkStateTracker:
     """Tracks link states between statues and detects changes."""
 
-    def __init__(self):
+    def __init__(self, playback=None):
         # Track which statues are linked to which
         self.links = {}  # {statue: set(linked_statues)}
         # Track link state for each statue (any links at all)
@@ -63,6 +65,23 @@ class LinkStateTracker:
         for statue in Statue:
             self.links[statue] = set()
             self.has_links[statue] = False
+        # Audio playback controller
+        self.playback = playback
+        # Map statue to channel index using enum order
+        self.statue_to_channel = {statue: list(Statue).index(statue) for statue in Statue}
+
+    def _update_audio_channel(self, statue, is_linked):
+        """Helper to update audio channel based on link state."""
+        if self.playback and statue in self.statue_to_channel:
+            channel = self.statue_to_channel[statue]
+            if is_linked and not self.playback.channel_enabled[channel]:
+                # Turn on channel
+                self.playback.toggle_channel(channel)
+                print(f"  ♪ Audio channel {channel} ON for {statue.value}")
+            elif not is_linked and self.playback.channel_enabled[channel]:
+                # Turn off channel
+                self.playback.toggle_channel(channel)
+                print(f"  ♪ Audio channel {channel} OFF for {statue.value}")
 
     def update_link(self, detector_statue, source_statue, is_linked):
         """
@@ -98,11 +117,15 @@ class LinkStateTracker:
             status = "linked" if self.has_links[detector_statue] else "unlinked"
             print(f"  → {detector_statue.value} is now {status}")
             changed = True
+            # Update audio channel
+            self._update_audio_channel(detector_statue, self.has_links[detector_statue])
 
         if old_has_links_source != self.has_links[source_statue]:
             status = "linked" if self.has_links[source_statue] else "unlinked"
             print(f"  → {source_statue.value} is now {status}")
             changed = True
+            # Update audio channel
+            self._update_audio_channel(source_statue, self.has_links[source_statue])
 
         return changed
 
@@ -128,8 +151,41 @@ class LinkStateTracker:
         return "\n".join(summary)
 
 
-# Global link state tracker
-link_tracker = LinkStateTracker()
+# Global link state tracker (initialized in main)
+link_tracker = None
+
+
+def initialize_audio_playback(devices):
+    """Initialize 6-channel audio playback for link detection."""
+    audio_file = "../../audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav"
+    
+    if not os.path.exists(audio_file):
+        print(f"\nAudio file not found: {audio_file}")
+        print("Continuing without audio playback")
+        return None
+    
+    try:
+        print(f"\nLoading audio: {os.path.basename(audio_file)}")
+        audio_data, sample_rate = sf.read(audio_file)
+        
+        # Ensure audio_data is 2D
+        if audio_data.ndim == 1:
+            audio_data = audio_data.reshape(-1, 1)
+        
+        print(f"  Duration: {len(audio_data) / sample_rate:.1f} seconds")
+        print(f"  Channels: {audio_data.shape[1]}")
+        
+        # Create toggleable playback instance
+        playback = ToggleableMultiChannelPlayback(audio_data, sample_rate, devices)
+        playback.start()
+        print("  ✓ Audio playback initialized")
+        
+        return playback
+        
+    except Exception as e:
+        print(f"Warning: Could not load audio file: {e}")
+        print("Continuing without audio playback")
+        return None
 
 
 # Device configuration is now imported from audio.devices module
@@ -338,6 +394,13 @@ if __name__ == "__main__":
             if freq > 0:
                 print(f"  {statue.value.upper()}: {freq}Hz")
 
+    # Initialize audio playback
+    audio_playback = initialize_audio_playback(devices)
+    
+    # Initialize link tracker with audio playback
+    global link_tracker
+    link_tracker = LinkStateTracker(audio_playback)
+
     play_and_detect_tones(devices)
 
     try:
@@ -349,5 +412,9 @@ if __name__ == "__main__":
         for stream in tone_streams.values():
             stream.stop()
             stream.close()
+        # Stop audio playback
+        if audio_playback:
+            audio_playback.stop()
+            print("Audio playback stopped")
         time.sleep(0.5)
         print("Done")
