@@ -173,6 +173,7 @@ class StatusDisplay:
         # 2D metrics: {detector_statue: {target_statue: {'level': float, 'snr': float}}}
         self.detection_metrics = {}
         self.lock = threading.Lock()
+        self.first_draw = True
         
         # Initialize 2D metrics for all statue pairs
         for detector_device in devices:
@@ -215,17 +216,33 @@ class StatusDisplay:
     
     def clear_screen(self):
         """Clear terminal screen."""
-        print("\033[2J\033[H", end='')
+        print("\033[2J\033[H", end='', flush=True)
+    
+    def hide_cursor(self):
+        """Hide terminal cursor."""
+        print("\033[?25l", end='', flush=True)
+    
+    def show_cursor(self):
+        """Show terminal cursor."""
+        print("\033[?25h", end='', flush=True)
+    
+    def move_cursor_home(self):
+        """Move cursor to home position without clearing."""
+        print("\033[H", end='', flush=True)
     
     def draw_interface(self):
         """Draw the status interface."""
-        self.clear_screen()
+        if self.first_draw:
+            self.clear_screen()
+            self.first_draw = False
+        else:
+            self.move_cursor_home()
         
         # Header
-        print("=== Missing Link Tone Detection ===\r\n\r")
+        print("=== Missing Link Tone Detection ===\r\n\r", flush=True)
         
         # Connection Status
-        print("CONNECTION STATUS:\r")
+        print("CONNECTION STATUS:\r", flush=True)
         for device in self.devices:
             statue = device['statue']
             is_linked = self.link_tracker.has_links[statue]
@@ -238,28 +255,28 @@ class StatusDisplay:
                 linked_to = [s.value for s in self.link_tracker.links[statue]]
             linked_str = " ↔ " + ", ".join(linked_to) if linked_to else " Not linked"
             
-            print(f"{statue.value:8s} [{status}] {bar} {linked_str}\r")
+            print(f"{statue.value:8s} [{status}] {bar} {linked_str}\r", flush=True)
         
         # Audio Status
-        print("\r\nAUDIO STATUS:\r")
+        print("\r\nAUDIO STATUS:\r", flush=True)
         if self.link_tracker.playback:
             progress = self.link_tracker.playback.get_progress()
             active = self.link_tracker.playback.active_count
             total = len(self.devices)
             playing = "Playing" if self.link_tracker.playback.is_playing else "Stopped"
-            print(f"Playback: {playing} ({progress}%)  |  Active channels: {active}/{total}\r")
+            print(f"Playback: {playing} ({progress}%)  |  Active channels: {active}/{total}\r", flush=True)
         else:
-            print("Playback: No audio loaded\r")
+            print("Playback: No audio loaded\r", flush=True)
         
         # Tone Detection Matrix
-        print("\r\nTONE DETECTION MATRIX:\r")
-        print("                    TRANSMITTER (Playing Tone)\r")
+        print("\r\nTONE DETECTION MATRIX:\r", flush=True)
+        print("                    TRANSMITTER (Playing Tone)\r", flush=True)
         
         # Header row with statue names
         statue_names = [d['statue'].value.upper() for d in self.devices]
         header = "  DETECTOR     " + "".join(f"{name:^9}" for name in statue_names)
-        print(header + "\r")
-        print("  (Listening)  " + "─" * (len(statue_names) * 9) + "\r")
+        print(header + "\r", flush=True)
+        print("  (Listening)  " + "─" * (len(statue_names) * 9) + "\r", flush=True)
         
         with self.lock:
             # For each detector (row)
@@ -288,25 +305,28 @@ class StatusDisplay:
                     row_line += f" {cell} "
                 
                 # Print the row
-                print(row_line + "\r")
+                print(row_line + "\r", flush=True)
                 
                 if detector != self.devices[-1]['statue']:  # Don't print separator after last row
-                    print("            │\r")  # Blank line between rows
+                    print("            │\r", flush=True)  # Blank line between rows
         
         # Legend
         threshold = dynConfig["touch_threshold"]
         print(f"\r\nLegend: ╔═╗ LINKED (>{threshold:.2f})  "
               f"┌─┐ WEAK (>{threshold*0.5:.2f})  "
-              f"Plain text: NO SIGNAL (<{threshold*0.5:.2f})\r")
+              f"Plain text: NO SIGNAL (<{threshold*0.5:.2f})\r", flush=True)
         
-        print("\r\nPress Ctrl+C to stop\r")
+        print("\r\nPress Ctrl+C to stop\r", flush=True)
+        # Add some blank lines to ensure we overwrite any previous content
+        print("\r\n" * 3, end='', flush=True)
     
     def run(self):
         """Run the display update loop."""
+        self.hide_cursor()
         while self.running:
             try:
                 self.draw_interface()
-                time.sleep(0.1)  # Update every 100ms
+                time.sleep(0.25)  # Update every 250ms (4Hz)
             except Exception:
                 # Don't crash the display thread
                 pass
@@ -314,6 +334,8 @@ class StatusDisplay:
     def stop(self):
         """Stop the display."""
         self.running = False
+        time.sleep(0.2)  # Give display thread time to exit
+        self.show_cursor()
         self.clear_screen()
 
 
