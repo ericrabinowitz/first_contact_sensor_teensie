@@ -170,24 +170,31 @@ class StatusDisplay:
         self.link_tracker = link_tracker
         self.devices = devices
         self.running = True
-        self.detection_metrics = {}  # {statue: {'level': float, 'snr': float}}
+        # 2D metrics: {detector_statue: {target_statue: {'level': float, 'snr': float}}}
+        self.detection_metrics = {}
         self.lock = threading.Lock()
         
-        # Initialize metrics for all statues
-        for device in devices:
-            statue = device['statue']
-            self.detection_metrics[statue] = {
-                'level': 0.0,
-                'snr': 0.0,
-                'freq': tones_hz.get(statue, 0)
-            }
+        # Initialize 2D metrics for all statue pairs
+        for detector_device in devices:
+            detector = detector_device['statue']
+            self.detection_metrics[detector] = {}
+            for target_device in devices:
+                target = target_device['statue']
+                if detector != target:  # Can't detect self
+                    self.detection_metrics[detector][target] = {
+                        'level': 0.0,
+                        'snr': 0.0,
+                        'freq': tones_hz.get(target, 0)
+                    }
     
-    def update_metrics(self, statue, level, snr=None):
-        """Update detection metrics for a statue."""
+    def update_metrics(self, detector, target, level, snr=None):
+        """Update detection metrics for a detector-target pair."""
         with self.lock:
-            self.detection_metrics[statue]['level'] = level
-            if snr is not None:
-                self.detection_metrics[statue]['snr'] = snr
+            if detector in self.detection_metrics and target in self.detection_metrics[detector]:
+                metrics = self.detection_metrics[detector][target]
+                metrics['level'] = level
+                if snr is not None:
+                    metrics['snr'] = snr
     
     def clear_screen(self):
         """Clear terminal screen."""
@@ -227,26 +234,37 @@ class StatusDisplay:
         else:
             print("Playback: No audio loaded\r")
         
-        # Tone Detection Metrics
-        print("\r\nTONE DETECTION METRICS:\r")
+        # Tone Detection Matrix
+        print("\r\nTONE DETECTION MATRIX:\r")
+        print("Detector→Target  Level    SNR(dB)  Status\r")
+        print("─" * 45 + "\r")
+        
         with self.lock:
-            for device in self.devices:
-                statue = device['statue']
-                metrics = self.detection_metrics[statue]
-                level = metrics['level']
-                snr = metrics.get('snr', 0)
-                freq = metrics['freq']
-                
-                # Signal strength indicator
-                if level > dynConfig["touch_threshold"]:
-                    strength = "[STRONG]"
-                elif level > dynConfig["touch_threshold"] * 0.5:
-                    strength = "[WEAK]"
-                else:
-                    strength = "[NO SIGNAL]"
-                
-                print(f"{statue.value:8s} ({freq:4d}Hz) → Level: {level:.4f}  "
-                      f"SNR: {snr:5.1f}dB  {strength}\r")
+            for detector_device in self.devices:
+                detector = detector_device['statue']
+                if detector not in self.detection_metrics:
+                    continue
+                    
+                for target_device in self.devices:
+                    target = target_device['statue']
+                    if target == detector:
+                        continue  # Skip self-detection
+                        
+                    if target in self.detection_metrics[detector]:
+                        metrics = self.detection_metrics[detector][target]
+                        level = metrics['level']
+                        snr = metrics.get('snr', 0)
+                        
+                        # Status based on threshold
+                        if level > dynConfig["touch_threshold"]:
+                            status = "LINKED"
+                        elif level > dynConfig["touch_threshold"] * 0.5:
+                            status = "WEAK  "
+                        else:
+                            status = "------"
+                        
+                        print(f"{detector.value:6s}→{target.value:6s}  "
+                              f"{level:6.4f}  {snr:7.1f}  {status}\r")
         
         print("\r\nPress Ctrl+C to stop\r")
     
@@ -256,7 +274,7 @@ class StatusDisplay:
             try:
                 self.draw_interface()
                 time.sleep(0.1)  # Update every 100ms
-            except Exception as e:
+            except Exception:
                 # Don't crash the display thread
                 pass
     
@@ -428,7 +446,7 @@ def detect_tone(statue, other_statues, link_tracker, status_display=None):
                 
                 # Update status display if available
                 if status_display:
-                    status_display.update_metrics(s, level, snr_db)
+                    status_display.update_metrics(statue, s, level, snr_db)
 
                 # Determine if currently detected
                 currently_detected = level > dynConfig["touch_threshold"]
