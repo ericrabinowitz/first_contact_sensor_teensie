@@ -43,8 +43,8 @@ audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
 tone-test: sync ## Play test tone on USB audio devices (syncs files first)
 	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./tone_test.py'"
 
-tone-detect-test: sync ## Run tone detection test with ELEKTRA->EROS wiring (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./tone_detect_test.py'"
+tone-detect-demo: sync ## Run tone detection demo with multi-statue detection (syncs files first)
+	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_UNBUF) ./tone_detect_demo.py'"
 
 audio-test: sync ## Run multi-channel audio playback test (syncs files first)
 	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_UNBUF) ./audio_test.py'"
@@ -58,7 +58,7 @@ freq-sweep: sync ## Run frequency sweep test to find optimal tone frequencies (s
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
 	@echo "Stopping running test scripts on $(SSH_TARGET)..."
-	@ssh $(SSH_TARGET) "pkill -f 'tone_test.py|tone_detect_test.py|controller.py' || true"
+	@ssh $(SSH_TARGET) "pkill -f 'tone_test.py|tone_detect_demo.py|controller.py' || true"
 	@echo "✓ Scripts stopped"
 
 kill-all: ## Force kill all Python scripts on Raspberry Pi
