@@ -44,14 +44,14 @@ from audio.music import play_audio, ToggleableMultiChannelPlayback
 
 AUDIO_JACK = "bcm2835 headphones"
 
-# Frequencies optimized based on frequency sweep test results
-# Selected for good detection and minimal cable attenuation
+# Frequencies from frequency_sweep_20250630_152512.log
+# All achieved 100% detection with good SNR despite cable losses
 tones_hz = {
-    Statue.EROS: 3000,      # 100% detection, 33.8dB SNR
-    Statue.ELEKTRA: 4500,   # Avoiding problematic 5639Hz
-    Statue.SOPHIA: 7500,    # Good mid-range frequency
-    Statue.ULTIMO: 10000,   # High frequency but still reliable
-    Statue.ARIEL: 15000,    # High frequency with good SNR
+    Statue.EROS: 3000,      # 100% detection, 33.8dB SNR, 1.5dB cable loss
+    Statue.ELEKTRA: 7000,   # Avoiding problematic 5639Hz, good spacing from neighbors
+    Statue.SOPHIA: 9500,    # 100% detection, 33.3dB SNR, 4.8dB cable loss
+    Statue.ULTIMO: 13500,   # 100% detection, 36.2dB SNR, 6.8dB cable loss
+    Statue.ARIEL: 19500,    # 100% detection, 36.4dB SNR, 9.8dB cable loss
 }
 # tone_streams = {}  # No longer needed - tones handled through audio playback
 audio_playback = None  # Global audio playback instance
