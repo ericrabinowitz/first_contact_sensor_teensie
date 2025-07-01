@@ -51,19 +51,19 @@ class StatusDisplay:
     def format_cell(self, level, is_self=False):
         """Format a single cell with level and box indicators."""
         if is_self:
-            return "   ---   "
+            return "  ---  "
 
         level_str = f"{level:.3f}"
 
         if level > dynConfig["touch_threshold"]:
             # LINKED - double box around value
-            return f"╔{level_str:^5}╗"
+            return f"{level_str:^7}"
         elif level > dynConfig["touch_threshold"] * 0.5:
             # WEAK - single box around value
-            return f"┌{level_str:^5}┐"
+            return f"{level_str:^7}"
         else:
             # NO SIGNAL - just value
-            return f" {level_str:^5} "
+            return f"{level_str:^7}"
 
     def clear_screen(self):
         """Clear terminal screen."""
@@ -126,21 +126,21 @@ class StatusDisplay:
         print("                    TRANSMITTER (Playing Tone)\r", flush=True)
 
         # Header row with statue names and frequencies
-        # Row label format is: "  {detector.value.upper():8s} │" = 13 chars total
-        header_line1 = "  DETECTOR   │"  # Match the row label format
-        header_line2 = "  (Listening)│"  # Match the row label format
+        # Row label format is: "  {detector.value.upper():11s} │" = 16 chars total
+        header_line1 = "  DETECTOR     │"  # Match the row label format
+        header_line2 = "  (Listening)  │"  # Match the row label format
 
         for d in self.devices:
             statue = d['statue']
             name = statue.value.upper()
             freq = TONE_FREQUENCIES.get(statue, 0)
-            # Each cell is: " {cell} " where cell is 9 chars = 11 chars total
-            header_line1 += f" {name:^9} "
-            header_line2 += f" {freq:^9.0f} "
+            # Each cell is centered in 9 chars
+            header_line1 += f"  {name:^7}  "
+            header_line2 += f"  {freq:^7.0f}  "
 
         print(header_line1 + "\r", flush=True)
         print(header_line2 + "Hz\r", flush=True)
-        print("  ─────────────" + "─" * (len(self.devices) * 11) + "\r", flush=True)
+        print("  ───────────────" + "─" * (len(self.devices) * 11) + "\r", flush=True)
 
         with self.lock:
             # For each detector (row)
@@ -148,7 +148,7 @@ class StatusDisplay:
                 detector = detector_device['statue']
 
                 # Row label - ensure consistent spacing
-                row_label = f"  {detector.value.upper():8s} │"
+                row_label = f"  {detector.value.upper():11s} │"
                 row_line = row_label
 
                 # For each target/transmitter (column)
@@ -166,7 +166,7 @@ class StatusDisplay:
                         cell = self.format_cell(level)
 
                     # Add cell to row with spacing
-                    row_line += f" {cell} "
+                    row_line += f"  {cell}  "
 
                 # Print the row with padding to ensure clean overwrites
                 print(f"{row_line:<100}\r", flush=True)
