@@ -167,11 +167,13 @@ class MultiChannelPlayback:
 class ToggleableMultiChannelPlayback(MultiChannelPlayback):
     """Extended playback class with per-channel mute control."""
 
-    def __init__(self, audio_data, sample_rate, devices):
+    def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None):
         super().__init__(audio_data, sample_rate, devices)
         # Initialize all channels as disabled
         self.channel_enabled = [False] * len(devices)
         self.active_count = 0
+        # Optional callbacks for right channel data (e.g., for tone generation)
+        self.right_channel_callbacks = right_channel_callbacks or {}
 
     def _create_callback(self, channel_index):
         """Create a callback function with mute control for a specific channel."""
@@ -206,11 +208,15 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                 if not self.channel_enabled[channel_index]:
                     channel_data = np.zeros_like(channel_data)
 
-                # Create stereo output with audio on left channel only
+                # Create stereo output with audio on left channel
                 stereo_data = np.zeros((frames, 2))
                 stereo_data[:frames_to_play, 0] = channel_data  # Left channel
-                # Right channel stays silent (reserved for tone)
-
+                
+                # Right channel: use callback if provided, otherwise silent
+                if channel_index in self.right_channel_callbacks:
+                    right_data = self.right_channel_callbacks[channel_index](frames)
+                    stereo_data[:, 1] = right_data
+                
                 outdata[:] = stereo_data
 
                 # Update frame index (only one callback should do this)

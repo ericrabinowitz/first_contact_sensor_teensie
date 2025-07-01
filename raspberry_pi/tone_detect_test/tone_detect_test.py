@@ -49,7 +49,7 @@ tones_hz = {
     Statue.ULTIMO: 4231,    # Avoiding harmonics
     Statue.ARIEL: 7040,     # Prime-based. Skip 5639 which has issues.
 }
-tone_streams = {}
+# tone_streams = {}  # No longer needed - tones handled through audio playback
 audio_playback = None  # Global audio playback instance
 
 
@@ -151,37 +151,61 @@ class LinkStateTracker:
         return "\n".join(summary)
 
 
-# Global link state tracker (initialized in main)
-link_tracker = None
+
+
+def create_tone_generator(frequency, sample_rate):
+    """Create a tone generator closure for the given frequency."""
+    phase = 0
+
+    def generate_tone(frames):
+        nonlocal phase
+        t = (np.arange(frames) + phase) / sample_rate
+        tone = 0.5 * np.sin(2 * np.pi * frequency * t)
+        # Update phase for continuity
+        phase = (phase + frames) % int(sample_rate / frequency)
+        return tone
+
+    return generate_tone
 
 
 def initialize_audio_playback(devices):
-    """Initialize 6-channel audio playback for link detection."""
+    """Initialize 6-channel audio playback for link detection with tone generation."""
     audio_file = "../../audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav"
-    
+
     if not os.path.exists(audio_file):
         print(f"\nAudio file not found: {audio_file}")
         print("Continuing without audio playback")
         return None
-    
+
     try:
         print(f"\nLoading audio: {os.path.basename(audio_file)}")
         audio_data, sample_rate = sf.read(audio_file)
-        
+
         # Ensure audio_data is 2D
         if audio_data.ndim == 1:
             audio_data = audio_data.reshape(-1, 1)
-        
+
         print(f"  Duration: {len(audio_data) / sample_rate:.1f} seconds")
         print(f"  Channels: {audio_data.shape[1]}")
-        
-        # Create toggleable playback instance
-        playback = ToggleableMultiChannelPlayback(audio_data, sample_rate, devices)
+
+        # Create tone generators for right channel of each device
+        right_channel_callbacks = {}
+        for i, device in enumerate(devices):
+            statue = device['statue']
+            if statue in tones_hz:
+                freq = tones_hz[statue]
+                device_sample_rate = device.get('sample_rate', sample_rate)
+                right_channel_callbacks[i] = create_tone_generator(freq, device_sample_rate)
+                print(f"  Created tone generator for {statue.value}: {freq}Hz")
+
+        # Create toggleable playback instance with tone generators
+        playback = ToggleableMultiChannelPlayback(audio_data, sample_rate, devices,
+                                                   right_channel_callbacks=right_channel_callbacks)
         playback.start()
-        print("  ✓ Audio playback initialized")
-        
+        print("  ✓ Audio playback initialized with tone generators")
+
         return playback
-        
+
     except Exception as e:
         print(f"Warning: Could not load audio file: {e}")
         print("Continuing without audio playback")
@@ -191,79 +215,53 @@ def initialize_audio_playback(devices):
 # Device configuration is now imported from audio.devices module
 
 
+# Old play_tone function - no longer needed since tones are generated through audio playback
 # def play_tone(statue):
 #     config = dynConfig[statue.value]["tone"]
 #     freq = dynConfig[statue.value]["tone_freq"]
-#     print(f"Playing a {freq} Hz tone for the {statue.value} statue")
-
-#     # Generate a time array and sine wave
-#     duration = 60  # seconds
-#     t = np.linspace(0, duration, int(config["sample_rate"] * duration), False)
-#     tone = np.sin(2 * np.pi * freq * t)
-#     tone = tone.astype(np.float32)
-
-#     try:
-#         sd.play(
-#             device=config["device_id"],
-#             data=tone,
-#             samplerate=config["sample_rate"],
-#             mapping=[config["channel"]],
-#             blocking=True,
-#             loop=True,
-#         )
-#     except KeyboardInterrupt:
-#         sd.stop()
-#         print("Playback stopped")
-#     except Exception as e:
-#         print(e)
-
-
-def play_tone(statue):
-    config = dynConfig[statue.value]["tone"]
-    freq = dynConfig[statue.value]["tone_freq"]
-
-    if config["device_index"] == -1:
-        print(f"WARNING: No output device configured for {statue.value}")
-        return
-
-    channel_name = "left" if config["channel"] == 0 else "right"
-    print(f"Playing {freq}Hz tone for {statue.value} on device {config['device_index']} ({channel_name} channel)")
-
-    def callback(outdata, frames, time_info, status):
-        if status:
-            print(f"Stream status: {status}")
-        t = (np.arange(frames) + callback.phase) / config["sample_rate"]
-        # Generate sine wave for stereo output with specific channel
-        sine_wave = 0.5 * np.sin(2 * np.pi * freq * t)
-
-        # Route to specific channel: 0=left (tip), 1=right (ring)
-        if config["channel"] == 0:  # Left channel (TRS tip)
-            outdata[:, 0] = sine_wave
-            outdata[:, 1] = 0  # Silence right channel
-        else:  # Right channel (TRS ring)
-            outdata[:, 0] = 0  # Silence left channel
-            outdata[:, 1] = sine_wave
-
-        callback.phase = (callback.phase + frames) % config["sample_rate"]
-
-    callback.phase = 0
-
-    # Create and start the output stream
-    stream = sd.OutputStream(
-        device=config["device_index"],
-        channels=2,  # Stereo output (required to route to specific channel)
-        samplerate=config["sample_rate"],
-        blocksize=dynConfig["block_size"],
-        callback=callback
-    )
-
-    tone_streams[statue.value] = stream
-    stream.start()
-    print(f"✓ Tone stream started for {statue.value} on channel {config['channel']}")
+#
+#     if config["device_index"] == -1:
+#         print(f"WARNING: No output device configured for {statue.value}")
+#         return
+#
+#     channel_name = "left" if config["channel"] == 0 else "right"
+#     print(f"Playing {freq}Hz tone for {statue.value} on device {config['device_index']} ({channel_name} channel)")
+#
+#     def callback(outdata, frames, time_info, status):
+#         if status:
+#             print(f"Stream status: {status}")
+#         t = (np.arange(frames) + callback.phase) / config["sample_rate"]
+#         # Generate sine wave for stereo output with specific channel
+#         sine_wave = 0.5 * np.sin(2 * np.pi * freq * t)
+#
+#         # Route to specific channel: 0=left (tip), 1=right (ring)
+#         if config["channel"] == 0:  # Left channel (TRS tip)
+#             outdata[:, 0] = sine_wave
+#             outdata[:, 1] = 0  # Silence right channel
+#         else:  # Right channel (TRS ring)
+#             outdata[:, 0] = 0  # Silence left channel
+#             outdata[:, 1] = sine_wave
+#
+#         callback.phase = (callback.phase + frames) % config["sample_rate"]
+#
+#     callback.phase = 0
+#
+#     # Create and start the output stream
+#     stream = sd.OutputStream(
+#         device=config["device_index"],
+#         channels=2,  # Stereo output (required to route to specific channel)
+#         samplerate=config["sample_rate"],
+#         blocksize=dynConfig["block_size"],
+#         callback=callback
+#     )
+#
+#     tone_streams[statue.value] = stream
+#     stream.start()
+#     print(f"✓ Tone stream started for {statue.value} on channel {config['channel']}")
 
 
 
-def detect_tone(statue, other_statues):
+def detect_tone(statue, other_statues, link_tracker):
     config = dynConfig[statue.value]["detect"]  # Use detect config, not tone
 
     if config["device_index"] == -1:
@@ -325,7 +323,7 @@ def detect_tone(statue, other_statues):
     print(f"Detection stopped for {statue.value}")
 
 
-def play_and_detect_tones(devices):
+def play_and_detect_tones(devices, link_tracker):
     """
     Start tone generation and detection for all configured statues.
     Each statue plays its unique tone and detects all other statue tones.
@@ -336,11 +334,11 @@ def play_and_detect_tones(devices):
     # Get list of configured statues
     configured_statues = [dev['statue'] for dev in devices]
 
-    # Start tone generation for all configured statues
-    print("\nStarting tone generators:")
-    for statue in configured_statues:
-        if dynConfig[statue.value]["tone"]["device_index"] != -1:
-            play_tone(statue)
+    # Tone generation now handled through audio playback system
+    print("\nTone generators integrated with audio playback")
+    # for statue in configured_statues:
+    #     if dynConfig[statue.value]["tone"]["device_index"] != -1:
+    #         play_tone(statue)
 
     # Small delay to ensure all tones are playing
     time.sleep(0.5)
@@ -356,7 +354,7 @@ def play_and_detect_tones(devices):
             if other_statues:
                 thread = threading.Thread(
                     target=detect_tone,
-                    args=(statue, other_statues),
+                    args=(statue, other_statues, link_tracker),
                     daemon=True,
                     name=f"detect_{statue.value}"
                 )
@@ -396,22 +394,21 @@ if __name__ == "__main__":
 
     # Initialize audio playback
     audio_playback = initialize_audio_playback(devices)
-    
+
     # Initialize link tracker with audio playback
-    global link_tracker
     link_tracker = LinkStateTracker(audio_playback)
 
-    play_and_detect_tones(devices)
+    play_and_detect_tones(devices, link_tracker)
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print("\n\nShutting down...")
-        # Close all tone streams
-        for stream in tone_streams.values():
-            stream.stop()
-            stream.close()
+        # Tone streams now handled through audio playback
+        # for stream in tone_streams.values():
+        #     stream.stop()
+        #     stream.close()
         # Stop audio playback
         if audio_playback:
             audio_playback.stop()
