@@ -127,8 +127,8 @@ class StatusDisplay:
 
         # Header row with statue names and frequencies
         # Row label format is: "  {detector.value.upper():11s} │" = 16 chars total
-        header_line1 = "  DETECTOR     │"  # Match the row label format
-        header_line2 = "  (Listening)  │"  # Match the row label format
+        header_line1 = "  DETECTOR    │"  # Match the row label format
+        header_line2 = "  (Listening) │"  # Match the row label format
 
         for d in self.devices:
             statue = d['statue']

@@ -37,7 +37,7 @@ def create_tone_generator(frequency, sample_rate):
     return generate_tone
 
 
-def detect_tone(statue, other_statues, link_tracker, status_display=None):
+def detect_tone(statue, other_statues, link_tracker, status_display=None, shutdown_event=None):
     """Detect tones from other statues using the Goertzel algorithm.
     
     Args:
@@ -45,6 +45,7 @@ def detect_tone(statue, other_statues, link_tracker, status_display=None):
         other_statues: List of other statues to detect (targets)
         link_tracker: LinkStateTracker instance for updating connections
         status_display: Optional StatusDisplay instance for metrics updates
+        shutdown_event: Optional threading.Event to signal shutdown
     """
     config = dynConfig[statue.value]["detect"]  # Use detect config, not tone
 
@@ -72,6 +73,10 @@ def detect_tone(statue, other_statues, link_tracker, status_display=None):
 
     # Detect tones using the Goertzel algorithm
     while True:
+        # Check for shutdown signal
+        if shutdown_event and shutdown_event.is_set():
+            break
+            
         try:
             audio, overflowed = stream.read(dynConfig["block_size"])
             if overflowed:
@@ -111,10 +116,18 @@ def detect_tone(statue, other_statues, link_tracker, status_display=None):
         except KeyboardInterrupt:
             break
         except Exception as e:
+            if shutdown_event and shutdown_event.is_set():
+                # Expected during shutdown
+                break
             print(f"Error in detection: {e}")
             break
 
-    stream.stop()
-    stream.close()
+    try:
+        stream.stop()
+        stream.close()
+    except:
+        # Ignore errors during cleanup
+        pass
+        
     if not link_tracker.quiet:
         print(f"Detection stopped for {statue.value}")

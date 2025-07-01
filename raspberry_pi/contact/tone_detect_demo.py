@@ -28,7 +28,7 @@ from contact import (
 )
 
 
-def play_and_detect_tones(devices, link_tracker, status_display=None):
+def play_and_detect_tones(devices, link_tracker, status_display=None, shutdown_event=None):
     """
     Start tone generation and detection for all configured statues.
     Each statue plays its unique tone and detects all other statue tones.
@@ -59,7 +59,7 @@ def play_and_detect_tones(devices, link_tracker, status_display=None):
             if other_statues:
                 thread = threading.Thread(
                     target=detect_tone,
-                    args=(statue, other_statues, link_tracker, status_display),
+                    args=(statue, other_statues, link_tracker, status_display, shutdown_event),
                     daemon=True,
                     name=f"detect_{statue.value}"
                 )
@@ -73,6 +73,8 @@ def play_and_detect_tones(devices, link_tracker, status_display=None):
         # Print initial status
         time.sleep(1)
         print("\n" + link_tracker.get_link_summary())
+    
+    return detection_threads
 
 
 def main():
@@ -116,6 +118,9 @@ def main():
     # Initialize link tracker with audio playback in quiet mode
     link_tracker = LinkStateTracker(audio_playback, quiet=True)
 
+    # Create shutdown event for coordinating thread shutdown
+    shutdown_event = threading.Event()
+    
     # Create status display
     status_display = StatusDisplay(link_tracker, devices)
 
@@ -123,7 +128,7 @@ def main():
     display_thread = threading.Thread(target=status_display.run, daemon=True)
     display_thread.start()
 
-    play_and_detect_tones(devices, link_tracker, status_display)
+    detection_threads = play_and_detect_tones(devices, link_tracker, status_display, shutdown_event)
 
     try:
         start_time = time.time()
@@ -139,11 +144,20 @@ def main():
     # Cleanup
     status_display.stop()
     print("\nShutting down...")
-    # Stop audio playback
+    
+    # Signal all detection threads to stop
+    shutdown_event.set()
+    
+    # Wait for detection threads to finish
+    for thread in detection_threads:
+        thread.join(timeout=1.0)
+    
+    # Now safe to stop audio playback
     if audio_playback:
         audio_playback.stop()
         print("Audio playback stopped")
-    time.sleep(0.5)
+    
+    time.sleep(0.2)
     print("Done")
 
     return 0
