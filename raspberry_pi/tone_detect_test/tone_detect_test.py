@@ -44,14 +44,14 @@ from audio.music import play_audio, ToggleableMultiChannelPlayback
 
 AUDIO_JACK = "bcm2835 headphones"
 
-# Non-harmonizing frequencies selected to avoid ratios like 2:1, 3:2, 4:3, 5:4
-# These are based on prime numbers and spaced 20-35% apart for clear distinction
+# Frequencies optimized based on frequency sweep test results
+# Selected for good detection and minimal cable attenuation
 tones_hz = {
-    Statue.EROS: 1789,      # Prime-based
-    Statue.ELEKTRA: 2357,   # Prime-based
-    Statue.SOPHIA: 3181,    # Prime-based
-    Statue.ULTIMO: 4231,    # Avoiding harmonics
-    Statue.ARIEL: 7040,     # Prime-based. Skip 5639 which has issues.
+    Statue.EROS: 3000,      # 100% detection, 33.8dB SNR
+    Statue.ELEKTRA: 4500,   # Avoiding problematic 5639Hz
+    Statue.SOPHIA: 7500,    # Good mid-range frequency
+    Statue.ULTIMO: 10000,   # High frequency but still reliable
+    Statue.ARIEL: 15000,    # High frequency with good SNR
 }
 # tone_streams = {}  # No longer needed - tones handled through audio playback
 audio_playback = None  # Global audio playback instance
@@ -255,7 +255,9 @@ class StatusDisplay:
                 linked_to = [s.value for s in self.link_tracker.links[statue]]
             linked_str = " ↔ " + ", ".join(linked_to) if linked_to else " Not linked"
             
-            print(f"{statue.value:8s} [{status}] {bar} {linked_str}\r", flush=True)
+            # Pad the line to ensure we overwrite any previous content
+            line = f"{statue.value:8s} [{status}] {bar} {linked_str}"
+            print(f"{line:<80}\r", flush=True)  # Pad to 80 chars
         
         # Audio Status
         print("\r\nAUDIO STATUS:\r", flush=True)
@@ -304,8 +306,8 @@ class StatusDisplay:
                     # Add cell to row with spacing
                     row_line += f" {cell} "
                 
-                # Print the row
-                print(row_line + "\r", flush=True)
+                # Print the row with padding to ensure clean overwrites
+                print(f"{row_line:<100}\r", flush=True)
                 
                 if detector != self.devices[-1]['statue']:  # Don't print separator after last row
                     print("            │\r", flush=True)  # Blank line between rows
