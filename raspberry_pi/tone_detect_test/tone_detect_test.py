@@ -285,8 +285,8 @@ class StatusDisplay:
             for detector_device in self.devices:
                 detector = detector_device['statue']
                 
-                # Row label
-                row_label = f"  {detector.value.upper():8s}│ "
+                # Row label - ensure consistent spacing
+                row_label = f"  {detector.value.upper():8s} │"
                 row_line = row_label
                 
                 # For each target/transmitter (column)
@@ -309,8 +309,7 @@ class StatusDisplay:
                 # Print the row with padding to ensure clean overwrites
                 print(f"{row_line:<100}\r", flush=True)
                 
-                if detector != self.devices[-1]['statue']:  # Don't print separator after last row
-                    print("            │\r", flush=True)  # Blank line between rows
+                # Remove the separator line - it's causing misalignment
         
         # Legend
         threshold = dynConfig["touch_threshold"]
