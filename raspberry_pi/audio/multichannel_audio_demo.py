@@ -9,16 +9,17 @@ Allows real-time muting/unmuting of individual channels while playing.
 """
 
 import os
-import sys
-import time
 import select
+import sys
 import termios
+import time
 import tty
 
 # Add parent directory to path for imports
 sys.path.append('../')
 
 import soundfile as sf
+
 from audio.devices import configure_devices
 from audio.music import ToggleableMultiChannelPlayback
 
@@ -114,7 +115,7 @@ def main():
     audio_file = "../../audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav"
 
     if not os.path.exists(audio_file):
-        print(f"6-channel file not found, trying stereo file...")
+        print("6-channel file not found, trying stereo file...")
         audio_file = "../../audio_files/Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav"
         if not os.path.exists(audio_file):
             print("ERROR: No test audio files found")

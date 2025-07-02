@@ -13,7 +13,6 @@ import arlpy
 import fastgoertzel as G
 import numpy as np
 
-
 # Issues
 # scipy.signal.goertzel doesn't seem to exist in the scipy versions I checked.
 #

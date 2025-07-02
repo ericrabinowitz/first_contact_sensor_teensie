@@ -9,8 +9,9 @@
 # Execute
 # ./mqtt_test.py
 
-import paho.mqtt.client as mqtt
 import json
+
+import paho.mqtt.client as mqtt
 
 # Define the MQTT server settings
 MQTT_BROKER = "rpi"  # IP address of your MQTT broker

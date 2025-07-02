@@ -6,9 +6,9 @@
 # Play test tones on detected USB audio devices
 # Execute: ./tone_test.py
 
-import json
 import re
 import time
+
 import numpy as np
 import sounddevice as sd
 
@@ -25,7 +25,7 @@ def find_usb_audio_devices():
         match = re.search(pattern, device["name"])
         if match and device["max_output_channels"] > 0:
             device_name = match.group(1).lower()
-            audio_type = match.group(2).lower()
+            match.group(2).lower()
             device_id = match.group(3)
 
             # Check if it's a USB device

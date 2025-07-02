@@ -31,18 +31,18 @@ Example:
     ariel: device 4
 """
 
-from enum import Enum
 import re
-from typing import Dict, List, Any, Optional, Union
-import sounddevice as sd
+from enum import Enum
+from typing import Any, Optional
 
+import sounddevice as sd
 
 USB_ADAPTER: str = "usb"  # Match any USB device
 
 
 class Statue(Enum):
     """Enumeration of the five Missing Link statues.
-    
+
     Each statue represents a figure in the art installation and requires
     its own USB audio device for contact sensing and audio playback.
     """
@@ -65,7 +65,7 @@ class Statue(Enum):
 #     "device_type": "usb audio device",
 # }
 # Initialize dynConfig with all statues
-dynConfig: Dict[str, Any] = {
+dynConfig: dict[str, Any] = {
     "debug": True,
     "block_size": 1024,
     "touch_threshold": 0.1,
@@ -99,30 +99,30 @@ for statue in Statue:
     }
 
 
-def configure_devices(max_devices: Optional[int] = None) -> List[Dict[str, Any]]:
+def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]:
     """Configure USB audio devices for statue assignments.
-    
+
     This is the main entry point for device configuration. It:
     1. Enumerates all available audio devices
     2. Filters for USB audio devices matching expected pattern
     3. Assigns devices to statues in enumeration order
     4. Configures audio/tone/detect channels for each device
-    
+
     Channel assignments follow the TRS jack standard:
     - Tip (Left/Ch0): Audio playback channel
     - Ring (Right/Ch1): Tone generation channel
     - Input: Tone detection from other statues
-    
+
     Args:
         max_devices (int, optional): Limit number of devices configured.
             Useful for testing with fewer than 5 devices.
-    
+
     Returns:
         list: Configured device dictionaries containing:
             - statue (Statue): The statue enum value
             - device_index (int): PortAudio device index
             - sample_rate (int): Sample rate in Hz
-    
+
     Side Effects:
         Updates the global dynConfig with device assignments
     """
@@ -208,7 +208,7 @@ def configure_devices(max_devices: Optional[int] = None) -> List[Dict[str, Any]]
             })
 
     if dynConfig["debug"]:
-        print(f"\nConfiguration summary:")
+        print("\nConfiguration summary:")
         print(f"  {len(configured_devices)} devices configured successfully")
         for dev in configured_devices:
             print(f"  {dev['statue'].value}: device {dev['device_index']}")
@@ -216,19 +216,19 @@ def configure_devices(max_devices: Optional[int] = None) -> List[Dict[str, Any]]
     return configured_devices
 
 
-def get_audio_devices() -> List[Dict[str, Any]]:
+def get_audio_devices() -> list[dict[str, Any]]:
     """Return a list of configured audio devices with their statue assignments.
-    
+
     This function reads from the global dynConfig to get device assignments
     that were configured by configure_devices().
-    
+
     Returns:
         list: Audio device configurations, each containing:
             - statue (Statue): The statue enum
             - device_index (int): PortAudio device index
             - sample_rate (int): Sample rate in Hz
             - channel (int): Audio output channel (0=left)
-    
+
     Note:
         Returns empty list if configure_devices() hasn't been called.
     """

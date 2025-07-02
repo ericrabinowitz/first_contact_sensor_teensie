@@ -5,6 +5,7 @@ parameters used throughout the contact detection system.
 """
 
 import sys
+
 sys.path.append('../')
 
 from audio.devices import Statue

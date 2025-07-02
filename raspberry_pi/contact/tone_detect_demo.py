@@ -9,29 +9,29 @@ This script demonstrates the tone-based contact detection system,
 showing real-time connection status and audio playback control.
 """
 
+import sys
 import threading
 import time
-import sys
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 # Add parent directory to path for imports
 sys.path.append('../')
 
-from audio.devices import dynConfig, configure_devices
+from audio.devices import configure_devices, dynConfig
 
 # Import from our contact module
 from contact import (
     TONE_FREQUENCIES,
     LinkStateTracker,
     StatusDisplay,
+    detect_tone,
     initialize_audio_playback,
-    detect_tone
 )
 
 
-def play_and_detect_tones(devices: List[Dict[str, Any]], link_tracker: LinkStateTracker, 
-                          status_display: Optional[StatusDisplay] = None, 
-                          shutdown_event: Optional[threading.Event] = None) -> List[threading.Thread]:
+def play_and_detect_tones(devices: list[dict[str, Any]], link_tracker: LinkStateTracker,
+                          status_display: Optional[StatusDisplay] = None,
+                          shutdown_event: Optional[threading.Event] = None) -> list[threading.Thread]:
     """
     Start tone generation and detection for all configured statues.
     Each statue plays its unique tone and detects all other statue tones.
@@ -76,13 +76,13 @@ def play_and_detect_tones(devices: List[Dict[str, Any]], link_tracker: LinkState
         # Print initial status
         time.sleep(1)
         print("\n" + link_tracker.get_link_summary())
-    
+
     return detection_threads
 
 
 def main() -> int:
     """Main function for tone detection demo.
-    
+
     This function orchestrates the complete demo:
     1. Parse command line arguments
     2. Configure USB audio devices (up to 5 for full installation)
@@ -92,10 +92,10 @@ def main() -> int:
     6. Start detection threads for all statues
     7. Run until interrupted or timeout expires
     8. Perform clean shutdown of all components
-    
+
     The demo requires at least one USB audio device to function.
     With 5 devices, it demonstrates the full 5-statue installation.
-    
+
     Exit codes:
         0: Success
         1: Configuration or initialization failure
@@ -141,7 +141,7 @@ def main() -> int:
 
     # Create shutdown event for coordinating thread shutdown
     shutdown_event = threading.Event()
-    
+
     # Create status display
     status_display = StatusDisplay(link_tracker, devices)
 
@@ -165,19 +165,19 @@ def main() -> int:
     # Cleanup
     status_display.stop()
     print("\nShutting down...")
-    
+
     # Signal all detection threads to stop
     shutdown_event.set()
-    
+
     # Wait for detection threads to finish
     for thread in detection_threads:
         thread.join(timeout=1.0)
-    
+
     # Now safe to stop audio playback
     if audio_playback:
         audio_playback.stop()
         print("Audio playback stopped")
-    
+
     time.sleep(0.2)
     print("Done")
 

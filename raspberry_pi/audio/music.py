@@ -27,24 +27,25 @@ Example:
 """
 
 import threading
-import time
-from typing import Dict, List, Optional, Callable, Any
+from typing import Any, Callable
+
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-from .devices import dynConfig, get_audio_devices, Statue
+
+from .devices import Statue, dynConfig, get_audio_devices
 
 
 def play_audio(statue: Statue, audio_file: str) -> None:
     """Play a WAV file on the audio channel for the specified statue.
-    
+
     This is a simple single-statue playback function, primarily used
     for testing. For production use, see MultiChannelPlayback classes.
-    
+
     Args:
         statue (Statue): The statue to play audio on
         audio_file (str): Path to WAV file to play
-        
+
     Note:
         Audio is routed to the left channel (TRS tip) of the statue's
         assigned USB device. The right channel remains silent.
@@ -95,7 +96,7 @@ def play_audio(statue: Statue, audio_file: str) -> None:
 class MultiChannelPlayback:
     """Manages synchronized multi-channel audio playback across multiple devices."""
 
-    def __init__(self, audio_data: np.ndarray, sample_rate: int, devices: List[Dict[str, Any]]) -> None:
+    def __init__(self, audio_data: np.ndarray, sample_rate: int, devices: list[dict[str, Any]]) -> None:
         self.audio_data = audio_data
         self.sample_rate = sample_rate
         self.devices = devices
@@ -107,14 +108,14 @@ class MultiChannelPlayback:
 
     def _create_callback(self, channel_index: int) -> Callable:
         """Create a callback function for a specific channel.
-        
+
         Each device gets its own callback that reads from the shared
         frame index. Only the first device updates the index to maintain
         synchronization.
-        
+
         Args:
             channel_index (int): Index of the channel in the audio data
-            
+
         Returns:
             function: Callback function for sounddevice stream
         """
@@ -212,16 +213,16 @@ class MultiChannelPlayback:
 
 class ToggleableMultiChannelPlayback(MultiChannelPlayback):
     """Extended playback class with per-channel mute control.
-    
+
     This class extends MultiChannelPlayback with the ability to dynamically
     enable/disable individual channels during playback. This is used to turn
     statue audio on/off based on whether they are linked in the contact
     detection system.
-    
+
     Additionally supports right channel callbacks for tone generation,
     allowing the same device to output both audio (left) and detection
     tones (right) simultaneously.
-    
+
     Attributes:
         channel_enabled (list): Boolean flags for each channel
         active_count (int): Number of currently active channels
@@ -230,7 +231,7 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
 
     def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None):
         """Initialize toggleable playback with optional tone generators.
-        
+
         Args:
             audio_data (np.ndarray): Multi-channel audio data
             sample_rate (int): Sample rate in Hz
@@ -281,12 +282,12 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                 # Create stereo output with audio on left channel
                 stereo_data = np.zeros((frames, 2))
                 stereo_data[:frames_to_play, 0] = channel_data  # Left channel
-                
+
                 # Right channel: use callback if provided, otherwise silent
                 if channel_index in self.right_channel_callbacks:
                     right_data = self.right_channel_callbacks[channel_index](frames)
                     stereo_data[:, 1] = right_data
-                
+
                 outdata[:] = stereo_data
 
                 # Update frame index (only one callback should do this)
@@ -297,14 +298,14 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
 
     def toggle_channel(self, channel_index):
         """Toggle a channel on/off.
-        
+
         When a statue becomes linked/unlinked, this method is called to
         enable/disable its audio channel. The audio fades in/out smoothly
         to avoid clicks.
-        
+
         Args:
             channel_index (int): Index of the channel to toggle
-            
+
         Returns:
             bool: True if toggle successful, False if invalid index
         """

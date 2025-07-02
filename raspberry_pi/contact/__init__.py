@@ -4,11 +4,11 @@ This module provides tone-based contact detection between statues,
 including audio playback control and real-time status display.
 """
 
-from .config import TONE_FREQUENCIES, AUDIO_JACK, DEFAULT_AUDIO_FILE
-from .link_state import LinkStateTracker
-from .display import StatusDisplay
-from .tone_detect import create_tone_generator, detect_tone
 from .audio_setup import initialize_audio_playback
+from .config import AUDIO_JACK, DEFAULT_AUDIO_FILE, TONE_FREQUENCIES
+from .display import StatusDisplay
+from .link_state import LinkStateTracker
+from .tone_detect import create_tone_generator, detect_tone
 
 __all__ = [
     'TONE_FREQUENCIES',

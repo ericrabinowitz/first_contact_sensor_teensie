@@ -21,12 +21,12 @@ Terminal Control:
 
 Example Display:
     === Missing Link Tone Detection ===
-    
+
     CONNECTION STATUS:
     eros     [ON]  ━━━━━━━━━━━━  Linked to: elektra
     elektra  [ON]  ━━━━━━━━━━━━  Linked to: eros
     sophia   [OFF] ────────────  Not linked
-    
+
     TONE DETECTION MATRIX:
     DETECTOR    │   EROS    ELEKTRA  SOPHIA
     ────────────┼─────────────────────────────
@@ -38,11 +38,12 @@ Example Display:
 import sys
 import threading
 import time
-from typing import Dict, List, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 sys.path.append('../')
 
-from audio.devices import dynConfig, Statue
+from audio.devices import Statue, dynConfig
+
 from .config import TONE_FREQUENCIES
 
 if TYPE_CHECKING:
@@ -51,16 +52,16 @@ if TYPE_CHECKING:
 
 class StatusDisplay:
     """Terminal-based status display for tone detection.
-    
+
     This class manages a real-time terminal display that shows:
     - Individual statue connection states
     - Audio playback status and channel activity
     - Full detection matrix with signal levels
-    
+
     The display updates every 100ms and uses terminal control sequences
     to update in-place without scrolling. The detection matrix provides
     a comprehensive view of all statue-to-statue signal levels.
-    
+
     Attributes:
         link_tracker (LinkStateTracker): Provides connection state info
         devices (list): Device configurations for all statues
@@ -68,9 +69,9 @@ class StatusDisplay:
         running (bool): Controls the display update loop
     """
 
-    def __init__(self, link_tracker: 'LinkStateTracker', devices: List[Dict[str, Any]]) -> None:
+    def __init__(self, link_tracker: 'LinkStateTracker', devices: list[dict[str, Any]]) -> None:
         """Initialize the status display.
-        
+
         Args:
             link_tracker (LinkStateTracker): Connection state tracker
             devices (list): List of device configurations with statue info
@@ -98,10 +99,10 @@ class StatusDisplay:
 
     def update_metrics(self, detector: Statue, target: Statue, level: float, snr: Optional[float] = None) -> None:
         """Update detection metrics for a detector-target pair.
-        
+
         Called by detection threads to update the signal level between
         a specific pair of statues. Thread-safe via internal locking.
-        
+
         Args:
             detector (Statue): The detecting statue
             target (Statue): The target statue being detected

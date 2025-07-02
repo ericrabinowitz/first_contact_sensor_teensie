@@ -31,18 +31,19 @@ Detection Thresholds:
 
 import sys
 import threading
-from typing import List, Optional, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Optional
+
+import fastgoertzel as G
 import numpy as np
 import sounddevice as sd
-import fastgoertzel as G
 
 sys.path.append('../')
 
-from audio.devices import dynConfig, Statue
+from audio.devices import Statue, dynConfig
 
 if TYPE_CHECKING:
-    from .link_state import LinkStateTracker
     from .display import StatusDisplay
+    from .link_state import LinkStateTracker
 
 
 def create_tone_generator(frequency: float, sample_rate: int) -> Callable[[int], np.ndarray]:
@@ -82,7 +83,7 @@ def create_tone_generator(frequency: float, sample_rate: int) -> Callable[[int],
     return generate_tone
 
 
-def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'LinkStateTracker',
+def detect_tone(statue: Statue, other_statues: list[Statue], link_tracker: 'LinkStateTracker',
                 status_display: Optional['StatusDisplay'] = None,
                 shutdown_event: Optional[threading.Event] = None) -> None:
     """Detect tones from other statues using the Goertzel algorithm.
@@ -187,7 +188,7 @@ def detect_tone(statue: Statue, other_statues: List[Statue], link_tracker: 'Link
     try:
         stream.stop()
         stream.close()
-    except:
+    except Exception:
         # Ignore errors during cleanup
         pass
 

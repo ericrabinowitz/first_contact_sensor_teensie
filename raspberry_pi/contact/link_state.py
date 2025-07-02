@@ -26,7 +26,8 @@ Example:
 """
 
 import sys
-from typing import Dict, Set, Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
 sys.path.append('../')
 
 from audio.devices import Statue

@@ -96,4 +96,13 @@ typecheck-install: ## Install pytype
 	@echo "Installing pytype..."
 	@pip3 install pytype
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test stop kill-all help typecheck typecheck-install
+## Linting
+lint: ## Run ruff linter on Python code
+	@echo "Running ruff linter..."
+	@cd raspberry_pi && ruff check . --fix
+
+lint-install: ## Install ruff linter
+	@echo "Installing ruff..."
+	@pip3 install ruff
+
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test stop kill-all help typecheck typecheck-install lint lint-install

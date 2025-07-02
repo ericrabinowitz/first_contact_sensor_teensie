@@ -9,12 +9,12 @@ Tests frequencies from 2kHz to 20kHz with emphasis on higher frequencies.
 Based on production experience showing 10kHz works well with long cables.
 """
 
-import os
-import time
 import sys
-import numpy as np
+import time
 from collections import defaultdict
 from datetime import datetime
+
+import numpy as np
 
 # Add parent directory to path for imports
 sys.path.append('../')
@@ -23,7 +23,7 @@ import fastgoertzel as G
 import sounddevice as sd
 
 # Import device configuration from audio module
-from audio.devices import Statue, dynConfig, configure_devices
+from audio.devices import Statue, configure_devices, dynConfig
 
 # Test frequency ranges focused on higher frequencies
 # Based on production statue success at 10kHz with long cables
@@ -67,7 +67,7 @@ class FrequencySweeper:
         self.current_freq = None
         self.is_playing = False
         self.phase = 0
-        self.results_file = open(f"frequency_sweep_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", 'w')
+        self.results_file = open(f"frequency_sweep_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", 'w')  # noqa: SIM115
 
     def log(self, message):
         """Log to console and file."""
@@ -210,7 +210,7 @@ class FrequencySweeper:
         self.log(f"Sample rate: {SAMPLE_RATE}Hz (Nyquist: {SAMPLE_RATE/2}Hz)")
         self.log(f"Output device: {self.output_device}")
         self.log(f"Input device: {self.input_device}")
-        self.log(f"Physical connection: Ariel (device 5) → Eros (device 1)")
+        self.log("Physical connection: Ariel (device 5) → Eros (device 1)")
         self.log("Note: Production statues with long cables work best at ~10kHz")
 
         # Create output stream
@@ -239,7 +239,7 @@ class FrequencySweeper:
         self.log("Freq(Hz)  Detection%  Avg Level   SNR(dB)  Freq Error%  Cable Loss(dB)")
         self.log("-" * 75)
 
-        for i, freq in enumerate(sorted_freqs[:25]):
+        for _i, freq in enumerate(sorted_freqs[:25]):
             r = test_results[freq]
             self.log(f"{freq:7d}  {r['detection_rate']:9.1f}%  {r['avg_goertzel_level']:9.4f}  "
                    f"{r['avg_snr_db']:7.1f}  {r['avg_freq_error_percent']:10.2f}  "
@@ -282,7 +282,7 @@ class FrequencySweeper:
         recommended = self.find_optimal_frequencies(5, prefer_high=True)
         statue_names = ["EROS", "ELEKTRA", "SOPHIA", "ULTIMO", "ARIEL"]
 
-        for i, (freq, score) in enumerate(recommended):
+        for i, (freq, _score) in enumerate(recommended):
             r = test_results[freq]
             self.log(f"  {statue_names[i]}: {freq}Hz (detection={r['detection_rate']:.1f}%, "
                    f"SNR={r['avg_snr_db']:.1f}dB, cable loss={r['est_cable_attenuation_db']:.1f}dB)")
@@ -318,7 +318,7 @@ class FrequencySweeper:
         zone_counts = {i: 0 for i in range(len(zones))}
 
         # First pass: Try to get one frequency from each zone
-        for zone_idx, (zone_min, zone_max, zone_name) in enumerate(zones):
+        for zone_idx, (zone_min, zone_max, _zone_name) in enumerate(zones):
             zone_candidates = [(f, r) for f, r in excellent_freqs
                              if zone_min <= f < zone_max]
 
@@ -421,7 +421,7 @@ def main():
         print("ERROR: Eros detection input not configured")
         return
 
-    print(f"\nUsing devices:")
+    print("\nUsing devices:")
     print(f"  Output: Ariel on device {ariel_config['device_index']}")
     print(f"  Input: Eros on device {eros_config['device_index']}")
 
