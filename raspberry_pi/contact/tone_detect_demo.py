@@ -14,9 +14,6 @@ import threading
 import time
 from typing import Any, Optional
 
-# Add parent directory to path for imports
-sys.path.append('../')
-
 from audio.devices import configure_devices, dynConfig
 
 # Import from our contact module

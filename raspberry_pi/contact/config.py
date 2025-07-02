@@ -4,10 +4,6 @@ This module contains tone frequencies and other configuration
 parameters used throughout the contact detection system.
 """
 
-import sys
-
-sys.path.append('../')
-
 from audio.devices import Statue
 
 # Frequencies from frequency_sweep_20250630_152512.log

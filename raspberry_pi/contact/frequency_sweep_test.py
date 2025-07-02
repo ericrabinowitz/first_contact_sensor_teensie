@@ -9,17 +9,12 @@ Tests frequencies from 2kHz to 20kHz with emphasis on higher frequencies.
 Based on production experience showing 10kHz works well with long cables.
 """
 
-import sys
 import time
 from collections import defaultdict
 from datetime import datetime
 
-import numpy as np
-
-# Add parent directory to path for imports
-sys.path.append('../')
-
 import fastgoertzel as G
+import numpy as np
 import sounddevice as sd
 
 # Import device configuration from audio module

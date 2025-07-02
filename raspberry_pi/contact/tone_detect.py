@@ -29,15 +29,12 @@ Detection Thresholds:
 - SNR typically > 30dB for reliable detection
 """
 
-import sys
 import threading
 from typing import TYPE_CHECKING, Callable, Optional
 
 import fastgoertzel as G
 import numpy as np
 import sounddevice as sd
-
-sys.path.append('../')
 
 from audio.devices import Statue, dynConfig
 

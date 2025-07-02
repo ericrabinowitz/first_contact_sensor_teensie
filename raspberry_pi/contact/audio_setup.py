@@ -5,11 +5,8 @@ playback with integrated tone generators for contact detection.
 """
 
 import os
-import sys
 
 import soundfile as sf
-
-sys.path.append('../')
 
 from audio.music import ToggleableMultiChannelPlayback
 

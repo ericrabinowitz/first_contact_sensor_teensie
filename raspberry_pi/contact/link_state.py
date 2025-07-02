@@ -25,10 +25,7 @@ Example:
       ♪ Audio channel 1 ON for elektra
 """
 
-import sys
 from typing import TYPE_CHECKING, Optional
-
-sys.path.append('../')
 
 from audio.devices import Statue
 

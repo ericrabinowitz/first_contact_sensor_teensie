@@ -35,12 +35,9 @@ Example Display:
     SOPHIA      │   0.000    0.001     ---
 """
 
-import sys
 import threading
 import time
 from typing import TYPE_CHECKING, Any, Optional
-
-sys.path.append('../')
 
 from audio.devices import Statue, dynConfig
 

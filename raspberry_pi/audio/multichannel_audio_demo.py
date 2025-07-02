@@ -15,9 +15,6 @@ import termios
 import time
 import tty
 
-# Add parent directory to path for imports
-sys.path.append('../')
-
 import soundfile as sf
 
 from audio.devices import configure_devices

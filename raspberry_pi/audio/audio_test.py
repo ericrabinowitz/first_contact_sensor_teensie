@@ -7,11 +7,7 @@
 # ./audio_test.py
 
 import os
-import sys
 import time
-
-# Add parent directory to path for imports
-sys.path.append('../')
 
 from audio.devices import configure_devices
 from audio.music import play_multichannel_audio
