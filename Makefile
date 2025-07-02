@@ -17,6 +17,9 @@ PYTHON_UNBUF := PYTHONUNBUFFERED=1 stdbuf -o0 -e0
 # Python with proper module path
 PYTHON_WITH_PATH := PYTHONPATH=$(PI_CODE_ROOT) $(PYTHON_UNBUF)
 
+# SSH command alias for interactive sessions
+SSH_EXEC := ssh -t $(SSH_TARGET)
+
 # Default target shows help
 .DEFAULT_GOAL := help
 
@@ -44,22 +47,22 @@ audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
 	@ssh $(SSH_TARGET) "sudo apt update && sudo apt install -y libportaudio2 portaudio19-dev"
 
 tone-test: sync ## Play test tone on USB audio devices (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_test.py'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_test.py'"
 
 tone-detect-demo: sync ## Run tone detection demo with multi-statue detection (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py'"
 
 tone-detect-test: sync ## Run tone detection demo with 5-second timeout for testing
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py --timeout 2'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py --timeout 2'"
 
 audio-test: sync ## Run multi-channel audio playback test (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./audio_test.py'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./audio_test.py'"
 
 audio-demo: sync ## Run interactive multi-channel audio demo with channel toggles (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./multichannel_audio_demo.py'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./multichannel_audio_demo.py'"
 
 freq-sweep: sync ## Run frequency sweep test to find optimal tone frequencies (syncs files first)
-	@ssh -t $(SSH_TARGET) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./frequency_sweep_test.py'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./frequency_sweep_test.py'"
 
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
