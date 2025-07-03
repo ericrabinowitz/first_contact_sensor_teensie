@@ -105,3 +105,215 @@ aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 
 - Teensy boards require Arduino IDE with Teensy add-on and specific libraries
 - WLED boards are configured via web interface at their assigned IPs
 - Audio files are categorized by "active" and "dormant" keywords in filenames
+
+## Code Style Guidelines
+
+### Python
+- Use type hints for all function parameters and return values
+- Follow PEP 8 style guide (enforced by ruff linter)
+- Follow Google Style Guide for Python (https://google.github.io/styleguide/pyguide.html)
+- Prefer f-strings over .format() or % formatting
+- Use descriptive variable names (e.g., `statue_name` not `sn`)
+- Keep functions under 50 lines when possible
+- Add comprehensive docstrings to all public functions and classes
+- Use `from __future__ import annotations` for forward references when needed
+
+### General
+- No trailing whitespace
+- Use consistent indentation (4 spaces for Python)
+- Line length limit: 100 characters
+- Import order: standard library, third-party, local (enforced by ruff)
+
+## Testing
+
+### Quick Tests
+```bash
+# Run tone detection demo with 2-second timeout
+make tone-detect-test
+
+# Test multi-channel audio playback
+make audio-test
+
+# Interactive audio demo with channel toggles
+make audio-demo
+
+# Frequency sweep test for optimal tone selection
+make freq-sweep
+```
+
+### Code Quality
+```bash
+# Run linter
+make lint
+
+# Run type checker
+make typecheck
+
+# Install dependencies
+make lint-install
+make typecheck-install
+```
+
+### Integration Testing
+- Always test with actual hardware before committing
+- Test with multiple USB devices connected (up to 5 for full setup)
+- Verify tone detection between all statue pairs
+- Check audio playback on all channels
+
+## Troubleshooting
+
+### USB Audio Device Issues
+- **"Device unavailable" error**: Run `make stop` then retry
+- **Check device permissions**: `ls -la /dev/snd/`
+- **Verify PortAudio installation**: `make audio-deps`
+- **List all audio devices**: `make audio-list`
+- **Check detailed audio status**: `make audio-status`
+
+### ALSA Errors
+- **"resource busy"**: Another process is using the device
+  - Solution: `make kill-all` to stop all Python processes
+- **"Invalid number of channels"**: Device doesn't support stereo
+  - Check device capabilities with `aplay -l`
+
+### Python Import Errors
+- The Makefile sets `PYTHONPATH` automatically
+- Never use `sys.path.append()` in code
+- All imports should be absolute: `from audio.devices import ...`
+
+## Design Patterns
+
+### Statue Communication
+- Each statue has unique tone frequency (defined in `contact/config.py`):
+  - EROS: 3000 Hz
+  - ELEKTRA: 7000 Hz  
+  - SOPHIA: 9500 Hz
+  - ULTIMO: 13500 Hz
+  - ARIEL: 19500 Hz
+- Detection is bidirectional (A detects B means B detects A)
+- Use `LinkStateTracker` for managing connection states
+- Goertzel algorithm for efficient single-frequency detection
+
+### Audio Architecture
+- **Stereo channel allocation**:
+  - Left channel: WAV file playback (music)
+  - Right channel: Sine wave tone generation
+- Channels toggle automatically based on link state
+- `ToggleableMultiChannelPlayback` manages all audio streams
+- Each statue gets its own USB audio device
+
+### Threading Model
+- Main thread: UI and coordination
+- Detection threads: One per statue for tone detection
+- Audio threads: Managed by sounddevice callbacks
+- All threads use daemon mode for clean shutdown
+
+## Performance Considerations
+
+- **Goertzel algorithm** is more efficient than FFT for single frequencies
+- **Block size**: Use 1024 samples for optimal latency/performance balance
+- **Sample rate**: 48000 Hz for better high-frequency response
+- **Cable effects**: ~0.5dB attenuation per kHz (important for long cables)
+- **Detection threshold**: 0.1 (10% of max signal level)
+- **Update rate**: Status display refreshes at 4Hz (every 250ms)
+
+## Hardware Configuration
+
+### USB Audio Devices
+- Device 0: Reserved for Raspberry Pi audio jack (bcm2835)
+- Devices 1-5: USB audio adapters for statues
+- Physical mapping maintained in `audio/devices.py`:
+  - Device 1: EROS
+  - Device 2: ELEKTRA
+  - Device 3: SOPHIA
+  - Device 4: ULTIMO
+  - Device 5: ARIEL
+
+### Network Setup
+- **Raspberry Pi**: Static IP 192.168.4.1
+- **DHCP range**: 192.168.4.100-200
+- **Services**: dnsmasq (DHCP/DNS), mosquitto (MQTT), controller.py
+- **Teensy boards**: Get static DHCP assignments
+
+## MQTT Protocol
+
+### Topics
+
+#### Published by Teensy
+- `missing_link/touch`: Contact detection events
+  ```json
+  {
+    "action": "link",    // or "unlink"
+    "statues": ["eros", "elektra"]
+  }
+  ```
+
+#### Subscribed by Teensy
+- `missing_link/haptic`: Haptic feedback commands
+  ```json
+  {
+    "statue": "eros"
+  }
+  ```
+
+#### Published by Controller
+- `wled/{statue}/api`: WLED light control commands
+
+## Dependencies
+
+### Python (3.9+)
+- **fastgoertzel**: Efficient tone detection algorithm
+- **numpy**: Signal processing and array operations
+- **sounddevice**: Cross-platform audio I/O
+- **soundfile**: Reading WAV files
+- **paho-mqtt**: MQTT client library
+- **deepmerge**: Configuration merging (controller only)
+- **just-playback**: Simple audio playback (controller only)
+
+### System Requirements
+- **PortAudio**: Required for sounddevice (`make audio-deps`)
+- **ALSA**: Linux audio subsystem
+- **USB audio support**: Multiple USB audio devices
+
+## Common Tasks
+
+### Adding a New Statue
+1. Add to `Statue` enum in `audio/devices.py`
+2. Update `TONE_FREQUENCIES` in `contact/config.py`
+3. Add USB device mapping in `configure_devices()`
+4. Update display formatting if needed
+
+### Changing Tone Frequencies
+1. Run `make freq-sweep` to test new frequencies
+2. Update `TONE_FREQUENCIES` in `contact/config.py`
+3. Ensure frequencies are non-harmonic (avoid 2:1, 3:2 ratios)
+4. Test with all statue pairs
+
+### Debugging Connection Issues
+1. Check USB devices: `make audio-list`
+2. Run tone detection: `make tone-detect-demo`
+3. Monitor detection matrix for signal levels
+4. Verify cable connections and lengths
+
+## Production Deployment
+
+### Pre-deployment Checklist
+- [ ] Run `make lint` and fix all issues
+- [ ] Run `make typecheck` and verify no errors
+- [ ] Test all 5 statues with `make tone-detect-demo`
+- [ ] Verify WLED integration works
+- [ ] Test with production audio files
+- [ ] Check service auto-start: `controller.status`
+
+### Production Settings
+- Set `dynConfig["debug"] = False` in `audio/devices.py`
+- Use production audio files in `/home/pi/audio_files/`
+- Ensure all services start on boot
+- Monitor logs: `controller.logs`, `mosquitto.logs`
+
+## Future Enhancements
+
+- [ ] Automatic gain control for varying cable lengths
+- [ ] Noise gate for better detection in noisy environments
+- [ ] Automated test suite for CI/CD
+- [ ] Dynamic frequency allocation to avoid interference
+- [ ] Recording capability for debugging audio issues
