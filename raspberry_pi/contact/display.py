@@ -236,8 +236,6 @@ class StatusDisplay:
                 # Print the row with padding to ensure clean overwrites
                 print(f"{row_line:<100}\r", flush=True)
 
-                # Remove the separator line - it's causing misalignment
-
         # Legend
         threshold = dynConfig["touch_threshold"]
         print(f"\r\nLegend: ╔═╗ LINKED (>{threshold:.2f})  "
