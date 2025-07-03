@@ -9,17 +9,18 @@
 # Execute
 # ./controller.py
 
+from enum import Enum
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
 import subprocess
 import threading
 import time
-from enum import Enum
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
-import paho.mqtt.client as mqtt
 from deepmerge import Merger
 from just_playback import Playback
+import paho.mqtt.client as mqtt
+
 
 # ### Reference docs
 # https://docs.google.com/document/d/107ZdOsc81E29lZZVTtqirHpqJKrvnqui0-EGSTGGslk/edit?tab=t.0
