@@ -122,13 +122,13 @@ class StatusDisplay:
 
         if level > dynConfig["touch_threshold"]:
             # LINKED - double box around value
-            return f"{level_str:^7}"
+            return f"╔{level_str:^5}╗"
         elif level > dynConfig["touch_threshold"] * 0.5:
             # WEAK - single box around value
-            return f"{level_str:^7}"
+            return f"┌{level_str:^5}┐"
         else:
             # NO SIGNAL - just value
-            return f"{level_str:^7}"
+            return f" {level_str:^5} "
 
     def clear_screen(self) -> None:
         """Clear terminal screen."""

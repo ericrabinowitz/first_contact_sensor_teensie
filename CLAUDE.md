@@ -185,7 +185,7 @@ make typecheck-install
 ### Statue Communication
 - Each statue has unique tone frequency (defined in `contact/config.py`):
   - EROS: 3000 Hz
-  - ELEKTRA: 7000 Hz  
+  - ELEKTRA: 17000 Hz
   - SOPHIA: 9500 Hz
   - ULTIMO: 13500 Hz
   - ARIEL: 19500 Hz
