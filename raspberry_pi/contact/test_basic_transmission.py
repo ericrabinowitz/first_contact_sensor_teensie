@@ -17,8 +17,7 @@ import fastgoertzel as G
 
 from audio.devices import configure_devices, dynConfig, Statue
 from contact.audio_setup import initialize_audio_playback
-from contact.tone_detect import SynchronousSlotManager
-from contact import tone_detect
+from contact.config import TONE_FREQUENCIES
 
 
 class TestBasicTransmission(unittest.TestCase):
@@ -41,12 +40,11 @@ class TestBasicTransmission(unittest.TestCase):
         if not cls.audio_playback:
             raise unittest.SkipTest("Failed to initialize audio playback")
         
-        # Set up slot manager for tone control
-        active_statues = [dev['statue'] for dev in cls.devices]
-        cls.slot_manager = SynchronousSlotManager(active_statues)
-        
-        # Assign slot manager to tone_detect module
-        tone_detect.slot_manager = cls.slot_manager
+        # Configure tone frequencies for detection
+        for device in cls.devices:
+            statue = device['statue']
+            if statue in TONE_FREQUENCIES:
+                dynConfig[statue.value]["tone_freq"] = TONE_FREQUENCIES[statue]
         
         # Let audio system initialize
         time.sleep(1.0)
@@ -61,8 +59,10 @@ class TestBasicTransmission(unittest.TestCase):
 
     def setUp(self):
         """Reset transmission state before each test."""
-        self.slot_manager.transmission_active.clear()
-        self.slot_manager.current_transmitter = None
+        # Disable all tone channels for clean test start
+        if self.__class__.audio_playback:
+            for i in range(len(self.__class__.devices)):
+                self.__class__.audio_playback.set_tone_channel(i, False)
         time.sleep(0.1)  # Let system settle
 
     def test_eros_to_elektra_transmission(self):
@@ -97,9 +97,15 @@ class TestBasicTransmission(unittest.TestCase):
         """Test that no signals are detected when nothing transmits."""
         print("Testing baseline with no transmission")
         
+        # Explicitly disable all tone channels
+        if self.__class__.audio_playback:
+            for i in range(len(self.__class__.devices)):
+                self.__class__.audio_playback.set_tone_channel(i, False)
+        time.sleep(0.1)  # Let system settle
+        
         threshold = dynConfig["touch_threshold"]
         
-        for device in self.devices:
+        for device in self.__class__.devices:
             statue = device['statue']
             config = dynConfig[statue.value]["detect"]
             
@@ -123,7 +129,7 @@ class TestBasicTransmission(unittest.TestCase):
         expected_duration_ms = (dynConfig["block_size"] / 48000) * 1000  # ~21.33ms
         tolerance_ms = 10.0  # Allow some variation
         
-        for device in self.devices:
+        for device in self.__class__.devices:
             statue = device['statue']
             config = dynConfig[statue.value]["detect"]
             
@@ -135,7 +141,7 @@ class TestBasicTransmission(unittest.TestCase):
                 durations = []
                 for _ in range(5):
                     start_time = time.time()
-                    audio, overflowed = stream.read(dynConfig["block_size"])
+                    _audio, overflowed = stream.read(dynConfig["block_size"])
                     duration_ms = (time.time() - start_time) * 1000
                     durations.append(duration_ms)
                     
@@ -152,9 +158,13 @@ class TestBasicTransmission(unittest.TestCase):
 
     def _test_single_direction(self, transmitter: Statue, detector: Statue):
         """Test transmission from one statue to another."""
+        # Check audio playback is available
+        if not self.__class__.audio_playback:
+            self.skipTest("Audio playback not available")
+        
         # Find detector device config
         detector_device = None
-        for dev in self.devices:
+        for dev in self.__class__.devices:
             if dev['statue'] == detector:
                 detector_device = dev
                 break
@@ -166,10 +176,13 @@ class TestBasicTransmission(unittest.TestCase):
                            f"No input device configured for {detector.value}")
         
         with self._create_input_stream(config) as stream:
+            # Get transmitter channel index
+            transmitter_channel = self._get_channel_index(transmitter)
+            self.assertIsNotNone(transmitter_channel, f"Transmitter {transmitter.value} not found")
+            
             # Measure detection with transmission OFF
             print(f"  Phase 1: {transmitter.value} transmission OFF")
-            self.slot_manager.transmission_active.clear()
-            self.slot_manager.current_transmitter = None
+            self.__class__.audio_playback.set_tone_channel(transmitter_channel, False)
             time.sleep(0.1)
             
             level_off = self._measure_detection_level(stream, transmitter, config)
@@ -177,16 +190,14 @@ class TestBasicTransmission(unittest.TestCase):
             
             # Measure detection with transmission ON
             print(f"  Phase 2: {transmitter.value} transmission ON")
-            self.slot_manager.current_transmitter = transmitter
-            self.slot_manager.transmission_active.set()
+            self.__class__.audio_playback.set_tone_channel(transmitter_channel, True)
             time.sleep(0.1)
             
             level_on = self._measure_detection_level(stream, transmitter, config)
             print(f"    Detection level: {level_on:.3f}")
             
             # Turn off transmission
-            self.slot_manager.transmission_active.clear()
-            self.slot_manager.current_transmitter = None
+            self.__class__.audio_playback.set_tone_channel(transmitter_channel, False)
             
             # Evaluate results
             threshold = dynConfig["touch_threshold"]
@@ -234,6 +245,13 @@ class TestBasicTransmission(unittest.TestCase):
         level, _ = G.goertzel(audio_data, normalized_freq)
         
         return level
+
+    def _get_channel_index(self, statue: Statue):
+        """Get the channel index for a given statue."""
+        for i, device in enumerate(self.__class__.devices):
+            if device['statue'] == statue:
+                return i
+        return None
 
 
 if __name__ == "__main__":
