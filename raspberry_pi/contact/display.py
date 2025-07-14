@@ -207,12 +207,18 @@ class StatusDisplay:
                 # Mark selected statue with arrow
                 if statue == self.freq_controller.get_selected_statue():
                     name = f"→{name}←"
+                # Show muted status
+                if self.freq_controller.is_muted(statue):
+                    freq_str = "MUTED"
+                else:
+                    freq_str = f"{freq:.0f}"
             else:
                 freq = TONE_FREQUENCIES.get(statue, 0)
+                freq_str = f"{freq:.0f}"
             
             # Each cell is centered in 9 chars
             header_line1 += f"  {name:^7}  "
-            header_line2 += f"  {freq:^7.0f}  "
+            header_line2 += f"  {freq_str:^7}  "
 
         print(header_line1 + "\r", flush=True)
         print(header_line2 + "Hz\r", flush=True)
@@ -254,7 +260,7 @@ class StatusDisplay:
               f"Plain text: NO SIGNAL (<{threshold*0.5:.2f})\r", flush=True)
 
         if self.freq_controller:
-            print("\r\nInteractive Controls: W/S=Navigate statues | A/D=Adjust frequency (±500Hz) | Q=Quit\r", flush=True)
+            print("\r\nInteractive Controls: A/D=Navigate statues | W/S=Adjust frequency (±500Hz) | Space=Mute/Unmute | Q=Quit\r", flush=True)
         else:
             print("\r\nPress Ctrl+C to stop\r", flush=True)
         # Add some blank lines to ensure we overwrite any previous content

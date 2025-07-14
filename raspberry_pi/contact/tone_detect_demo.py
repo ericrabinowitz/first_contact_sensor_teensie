@@ -41,6 +41,7 @@ class FrequencyController:
         
         # Initialize current frequencies from tone generators
         self.current_frequencies = {}
+        self.muted_statues = set()  # Track muted statues
         for statue, generator in dynamic_tone_generators.items():
             self.current_frequencies[statue] = generator.get_frequency()
     
@@ -85,20 +86,45 @@ class FrequencyController:
         """Get current frequency for a statue."""
         with self.lock:
             return self.current_frequencies.get(statue, 0)
+    
+    def toggle_mute(self):
+        """Toggle mute state for selected statue."""
+        selected_statue = self.get_selected_statue()
+        if not selected_statue or selected_statue not in self.dynamic_tone_generators:
+            return
+            
+        with self.lock:
+            if selected_statue in self.muted_statues:
+                # Unmute: restore frequency
+                self.muted_statues.remove(selected_statue)
+                self.dynamic_tone_generators[selected_statue].set_frequency(self.current_frequencies[selected_statue])
+                dynConfig[selected_statue.value]["tone_freq"] = self.current_frequencies[selected_statue]
+            else:
+                # Mute: set frequency to 0
+                self.muted_statues.add(selected_statue)
+                self.dynamic_tone_generators[selected_statue].set_frequency(0)
+                dynConfig[selected_statue.value]["tone_freq"] = 0
+    
+    def is_muted(self, statue):
+        """Check if a statue is muted."""
+        with self.lock:
+            return statue in self.muted_statues
 
 
 def handle_key_input(key, freq_controller):
     """Handle keyboard input for frequency control."""
     if key == 'q' or key == 'Q' or key == '\x1b':  # ESC key
         return False  # Signal to exit
-    elif key == 'w' or key == 'W':  # Up (w key)
-        freq_controller.navigate_up()
-    elif key == 's' or key == 'S':  # Down (s key)
-        freq_controller.navigate_down()
-    elif key == 'a' or key == 'A':  # Left (a key)
-        freq_controller.adjust_frequency(-500)
-    elif key == 'd' or key == 'D':  # Right (d key)
+    elif key == 'w' or key == 'W':  # Up - increase frequency
         freq_controller.adjust_frequency(+500)
+    elif key == 's' or key == 'S':  # Down - decrease frequency
+        freq_controller.adjust_frequency(-500)
+    elif key == 'a' or key == 'A':  # Left - previous statue
+        freq_controller.navigate_up()
+    elif key == 'd' or key == 'D':  # Right - next statue
+        freq_controller.navigate_down()
+    elif key == ' ':  # Spacebar - toggle mute
+        freq_controller.toggle_mute()
     return True  # Continue running
 
 
@@ -233,7 +259,7 @@ def main() -> int:
         tty.setraw(sys.stdin.fileno())
         
         print("\n=== Interactive Controls ===")
-        print("W/S: Navigate statues | A/D: Adjust frequency (-/+500Hz) | Q/ESC: Quit")
+        print("A/D: Navigate statues | W/S: Adjust frequency (+/-500Hz) | Space: Mute/Unmute | Q/ESC: Quit")
         print("Currently controlling frequencies in real-time...")
         
         start_time = time.time()
