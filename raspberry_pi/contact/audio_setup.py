@@ -14,12 +14,13 @@ from .config import DEFAULT_AUDIO_FILE, TONE_FREQUENCIES
 from .tone_detect import create_tone_generator
 
 
-def initialize_audio_playback(devices, audio_file=None):
+def initialize_audio_playback(devices, audio_file=None, loop=False):
     """Initialize 6-channel audio playback for link detection with tone generation.
 
     Args:
         devices: List of device configurations from configure_devices()
         audio_file: Optional path to audio file (defaults to DEFAULT_AUDIO_FILE)
+        loop: Whether to loop audio playback (defaults to False)
 
     Returns:
         ToggleableMultiChannelPlayback instance or None if initialization fails
@@ -56,7 +57,8 @@ def initialize_audio_playback(devices, audio_file=None):
         # Create toggleable playback instance with tone generators
         playback = ToggleableMultiChannelPlayback(
             audio_data, sample_rate, devices,
-            right_channel_callbacks=right_channel_callbacks
+            right_channel_callbacks=right_channel_callbacks,
+            loop=loop
         )
         playback.start()
         print("  ✓ Audio playback initialized with tone generators")

@@ -232,7 +232,7 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
         lock (threading.RLock): Reentrant lock for thread-safe state changes
     """
 
-    def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None):
+    def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None, loop=False):
         """Initialize toggleable playback with optional tone generators.
 
         Args:
@@ -241,6 +241,7 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
             devices (list): Device configurations
             right_channel_callbacks (dict, optional): Tone generators by statue.
                 Maps Statue enum to generator function that returns samples.
+            loop (bool, optional): Whether to loop audio playback. Defaults to False.
         """
         super().__init__(audio_data, sample_rate, devices)
         # Initialize all music channels as disabled
@@ -252,6 +253,8 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
         self.right_channel_callbacks = right_channel_callbacks or {}
         # Use reentrant lock to allow toggle->set method calls
         self.lock = threading.RLock()
+        # Whether to loop audio playback
+        self.loop = loop
 
     def _create_callback(self, channel_index):
         """Create a callback function with mute control for a specific channel."""
@@ -267,9 +270,14 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                 # Calculate remaining frames
                 remaining_frames = len(self.audio_data) - self.frame_index
                 if remaining_frames <= 0:
-                    outdata.fill(0)
-                    self.is_playing = False
-                    return
+                    if self.loop:
+                        # Reset frame index to loop
+                        self.frame_index = 0
+                        remaining_frames = len(self.audio_data)
+                    else:
+                        outdata.fill(0)
+                        self.is_playing = False
+                        return
 
                 # Get frames to play
                 frames_to_play = min(frames, remaining_frames)

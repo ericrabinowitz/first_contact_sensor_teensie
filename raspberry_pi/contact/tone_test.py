@@ -287,13 +287,16 @@ def main():
         print(f"  Created tone generator for {statue.value}: {freq}Hz")
 
     # Create dummy audio data (we only use tone generators)
-    dummy_audio = np.zeros((1000, 1))  # Short dummy audio
+    # Use 1 second of audio per channel for smooth looping
     sample_rate = devices[0]['sample_rate']
+    audio_duration_seconds = 1.0
+    dummy_audio = np.zeros((int(sample_rate * audio_duration_seconds), len(devices)))
 
-    # Create and start playback
+    # Create and start playback with looping enabled
     playback = ToggleableMultiChannelPlayback(
         dummy_audio, sample_rate, devices,
-        right_channel_callbacks=tone_generators
+        right_channel_callbacks=tone_generators,
+        loop=True  # Enable looping for continuous tone generation
     )
     playback.start()
 
