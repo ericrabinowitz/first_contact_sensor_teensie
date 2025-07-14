@@ -11,11 +11,12 @@ EROS and ELEKTRA statues, bypassing coordinator complexity.
 
 import time
 import unittest
+
+import fastgoertzel as G
 import numpy as np
 import sounddevice as sd
-import fastgoertzel as G
 
-from audio.devices import configure_devices, dynConfig, Statue
+from audio.devices import Statue, configure_devices, dynConfig
 from contact.audio_setup import initialize_audio_playback
 from contact.config import TONE_FREQUENCIES
 
@@ -232,7 +233,7 @@ class TestBasicTransmission(unittest.TestCase):
         duration_ms = (time.time() - start_time) * 1000
 
         if overflowed:
-            print(f"    WARNING: Audio overflow")
+            print("    WARNING: Audio overflow")
 
         print(f"    Audio read took {duration_ms:.1f}ms")
 

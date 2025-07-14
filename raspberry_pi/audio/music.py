@@ -291,7 +291,7 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                 stereo_data[:frames_to_play, 0] = channel_data  # Left channel
 
                 # Right channel: use callback if tone enabled and callback provided
-                if (self.tone_enabled[channel_index] and 
+                if (self.tone_enabled[channel_index] and
                     channel_index in self.right_channel_callbacks):
                     right_data = self.right_channel_callbacks[channel_index](frames)
                     stereo_data[:, 1] = right_data
