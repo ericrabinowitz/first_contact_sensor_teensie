@@ -55,6 +55,12 @@ tone-detect-demo: sync ## Run tone detection demo with multi-statue detection (s
 tone-detect-test: sync ## Run tone detection demo with 5-second timeout for testing
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py --timeout 2'"
 
+detect-test: sync ## Run detection-only demo with 5-second timeout for testing
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./detect_demo.py --timeout 5'"
+
+detect-demo: sync ## Run standalone tone detection demo (detection only, no generation)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./detect_demo.py'"
+
 signal-test: sync ## Run basic transmission unittest to verify tone generation and detection
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./test_basic_transmission.py'"
 
