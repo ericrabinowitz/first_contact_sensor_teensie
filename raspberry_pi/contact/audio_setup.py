@@ -5,13 +5,43 @@ playback with integrated tone generators for contact detection.
 """
 
 import os
+import threading
 
+import numpy as np
 import soundfile as sf
 
 from audio.music import ToggleableMultiChannelPlayback
 
 from .config import DEFAULT_AUDIO_FILE, TONE_FREQUENCIES
 from .tone_detect import create_tone_generator
+
+
+class DynamicToneGenerator:
+    """Dynamic tone generator with real-time frequency updates."""
+    
+    def __init__(self, initial_frequency: float, sample_rate: int):
+        # Store the working tone generator closure
+        self.base_generator = create_tone_generator(initial_frequency, sample_rate)
+        self.frequency = initial_frequency
+        self.sample_rate = sample_rate
+        self.lock = threading.Lock()
+    
+    def set_frequency(self, new_frequency: float):
+        """Update frequency by creating a new generator."""
+        with self.lock:
+            self.frequency = max(500, new_frequency)  # Enforce minimum
+            # Create new generator with updated frequency
+            self.base_generator = create_tone_generator(self.frequency, self.sample_rate)
+    
+    def get_frequency(self):
+        """Get current frequency."""
+        with self.lock:
+            return self.frequency
+    
+    def __call__(self, frames):
+        """Generate tone samples using the working generator."""
+        with self.lock:
+            return self.base_generator(frames)
 
 
 def initialize_audio_playback(devices, audio_file=None, loop=False):
@@ -23,7 +53,8 @@ def initialize_audio_playback(devices, audio_file=None, loop=False):
         loop: Whether to loop audio playback (defaults to False)
 
     Returns:
-        ToggleableMultiChannelPlayback instance or None if initialization fails
+        tuple: (ToggleableMultiChannelPlayback instance, dict of DynamicToneGenerators)
+               Returns (None, {}) if initialization fails
     """
     if audio_file is None:
         audio_file = DEFAULT_AUDIO_FILE
@@ -31,7 +62,7 @@ def initialize_audio_playback(devices, audio_file=None, loop=False):
     if not os.path.exists(audio_file):
         print(f"\nAudio file not found: {audio_file}")
         print("Continuing without audio playback")
-        return None
+        return None, {}
 
     try:
         print(f"\nLoading audio: {os.path.basename(audio_file)}")
@@ -44,15 +75,19 @@ def initialize_audio_playback(devices, audio_file=None, loop=False):
         print(f"  Duration: {len(audio_data) / sample_rate:.1f} seconds")
         print(f"  Channels: {audio_data.shape[1]}")
 
-        # Create tone generators for right channel of each device
+        # Create dynamic tone generators for right channel of each device
         right_channel_callbacks = {}
+        dynamic_tone_generators = {}
         for i, device in enumerate(devices):
             statue = device['statue']
             if statue in TONE_FREQUENCIES:
                 freq = TONE_FREQUENCIES[statue]
                 device_sample_rate = device.get('sample_rate', sample_rate)
-                right_channel_callbacks[i] = create_tone_generator(freq, device_sample_rate)
-                print(f"  Created tone generator for {statue.value}: {freq}Hz")
+                # Create dynamic tone generator
+                dynamic_generator = DynamicToneGenerator(freq, device_sample_rate)
+                right_channel_callbacks[i] = dynamic_generator
+                dynamic_tone_generators[statue] = dynamic_generator
+                print(f"  Created dynamic tone generator for {statue.value}: {freq}Hz")
 
         # Create toggleable playback instance with tone generators
         playback = ToggleableMultiChannelPlayback(
@@ -61,11 +96,11 @@ def initialize_audio_playback(devices, audio_file=None, loop=False):
             loop=loop
         )
         playback.start()
-        print("  ✓ Audio playback initialized with tone generators")
+        print("  ✓ Audio playback initialized with dynamic tone generators")
 
-        return playback
+        return playback, dynamic_tone_generators
 
     except Exception as e:
         print(f"Warning: Could not load audio file: {e}")
         print("Continuing without audio playback")
-        return None
+        return None, {}

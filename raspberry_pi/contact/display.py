@@ -66,15 +66,17 @@ class StatusDisplay:
         running (bool): Controls the display update loop
     """
 
-    def __init__(self, link_tracker: 'LinkStateTracker', devices: list[dict[str, Any]]) -> None:
+    def __init__(self, link_tracker: 'LinkStateTracker', devices: list[dict[str, Any]], freq_controller=None) -> None:
         """Initialize the status display.
 
         Args:
             link_tracker (LinkStateTracker): Connection state tracker
             devices (list): List of device configurations with statue info
+            freq_controller (FrequencyController, optional): Frequency controller for interactive mode
         """
         self.link_tracker = link_tracker
         self.devices = devices
+        self.freq_controller = freq_controller
         self.running = True
         # 2D metrics: {detector_statue: {target_statue: {'level': float, 'snr': float}}}
         self.detection_metrics = {}
@@ -198,7 +200,16 @@ class StatusDisplay:
         for d in self.devices:
             statue = d['statue']
             name = statue.value.upper()
-            freq = TONE_FREQUENCIES.get(statue, 0)
+            
+            # Use dynamic frequency if frequency controller is available
+            if self.freq_controller:
+                freq = self.freq_controller.get_current_frequency(statue)
+                # Mark selected statue with arrow
+                if statue == self.freq_controller.get_selected_statue():
+                    name = f"→{name}←"
+            else:
+                freq = TONE_FREQUENCIES.get(statue, 0)
+            
             # Each cell is centered in 9 chars
             header_line1 += f"  {name:^7}  "
             header_line2 += f"  {freq:^7.0f}  "
@@ -242,7 +253,10 @@ class StatusDisplay:
               f"┌─┐ WEAK (>{threshold*0.5:.2f})  "
               f"Plain text: NO SIGNAL (<{threshold*0.5:.2f})\r", flush=True)
 
-        print("\r\nPress Ctrl+C to stop\r", flush=True)
+        if self.freq_controller:
+            print("\r\nInteractive Controls: W/S=Navigate statues | A/D=Adjust frequency (±500Hz) | Q=Quit\r", flush=True)
+        else:
+            print("\r\nPress Ctrl+C to stop\r", flush=True)
         # Add some blank lines to ensure we overwrite any previous content
         print("\r\n" * 3, end='', flush=True)
 

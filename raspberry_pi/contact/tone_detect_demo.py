@@ -9,12 +9,15 @@ This script demonstrates the tone-based contact detection system,
 showing real-time connection status and audio playback control.
 """
 
+import select
 import sys
+import termios
 import threading
 import time
+import tty
 from typing import Any, Optional
 
-from audio.devices import configure_devices, dynConfig
+from audio.devices import Statue, configure_devices, dynConfig
 
 # Import from our contact module
 from contact import (
@@ -24,6 +27,79 @@ from contact import (
     detect_tone,
     initialize_audio_playback,
 )
+
+
+class FrequencyController:
+    """Manages dynamic frequency updates for tone generation and detection."""
+    
+    def __init__(self, devices, dynamic_tone_generators):
+        """Initialize frequency controller."""
+        self.devices = devices
+        self.dynamic_tone_generators = dynamic_tone_generators
+        self.selected_statue_index = 0
+        self.lock = threading.RLock()
+        
+        # Initialize current frequencies from tone generators
+        self.current_frequencies = {}
+        for statue, generator in dynamic_tone_generators.items():
+            self.current_frequencies[statue] = generator.get_frequency()
+    
+    def get_selected_statue(self):
+        """Get currently selected statue."""
+        with self.lock:
+            if 0 <= self.selected_statue_index < len(self.devices):
+                return self.devices[self.selected_statue_index]['statue']
+            return None
+    
+    def navigate_up(self):
+        """Move selection up to previous statue."""
+        with self.lock:
+            if self.selected_statue_index > 0:
+                self.selected_statue_index -= 1
+    
+    def navigate_down(self):
+        """Move selection down to next statue."""
+        with self.lock:
+            if self.selected_statue_index < len(self.devices) - 1:
+                self.selected_statue_index += 1
+    
+    def adjust_frequency(self, delta):
+        """Adjust frequency of selected statue by delta Hz."""
+        selected_statue = self.get_selected_statue()
+        if not selected_statue or selected_statue not in self.dynamic_tone_generators:
+            return
+            
+        with self.lock:
+            current_freq = self.current_frequencies[selected_statue]
+            new_freq = max(500, min(20000, current_freq + delta))  # Enforce 500-20000Hz range
+            
+            if new_freq != current_freq:
+                # Update tone generator for real-time frequency change
+                self.dynamic_tone_generators[selected_statue].set_frequency(new_freq)
+                self.current_frequencies[selected_statue] = new_freq
+                
+                # Update detection frequencies in dynConfig (affects detection threads)
+                dynConfig[selected_statue.value]["tone_freq"] = new_freq
+    
+    def get_current_frequency(self, statue):
+        """Get current frequency for a statue."""
+        with self.lock:
+            return self.current_frequencies.get(statue, 0)
+
+
+def handle_key_input(key, freq_controller):
+    """Handle keyboard input for frequency control."""
+    if key == 'q' or key == 'Q' or key == '\x1b':  # ESC key
+        return False  # Signal to exit
+    elif key == 'w' or key == 'W':  # Up (w key)
+        freq_controller.navigate_up()
+    elif key == 's' or key == 'S':  # Down (s key)
+        freq_controller.navigate_down()
+    elif key == 'a' or key == 'A':  # Left (a key)
+        freq_controller.adjust_frequency(-500)
+    elif key == 'd' or key == 'D':  # Right (d key)
+        freq_controller.adjust_frequency(+500)
+    return True  # Continue running
 
 
 def play_and_detect_tones(devices: list[dict[str, Any]], link_tracker: LinkStateTracker,
@@ -130,8 +206,8 @@ def main() -> int:
             if freq > 0:
                 print(f"  {statue.value.upper()}: {freq}Hz")
 
-    # Initialize audio playback
-    audio_playback = initialize_audio_playback(devices)
+    # Initialize audio playback with dynamic tone generators
+    audio_playback, dynamic_tone_generators = initialize_audio_playback(devices)
 
     # Initialize link tracker with audio playback in quiet mode
     link_tracker = LinkStateTracker(audio_playback, quiet=True)
@@ -139,25 +215,46 @@ def main() -> int:
     # Create shutdown event for coordinating thread shutdown
     shutdown_event = threading.Event()
 
-    # Create status display
-    status_display = StatusDisplay(link_tracker, devices)
+    # Create frequency controller
+    freq_controller = FrequencyController(devices, dynamic_tone_generators)
+    
+    # Create status display with frequency controller
+    status_display = StatusDisplay(link_tracker, devices, freq_controller)
 
     # Start display thread
     display_thread = threading.Thread(target=status_display.run, daemon=True)
     display_thread.start()
 
     detection_threads = play_and_detect_tones(devices, link_tracker, status_display, shutdown_event)
-
+    
+    # Set up terminal for non-blocking input
+    old_settings = termios.tcgetattr(sys.stdin)
     try:
+        tty.setraw(sys.stdin.fileno())
+        
+        print("\n=== Interactive Controls ===")
+        print("W/S: Navigate statues | A/D: Adjust frequency (-/+500Hz) | Q/ESC: Quit")
+        print("Currently controlling frequencies in real-time...")
+        
         start_time = time.time()
         while True:
-            time.sleep(1)
+            # Check for keyboard input (non-blocking)
+            if select.select([sys.stdin], [], [], 0.1)[0]:
+                key = sys.stdin.read(1)
+                if not handle_key_input(key, freq_controller):
+                    print("\nExiting due to user input...")
+                    break
+            
             # Check timeout
             if args.timeout > 0 and (time.time() - start_time) >= args.timeout:
                 print("\nTimeout reached, shutting down...")
                 break
+                
     except KeyboardInterrupt:
         print("\nInterrupted by user...")
+    finally:
+        # Restore terminal settings
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
     # Cleanup
     status_display.stop()
