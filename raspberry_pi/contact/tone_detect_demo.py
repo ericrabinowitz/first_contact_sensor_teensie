@@ -31,68 +31,68 @@ from contact import (
 
 class FrequencyController:
     """Manages dynamic frequency updates for tone generation and detection."""
-    
+
     def __init__(self, devices, dynamic_tone_generators):
         """Initialize frequency controller."""
         self.devices = devices
         self.dynamic_tone_generators = dynamic_tone_generators
         self.selected_statue_index = 0
         self.lock = threading.RLock()
-        
+
         # Initialize current frequencies from tone generators
         self.current_frequencies = {}
         self.muted_statues = set()  # Track muted statues
         for statue, generator in dynamic_tone_generators.items():
             self.current_frequencies[statue] = generator.get_frequency()
-    
+
     def get_selected_statue(self):
         """Get currently selected statue."""
         with self.lock:
             if 0 <= self.selected_statue_index < len(self.devices):
                 return self.devices[self.selected_statue_index]['statue']
             return None
-    
+
     def navigate_up(self):
         """Move selection up to previous statue."""
         with self.lock:
             if self.selected_statue_index > 0:
                 self.selected_statue_index -= 1
-    
+
     def navigate_down(self):
         """Move selection down to next statue."""
         with self.lock:
             if self.selected_statue_index < len(self.devices) - 1:
                 self.selected_statue_index += 1
-    
+
     def adjust_frequency(self, delta):
         """Adjust frequency of selected statue by delta Hz."""
         selected_statue = self.get_selected_statue()
         if not selected_statue or selected_statue not in self.dynamic_tone_generators:
             return
-            
+
         with self.lock:
             current_freq = self.current_frequencies[selected_statue]
             new_freq = max(500, min(20000, current_freq + delta))  # Enforce 500-20000Hz range
-            
+
             if new_freq != current_freq:
                 # Update tone generator for real-time frequency change
                 self.dynamic_tone_generators[selected_statue].set_frequency(new_freq)
                 self.current_frequencies[selected_statue] = new_freq
-                
+
                 # Update detection frequencies in dynConfig (affects detection threads)
                 dynConfig[selected_statue.value]["tone_freq"] = new_freq
-    
+
     def get_current_frequency(self, statue):
         """Get current frequency for a statue."""
         with self.lock:
             return self.current_frequencies.get(statue, 0)
-    
+
     def toggle_mute(self):
         """Toggle mute state for selected statue."""
         selected_statue = self.get_selected_statue()
         if not selected_statue or selected_statue not in self.dynamic_tone_generators:
             return
-            
+
         with self.lock:
             if selected_statue in self.muted_statues:
                 # Unmute: restore frequency
@@ -104,7 +104,7 @@ class FrequencyController:
                 self.muted_statues.add(selected_statue)
                 self.dynamic_tone_generators[selected_statue].set_frequency(0)
                 dynConfig[selected_statue.value]["tone_freq"] = 0
-    
+
     def is_muted(self, statue):
         """Check if a statue is muted."""
         with self.lock:
@@ -243,7 +243,7 @@ def main() -> int:
 
     # Create frequency controller
     freq_controller = FrequencyController(devices, dynamic_tone_generators)
-    
+
     # Create status display with frequency controller
     status_display = StatusDisplay(link_tracker, devices, freq_controller)
 
@@ -252,16 +252,16 @@ def main() -> int:
     display_thread.start()
 
     detection_threads = play_and_detect_tones(devices, link_tracker, status_display, shutdown_event)
-    
+
     # Set up terminal for non-blocking input
     old_settings = termios.tcgetattr(sys.stdin)
     try:
         tty.setraw(sys.stdin.fileno())
-        
+
         print("\n=== Interactive Controls ===")
         print("A/D: Navigate statues | W/S: Adjust frequency (+/-500Hz) | Space: Mute/Unmute | Q/ESC: Quit")
         print("Currently controlling frequencies in real-time...")
-        
+
         start_time = time.time()
         while True:
             # Check for keyboard input (non-blocking)
@@ -270,12 +270,12 @@ def main() -> int:
                 if not handle_key_input(key, freq_controller):
                     print("\nExiting due to user input...")
                     break
-            
+
             # Check timeout
             if args.timeout > 0 and (time.time() - start_time) >= args.timeout:
                 print("\nTimeout reached, shutting down...")
                 break
-                
+
     except KeyboardInterrupt:
         print("\nInterrupted by user...")
     finally:

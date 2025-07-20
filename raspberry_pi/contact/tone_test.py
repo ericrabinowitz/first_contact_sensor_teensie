@@ -21,20 +21,12 @@ import numpy as np
 
 from audio.devices import Statue, configure_devices
 from audio.music import ToggleableMultiChannelPlayback
-
-# Default tone frequencies (copied from contact.config to avoid import chain)
-TONE_FREQUENCIES = {
-    Statue.EROS: 3000,
-    Statue.ELEKTRA: 17000,
-    Statue.SOPHIA: 9500,
-    Statue.ULTIMO: 13500,
-    Statue.ARIEL: 19500,
-}
+from config import TONE_FREQUENCIES
 
 
 def create_tone_generator(frequency: float, sample_rate: int):
     """Create a tone generator closure for the given frequency.
-    
+
     This is the working implementation from tone_detect.py, copied here
     to avoid import dependencies.
     """

@@ -21,15 +21,7 @@ import numpy as np
 import sounddevice as sd
 
 from audio.devices import Statue, configure_devices, dynConfig
-
-# Default tone frequencies (copied to avoid import chain)
-TONE_FREQUENCIES = {
-    Statue.EROS: 3000,
-    Statue.ELEKTRA: 17000,
-    Statue.SOPHIA: 9500,
-    Statue.ULTIMO: 13500,
-    Statue.ARIEL: 19500,
-}
+from config import TONE_FREQUENCIES
 
 
 class SimpleDetectionTracker:
@@ -201,8 +193,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description='Missing Link Tone Detection Demo (Detection Only)')
     parser.add_argument('--timeout', type=int, default=0,
                         help='Auto-exit after N seconds (0 = run forever)')
-    parser.add_argument('--interval', type=int, default=0.5,
-                        help='Table update interval in seconds (default: 0.5)')
+    parser.add_argument('--interval', type=int, default=0.1,
+                        help='Table update interval in seconds (default: 0.1)')
     parser.add_argument('--quiet', action='store_true',
                         help='Minimal output')
     args = parser.parse_args()
