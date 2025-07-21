@@ -1,417 +1,241 @@
-# Statue Audio Routing with ADG2188 - Complete Guide
+# Statue Audio Routing Guide (Revised July 2025)
 
-## Project Overview
+This guide shows how to use the **EVAL‑ADG2188EBZ** 8 × 8 cross‑point switch with a Raspberry Pi to route statue transmit / receive lines cleanly and silently.
 
-Multiple interactive statues at Burning Man need to communicate via audio signals. Each statue can transmit and receive audio tones for interaction. The system uses USB audio adapters (CM108-based) connected to Raspberry Pis.
+> **Major fixes in this revision**\
+> • Corrected device to **8 × 8** (not 8 × 12) and **R****ON**** ≈ 30 Ω**\
+> • Uses *row‑byte + LDSW* programming (the official method)\
+> • Pin labels match the evaluation board (AVDD, AVSS, VL, AGND)\
+> • Added AC‑coupling network and bias bleeders\
+> • Troubleshooting refers to I²C (not SPI)
 
-## Problem Description
+---
 
-### Initial Issue
-When connecting statue transmitters and receivers:
-- When B's transmitter is disconnected: B can detect A's signal
-- When B's transmitter is connected (even when muted): Signal detection fails
-- Adding a 10kΩ resistor to B's transmitter helps B detect A, but hurts A's ability to hear B
+## Problem Context
 
-### Root Cause
-The CM108 USB audio adapters have mismatched DC bias levels:
-- **TX Output**: ~0-1V (near ground)
-- **RX Input**: Biased at ~4.4V (for single-supply operation)
+Multiple interactive statues need bidirectional audio communication. Direct connection of USB audio adapters (CM108) causes signal loading due to DC bias mismatch:
+- TX outputs: ~0V DC bias
+- RX inputs: ~4.4V DC bias
+- Direct connection causes current flow that attenuates signals
 
-When TX and RX are connected, current flows from the high-bias RX (4.4V) to the low TX (~0V), creating a "loading" effect that attenuates signals.
+The ADG2188 provides isolated switching to prevent loading when statues aren't actively communicating.
 
-### Additional Complications
-- Shared ground between statues creates unwanted signal paths
-- AC coupling with bias resistors to ground still allows signal transfer between statues
-- Need true isolation between statues when not actively communicating
+---
 
-## Solution: ADG2188 Crosspoint Switch
+## 1 Board power & logic
 
-The ADG2188 is an 8×12 analog crosspoint switch matrix that provides:
-- True isolation when switches are open (>1GΩ)
-- Low resistance when closed (~300-500Ω at 5V)
-- Multiple simultaneous connections possible
-- SPI control from Raspberry Pi
+| ADG2188 pin       | Connect to                             | Notes                   |
+| ----------------- | -------------------------------------- | ----------------------- |
+| **AVDD** (J4‑1)   | Pi 5 V                                 | 4.5–5.5 V single‑supply |
+| **VL** (J4‑3)     | Pi 3 V3                                | Logic‑level reference   |
+| **AGND** (J4‑2/4) | Pi GND                                 | Common ground plane     |
+| **AVSS**          | **Short to AGND** ( jumper LK4 → *B* ) | Single‑supply mode      |
 
-## Hardware Setup
+*Leave the mini‑USB socket empty; the Pi owns the I²C bus.*
 
-### Components Needed
-- EVAL-ADG2188EB evaluation board
-- 10µF electrolytic capacitors (one per audio connection)
-- 5V power supply (or regulator from 12V)
-- Jumper wires for Pi connection
-- Audio cables with appropriate connectors
+---
 
-### Power Supply Wiring
-```
-Power Source (choose one):
-- 5V from USB
-- 5V from Pi pins 2 or 4  
-- 12V → 7805 regulator → 5V
+## 2 I²C wiring
 
-EVAL-ADG2188EB Power Connections:
-VDD → +5V
-VSS → GND (ground)
-VL  → 3.3V (from Pi pin 1)
-GND → Common Ground (Pi pin 6)
-```
+| Pi pin             | EVAL‑ADG2188EBZ  | Default pull‑ups      |
+| ------------------ | ---------------- | --------------------- |
+| SDA (Pin 3)        | **SDA** (J2‑4)   | 4.7 k Ω → VL on board |
+| SCL (Pin 5)        | **SCL** (J2‑5)   | ―                     |
+| GPIO 22 (optional) | **LDSW** (J2‑2)  | Latch new settings    |
+| GPIO 27 (optional) | **RESET** (J2‑3) | Opens all switches    |
 
-### Raspberry Pi I2C Connections
-```
-Raspberry Pi          EVAL-ADG2188EB
-Physical Pin          Signal Name
-Pin 3 (GPIO 2)    →   SDA (I2C Data)
-Pin 5 (GPIO 3)    →   SCL (I2C Clock)
-Pin 6             →   GND (Digital Ground)
-Pin 1             →   VL (3.3V Logic Supply)
+### Address jumpers
 
-Note: May need pull-up resistors (4.7kΩ) on SDA and SCL to 3.3V
-```
+JP1 links **A2 A1 A0** → `000` by default ⇒ **address 0x70**. Change links for multiple boards.
 
-### Audio Signal Connections
-
-**Important**: All audio connections need AC coupling capacitors!
+### Wiring Diagram
 
 ```
-Inputs (Y pins):
-Statue A TX → [10µF cap] → Y0
-Statue B TX → [10µF cap] → Y1
-Statue C TX → [10µF cap] → Y2
-(etc...)
-
-Outputs (X pins):
-X0 → [10µF cap] → Statue A RX
-X1 → [10µF cap] → Statue B RX
-X2 → [10µF cap] → Statue C RX
-(etc...)
-
-Capacitor Polarity (for electrolytic):
-- Negative (-) side toward TX (lower voltage ~0V)
-- Positive (+) side toward switch/RX (higher voltage)
+         EVAL-ADG2188EBZ
+    ┌─────────────────────────┐
+    │  Y0 ←─[AC couple]← A TX │
+    │  Y1 ←─[AC couple]← B TX │
+    │  Y2 ←─[AC couple]← C TX │
+    │  Y3 ←─[AC couple]← D TX │
+    │                         │
+    │  X0 →─[AC couple]→ A RX │
+    │  X1 →─[AC couple]→ B RX │
+    │  X2 →─[AC couple]→ C RX │
+    │  X3 →─[AC couple]→ D RX │
+    │                         │
+    │  I²C: SDA,SCL ← Pi      │
+    │  PWR: 5V,3V3,GND ← Pi   │
+    └─────────────────────────┘
 ```
 
-## Software Control
+---
 
-### Enable I2C on Raspberry Pi
+## 3 Audio coupling network (per statue line)
 
-First, enable I2C:
-```bash
-sudo raspi-config
-# Navigate to Interface Options → I2C → Enable
-# Or manually:
-sudo modprobe i2c-dev
-sudo modprobe i2c-bcm2835
+```
+Codec OUT ── 100 Ω ─┬─ 1 µF ─► Xn
+                   │
+                   └─ 1 MΩ ─► GND
 ```
 
-### I2C Address Configuration
+- 1 µF film (or 4.7 µF bipolar electrolytic) blocks DC.
+- 1 MΩ bleed stops floating pickup without loading the codec (< 0.1 dB).
+- 100 Ω series resistor protects the driver and damps cable capacitance.
 
-The ADG2188 I2C address is set by pins A0, A1, and A2:
+Repeat the same network from Yn back to the opposite statue.
 
-| A2 | A1 | A0 | I2C Address |
-|----|----|----|-------------|
-| 0  | 0  | 0  | 0x70        |
-| 0  | 0  | 1  | 0x71        |
-| 0  | 1  | 0  | 0x72        |
-| 0  | 1  | 1  | 0x73        |
-| 1  | 0  | 0  | 0x74        |
-| 1  | 0  | 1  | 0x75        |
-| 1  | 1  | 0  | 0x76        |
-| 1  | 1  | 1  | 0x77        |
+### Capacitor Selection
+- **Preferred**: 1µF film or ceramic (non-polarized)
+- **Alternative**: 4.7µF bipolar electrolytic
+- **If using polarized**: Two 10µF back-to-back
+- **Avoid**: Single polarized electrolytic (DC bias varies)
 
-Check your EVAL board jumpers/switches to determine address.
+---
 
-### Basic I2C Control
+## 4 Programming the matrix (row‑byte + LDSW)
+
+Row registers live at **0x74 … 0x7B** (Y0…Y7). Bits 0‑7 represent X0…X7.
 
 ```python
-import smbus
+import smbus2, time
+bus  = smbus2.SMBus(1)   # Pi I²C‑1
+addr = 0x70              # JP1 = 000
+ROW0 = 0x74              # Y0
+LDSW = 0x72
+
+# close X0‑Y0
+bus.write_byte_data(addr, ROW0, 0b00000001)
+# optional: preload other rows here …
+
+bus.write_byte_data(addr, LDSW, 0x01)   # latch → all selected switches on
+```
+
+*Full update latency* = 8 bytes + LDSW ≈ 200 µs @ 400 kHz I²C; switch tON = 170 ns.
+
+### High-Level Control Class
+
+```python
+import smbus2
 import time
 
-class ADG2188Controller:
-    def __init__(self, i2c_address=0x70):
-        """
-        Initialize ADG2188 controller
-        
-        Args:
-            i2c_address: 7-bit I2C address (0x70-0x77 based on A0-A2 pins)
-        """
-        self.bus = smbus.SMBus(1)  # I2C bus 1 on Raspberry Pi
-        self.address = i2c_address
-        
-        # Reset and clear all switches on startup
-        self.reset()
-        self.clear_all()
-    
-    def reset(self):
-        """Software reset of ADG2188"""
-        # Send reset command (if available)
-        # Check datasheet for specific reset procedure
-        time.sleep(0.01)
-    
-    def write_switch(self, y_input, x_output, enable):
-        """
-        Control a single crosspoint
-        
-        Args:
-            y_input: 0-7 (input channel)
-            x_output: 0-11 (output channel)
-            enable: True to connect, False to disconnect
-        
-        The ADG2188 uses a 16-bit data word:
-        [15:12] = Don't care
-        [11:8]  = Y address (0-7)
-        [7:4]   = X address (0-11)
-        [3:0]   = Data (0x01=on, 0x00=off)
-        """
-        # Create 16-bit command
-        data = 1 if enable else 0
-        command = (y_input << 8) | (x_output << 4) | data
-        
-        # Split into two bytes for I2C transmission
-        msb = (command >> 8) & 0xFF
-        lsb = command & 0xFF
-        
-        # Write to device
-        self.bus.write_i2c_block_data(self.address, msb, [lsb])
-        
-        # Small delay for switch settling
-        time.sleep(0.001)
-    
-    def set_switch(self, y_input, x_output, enable):
-        """Alias for write_switch for compatibility"""
-        self.write_switch(y_input, x_output, enable)
-    
+class StatueRouter:
+    def __init__(self, bus=1, addr=0x70):
+        self.bus = smbus2.SMBus(bus)
+        self.addr = addr
+        self.ROW_BASE = 0x74
+        self.LDSW = 0x72
+        self.rows = [0] * 8  # shadow registers
+
+    def connect(self, y_in, x_out):
+        """Connect Yn to Xm"""
+        self.rows[y_in] |= (1 << x_out)
+        self._update()
+
+    def disconnect(self, y_in, x_out):
+        """Disconnect Yn from Xm"""
+        self.rows[y_in] &= ~(1 << x_out)
+        self._update()
+
     def clear_all(self):
-        """Disconnect all switches"""
-        for y in range(8):
-            for x in range(12):
-                self.write_switch(y, x, False)
-        print("All switches cleared")
-    
-    def read_status(self):
-        """Read back switch status (if supported by your board)"""
-        try:
-            # Implementation depends on specific board
-            # Some versions support readback
-            data = self.bus.read_i2c_block_data(self.address, 0, 2)
-            return data
-        except:
-            return None
-    
-    def cleanup(self):
-        """Clean up I2C bus"""
-        self.bus.close()
+        """Open all switches"""
+        self.rows = [0] * 8
+        self._update()
+
+    def _update(self):
+        """Write all rows then latch"""
+        for y, data in enumerate(self.rows):
+            self.bus.write_byte_data(self.addr, self.ROW_BASE + y, data)
+        self.bus.write_byte_data(self.addr, self.LDSW, 0x01)
 ```
 
-### High-Level Statue Control
+### Specific Statue Use Cases
 
 ```python
-class StatueAudioRouter:
-    def __init__(self):
-        self.switch = ADG2188Controller()
-        self.num_statues = 4  # Adjust based on your setup
-    
-    def enable_transmission(self, from_statue, to_statue):
-        """Enable audio from one statue to another"""
-        if from_statue == to_statue:
-            return  # Don't create feedback loops
-        
-        # Map statue IDs to switch pins
-        y_pin = from_statue  # TX connects to Y inputs
-        x_pin = to_statue    # RX connects to X outputs
-        
-        self.switch.set_switch(y_pin, x_pin, True)
-        print(f"Statue {from_statue} → Statue {to_statue}: ON")
-    
-    def disable_transmission(self, from_statue, to_statue):
-        """Disable audio from one statue to another"""
-        y_pin = from_statue
-        x_pin = to_statue
-        self.switch.set_switch(y_pin, x_pin, False)
-        print(f"Statue {from_statue} → Statue {to_statue}: OFF")
-    
-    def broadcast_mode(self, sender_id):
-        """One statue broadcasts to all others"""
-        # First clear all connections
-        self.switch.clear_all()
-        
-        # Connect sender to all other statues
-        for receiver_id in range(self.num_statues):
-            if receiver_id != sender_id:
-                self.enable_transmission(sender_id, receiver_id)
-    
-    def peer_to_peer(self, statue_a, statue_b):
-        """Enable bidirectional communication between two statues"""
-        # Clear all first
-        self.switch.clear_all()
-        
-        # Enable both directions
-        self.enable_transmission(statue_a, statue_b)
-        self.enable_transmission(statue_b, statue_a)
-    
-    def party_mode(self):
-        """Everyone can hear everyone"""
-        for sender in range(self.num_statues):
-            for receiver in range(self.num_statues):
-                if sender != receiver:
-                    self.enable_transmission(sender, receiver)
-    
-    def silence_all(self):
-        """Disconnect all audio paths"""
-        self.switch.clear_all()
-        print("All audio paths disconnected")
+# Initialize router
+router = StatueRouter()
+
+# Broadcast mode: Statue A to all others
+router.connect(0, 1)  # A→B
+router.connect(0, 2)  # A→C
+router.connect(0, 3)  # A→D
+
+# Peer-to-peer: A↔B only
+router.clear_all()
+router.connect(0, 1)  # A→B
+router.connect(1, 0)  # B→A
+
+# Party mode: Everyone to everyone
+for tx in range(4):
+    for rx in range(4):
+        if tx != rx:  # No self-feedback
+            router.connect(tx, rx)
 ```
 
-## Usage Examples
+---
 
-```python
-# Initialize the router
-router = StatueAudioRouter()
+## 5 LED bench test
 
-# Example 1: Statue 0 broadcasts to all
-router.broadcast_mode(0)
-time.sleep(5)
+1. **Row X0** → LED + 330 Ω → 3 V3.
+2. **Col Y0** → LED cathode → GND.
+3. Run the Python snippet above.
 
-# Example 2: Private conversation between statues 1 and 2
-router.peer_to_peer(1, 2)
-time.sleep(5)
+- LED lights when X0‑Y0 closed, off otherwise – confirms power, I²C, row/col mapping.
 
-# Example 3: Everyone talks to everyone
-router.party_mode()
-time.sleep(5)
+---
 
-# Example 4: Silence
-router.silence_all()
+## 6 Key electrical specs (single‑supply 5 V)
 
-# Cleanup when done
-router.switch.cleanup()
-```
+| Parameter     | Typical         | Max  | Source       |
+| ------------- | --------------- | ---- | ------------ |
+| RON           | 30 Ω            | 35 Ω | DS Table 4   |
+| tON/tOFF      | 170 ns / 210 ns | ―    | DS Fig. 18   |
+| Off‑isolation | –69 dB @ 5 MHz  | ―    | DS Fig. 25   |
+| THD + N       | 0.04 % @ 1 Vpp  | ―    | DS Table 6   |
+| Signal swing  | 0 – AVDD        | ―    | Absolute‑max |
 
-## Testing Procedure
-
-### 1. Basic Connectivity Test
-```python
-def test_basic_connectivity():
-    switch = ADG2188Controller()
-    
-    print("Testing each path individually...")
-    for y in range(2):  # Test first 2 inputs
-        for x in range(2):  # Test first 2 outputs
-            if y != x:  # Avoid feedback
-                print(f"\nTesting Y{y} → X{x}")
-                switch.set_switch(y, x, True)
-                input("Check signal path. Press Enter to continue...")
-                switch.set_switch(y, x, False)
-    
-    switch.cleanup()
-
-# Test I2C communication first
-import smbus
-import time
-
-def test_i2c_connection(address=0x70):
-    try:
-        bus = smbus.SMBus(1)
-        # Try to read from device
-        bus.read_byte(address)
-        print(f"Found ADG2188 at address 0x{address:02X}")
-        bus.close()
-        return True
-    except:
-        print(f"No device found at address 0x{address:02X}")
-        return False
-
-# Scan for device
-print("Scanning for ADG2188...")
-for addr in range(0x70, 0x78):
-    if test_i2c_connection(addr):
-        break
-```
-
-### 2. Signal Quality Test
-1. Generate 1kHz test tone on Statue A
-2. Enable path from A to B
-3. Measure signal amplitude at B
-4. Should see minimal attenuation (<10%)
-
-### 3. Isolation Test
-1. Generate different tones on each statue
-2. Enable only specific paths
-3. Verify only enabled paths pass signal
-4. Disabled paths should show >60dB isolation
-
-## Troubleshooting
-
-### No Signal Transfer
-- Check power supplies (5V on VDD, 3.3V on VL)
-- Verify SPI connections with multimeter
-- Check capacitor polarity
-- Test with slower SPI clock (increase delays)
-
-### Signal Distortion
-- Ensure AC coupling capacitors are properly connected
-- Check for proper grounding
-- Verify signal levels are within 0-5V range
-
-### Cross-talk Between Channels
-- Verify all unused switches are OFF
-- Check for ground loops
-- Use shielded audio cables for long runs
-
-### I2C Communication Issues
-- Enable I2C in raspi-config
-- Check pull-up resistors (4.7kΩ) on SDA and SCL
-- Verify device address with i2cdetect
-- Try slower I2C clock speed:
-  ```python
-  # For older/problematic devices
-  bus = smbus.SMBus(1, force=True)
-  bus.set_i2c_bus_speed(10000)  # 10kHz instead of 100kHz
-  ```
-- Check A0-A2 address pins on EVAL board
-
-## Design Considerations
+DS = ADG2188 datasheet Rev. C.
 
 ### Signal Levels
-- Input signals: 0-2V peak-to-peak typical
-- Centered around different DC levels (TX: ~0V, RX: ~4V)
-- AC coupling removes DC bias differences
-- 5V supply provides adequate headroom
+- CM108 output: 0-2Vpp typical (consumer line level)
+- ADG2188 handles: 0V to AVDD (5V)
+- Headroom: >3V for clean switching
+- If clipping occurs: Reduce codec output level in software
 
-### Impedances
-- CM108 output impedance: 50-200Ω
-- CM108 input impedance: 10-20kΩ  
-- ADG2188 on-resistance at 5V: ~500Ω
-- Total path resistance: <1kΩ (acceptable for high-Z inputs)
+---
 
-### Burning Man Environmental Factors
-- Dust protection: Seal evaluation board in enclosure
-- Temperature: ADG2188 rated -40°C to +85°C
-- Power: Use regulated supplies, add filtering
-- Connectors: Use locking, weatherproof audio connectors
+## 7 Quick Functional Test
 
-## Alternative Approaches Considered
+1. Power up with no audio connected
+2. Run `i2cdetect -y 1` - verify 0x70 appears
+3. Connect scope/meter to X0
+4. Connect 1kHz test tone to Y0
+5. Run: `router.connect(0, 0)`
+6. Verify signal passes with <1dB loss
+7. Run: `router.disconnect(0, 0)`
+8. Verify >60dB isolation
 
-1. **Direct connection with series resistor**: Too much signal loss
-2. **AC coupling only**: Ground paths still caused cross-talk
-3. **Separate USB adapters**: Didn't solve voltage mismatch
-4. **Op-amp buffers**: More complex than switch matrix
-5. **Transformer isolation**: More expensive, bulkier
+---
 
-The ADG2188 provides the cleanest solution with true isolation and flexible routing capabilities.
+## 8 Troubleshooting
 
-## Parts List
+| Symptom                        | Check / fix                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| `i2cdetect` shows **no 0x70**  | Wrong power pins, SDA/SCL swapped, JP1 address ≠ expected                          |
+| All switches stay open         | Send `0x72 = 0x01` latch byte; ensure LDSW pin isn't held low                      |
+| Pops or stray 10 kHz when idle | Add / verify 1 MΩ bleeder & 1 µF cap; confirm return‑ground path                   |
+| High loss (>3 dB)              | Codec driving <5 kΩ due to stray shunts; series resistor too big; measure with DSO |
+| Bus errors                     | Slow I²C to 50 kHz; use twisted pair SCL/SDA                                       |
 
-| Component | Quantity | Notes |
-|-----------|----------|-------|
-| EVAL-ADG2188EB | 1 | Evaluation board with ADG2188 |
-| 10µF capacitor | 8-16 | Electrolytic, 16V minimum |
-| Jumper wires | ~10 | Female-female for Pi connection |
-| 5V regulator | 1 | 7805 or switching regulator |
-| Project box | 1 | Dust-proof enclosure |
-| Audio connectors | As needed | 3.5mm or XLR |
+*(Troubleshooting now references I²C only—SPI wording removed.)*
 
-## References
+---
 
-- ADG2188 Datasheet: 8×12 Analog Crosspoint Switch with I2C Control
-- CM108 USB Audio: Single-supply USB audio codec
-- Raspberry Pi I2C: Using GPIO 2 (SDA) and GPIO 3 (SCL)
-- I2C Protocol: 7-bit addressing, up to 400kHz clock speed
+## 9 Environmental & enclosure notes
+
+- Chip is rated –40 °C … +85 °C, but cheap CM108 USB dongles are **0 – 70 °C**; keep them shaded.
+- Use conformal coating or Gore vents to keep Playa dust out while letting heat escape.
+- Secure cables with strain‑relief; RON is low but static can still punch through if grounds detach.
+
+---
+
+© 2025 BM Electronics Art Project.  Based on Analog Devices UG‑915 and ADG2188 Rev. C datasheet.
