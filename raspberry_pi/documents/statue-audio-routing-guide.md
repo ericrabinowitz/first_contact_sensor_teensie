@@ -55,15 +55,16 @@ VL  → 3.3V (from Pi pin 1)
 GND → Common Ground (Pi pin 6)
 ```
 
-### Raspberry Pi SPI Connections
+### Raspberry Pi I2C Connections
 ```
 Raspberry Pi          EVAL-ADG2188EB
 Physical Pin          Signal Name
-Pin 19 (GPIO 10)  →   DIN (Data In)
-Pin 23 (GPIO 11)  →   SCLK (Serial Clock)
-Pin 24 (GPIO 8)   →   CS (Chip Select)
+Pin 3 (GPIO 2)    →   SDA (I2C Data)
+Pin 5 (GPIO 3)    →   SCL (I2C Clock)
 Pin 6             →   GND (Digital Ground)
 Pin 1             →   VL (3.3V Logic Supply)
+
+Note: May need pull-up resistors (4.7kΩ) on SDA and SCL to 3.3V
 ```
 
 ### Audio Signal Connections
@@ -90,55 +91,62 @@ Capacitor Polarity (for electrolytic):
 
 ## Software Control
 
-### Basic SPI Control (No Libraries)
+### Enable I2C on Raspberry Pi
+
+First, enable I2C:
+```bash
+sudo raspi-config
+# Navigate to Interface Options → I2C → Enable
+# Or manually:
+sudo modprobe i2c-dev
+sudo modprobe i2c-bcm2835
+```
+
+### I2C Address Configuration
+
+The ADG2188 I2C address is set by pins A0, A1, and A2:
+
+| A2 | A1 | A0 | I2C Address |
+|----|----|----|-------------|
+| 0  | 0  | 0  | 0x70        |
+| 0  | 0  | 1  | 0x71        |
+| 0  | 1  | 0  | 0x72        |
+| 0  | 1  | 1  | 0x73        |
+| 1  | 0  | 0  | 0x74        |
+| 1  | 0  | 1  | 0x75        |
+| 1  | 1  | 0  | 0x76        |
+| 1  | 1  | 1  | 0x77        |
+
+Check your EVAL board jumpers/switches to determine address.
+
+### Basic I2C Control
 
 ```python
-import RPi.GPIO as GPIO
+import smbus
 import time
 
-# Pin definitions
-DIN = 10   # GPIO 10 (Physical Pin 19)
-SCLK = 11  # GPIO 11 (Physical Pin 23)
-CS = 8     # GPIO 8 (Physical Pin 24)
-
 class ADG2188Controller:
-    def __init__(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(DIN, GPIO.OUT)
-        GPIO.setup(SCLK, GPIO.OUT)
-        GPIO.setup(CS, GPIO.OUT)
+    def __init__(self, i2c_address=0x70):
+        """
+        Initialize ADG2188 controller
         
-        # Initial states
-        GPIO.output(CS, GPIO.HIGH)
-        GPIO.output(SCLK, GPIO.LOW)
+        Args:
+            i2c_address: 7-bit I2C address (0x70-0x77 based on A0-A2 pins)
+        """
+        self.bus = smbus.SMBus(1)  # I2C bus 1 on Raspberry Pi
+        self.address = i2c_address
         
-        # Clear all switches on startup
+        # Reset and clear all switches on startup
+        self.reset()
         self.clear_all()
     
-    def write_bit(self, bit):
-        """Write a single bit via SPI"""
-        GPIO.output(DIN, bit)
-        GPIO.output(SCLK, GPIO.HIGH)
-        time.sleep(0.000001)  # 1µs
-        GPIO.output(SCLK, GPIO.LOW)
-        time.sleep(0.000001)
+    def reset(self):
+        """Software reset of ADG2188"""
+        # Send reset command (if available)
+        # Check datasheet for specific reset procedure
+        time.sleep(0.01)
     
-    def send_command(self, command):
-        """Send 16-bit command to ADG2188"""
-        # CS low to start transmission
-        GPIO.output(CS, GPIO.LOW)
-        time.sleep(0.000001)
-        
-        # Send 16 bits, MSB first
-        for i in range(15, -1, -1):
-            bit = (command >> i) & 1
-            self.write_bit(bit)
-        
-        # CS high to latch command
-        GPIO.output(CS, GPIO.HIGH)
-        time.sleep(0.000001)
-    
-    def set_switch(self, y_input, x_output, enable):
+    def write_switch(self, y_input, x_output, enable):
         """
         Control a single crosspoint
         
@@ -146,25 +154,51 @@ class ADG2188Controller:
             y_input: 0-7 (input channel)
             x_output: 0-11 (output channel)
             enable: True to connect, False to disconnect
-            
-        Command format (16 bits):
-        [15:12] = Don't care (0000)
-        [11:8]  = Y address
-        [7:4]   = X address
-        [3:0]   = Data (0001=on, 0000=off)
+        
+        The ADG2188 uses a 16-bit data word:
+        [15:12] = Don't care
+        [11:8]  = Y address (0-7)
+        [7:4]   = X address (0-11)
+        [3:0]   = Data (0x01=on, 0x00=off)
         """
-        command = (y_input << 8) | (x_output << 4) | (1 if enable else 0)
-        self.send_command(command)
+        # Create 16-bit command
+        data = 1 if enable else 0
+        command = (y_input << 8) | (x_output << 4) | data
+        
+        # Split into two bytes for I2C transmission
+        msb = (command >> 8) & 0xFF
+        lsb = command & 0xFF
+        
+        # Write to device
+        self.bus.write_i2c_block_data(self.address, msb, [lsb])
+        
+        # Small delay for switch settling
+        time.sleep(0.001)
+    
+    def set_switch(self, y_input, x_output, enable):
+        """Alias for write_switch for compatibility"""
+        self.write_switch(y_input, x_output, enable)
     
     def clear_all(self):
         """Disconnect all switches"""
         for y in range(8):
             for x in range(12):
-                self.set_switch(y, x, False)
+                self.write_switch(y, x, False)
+        print("All switches cleared")
+    
+    def read_status(self):
+        """Read back switch status (if supported by your board)"""
+        try:
+            # Implementation depends on specific board
+            # Some versions support readback
+            data = self.bus.read_i2c_block_data(self.address, 0, 2)
+            return data
+        except:
+            return None
     
     def cleanup(self):
-        """Clean up GPIO pins"""
-        GPIO.cleanup()
+        """Clean up I2C bus"""
+        self.bus.close()
 ```
 
 ### High-Level Statue Control
@@ -268,6 +302,28 @@ def test_basic_connectivity():
                 switch.set_switch(y, x, False)
     
     switch.cleanup()
+
+# Test I2C communication first
+import smbus
+import time
+
+def test_i2c_connection(address=0x70):
+    try:
+        bus = smbus.SMBus(1)
+        # Try to read from device
+        bus.read_byte(address)
+        print(f"Found ADG2188 at address 0x{address:02X}")
+        bus.close()
+        return True
+    except:
+        print(f"No device found at address 0x{address:02X}")
+        return False
+
+# Scan for device
+print("Scanning for ADG2188...")
+for addr in range(0x70, 0x78):
+    if test_i2c_connection(addr):
+        break
 ```
 
 ### 2. Signal Quality Test
@@ -300,10 +356,17 @@ def test_basic_connectivity():
 - Check for ground loops
 - Use shielded audio cables for long runs
 
-### SPI Communication Issues
-- Add 10kΩ pull-up resistor on CS line
-- Check logic levels (3.3V from Pi)
-- Verify timing (ADG2188 supports up to 50MHz)
+### I2C Communication Issues
+- Enable I2C in raspi-config
+- Check pull-up resistors (4.7kΩ) on SDA and SCL
+- Verify device address with i2cdetect
+- Try slower I2C clock speed:
+  ```python
+  # For older/problematic devices
+  bus = smbus.SMBus(1, force=True)
+  bus.set_i2c_bus_speed(10000)  # 10kHz instead of 100kHz
+  ```
+- Check A0-A2 address pins on EVAL board
 
 ## Design Considerations
 
@@ -348,7 +411,7 @@ The ADG2188 provides the cleanest solution with true isolation and flexible rout
 
 ## References
 
-- ADG2188 Datasheet: 8×12 Analog Crosspoint Switch
+- ADG2188 Datasheet: 8×12 Analog Crosspoint Switch with I2C Control
 - CM108 USB Audio: Single-supply USB audio codec
-- Raspberry Pi GPIO: BCM pin numbering used
-- SPI Protocol: Mode 0 (CPOL=0, CPHA=0)
+- Raspberry Pi I2C: Using GPIO 2 (SDA) and GPIO 3 (SCL)
+- I2C Protocol: 7-bit addressing, up to 400kHz clock speed
