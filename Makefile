@@ -46,8 +46,8 @@ audio-status: ## Show detailed audio device configuration
 audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
 	@ssh $(SSH_TARGET) "sudo apt update && sudo apt install -y libportaudio2 portaudio19-dev"
 
-tone-test: sync ## Play test tone on USB audio devices (syncs files first)
-	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_test.py'"
+tone-demo: sync ## Play test tone on USB audio devices (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_demo.py'"
 
 tone-detect-demo: sync ## Run tone detection demo with multi-statue detection (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py'"
@@ -79,7 +79,7 @@ freq-sweep: sync ## Run frequency sweep test to find optimal tone frequencies (s
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
 	@echo "Stopping running test scripts on $(SSH_TARGET)..."
-	@ssh $(SSH_TARGET) "pkill -f 'tone_test.py|tone_detect_demo.py|controller.py' || true"
+	@ssh $(SSH_TARGET) "pkill -f 'tone_demo.py|tone_detect_demo.py|controller.py' || true"
 	@echo "✓ Scripts stopped"
 
 kill-all: ## Force kill all Python scripts on Raspberry Pi
