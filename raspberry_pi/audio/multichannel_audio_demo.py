@@ -85,7 +85,7 @@ class ChannelToggleInterface:
                     elif key.isdigit():
                         channel = int(key) - 1
                         if 0 <= channel < len(self.devices):
-                            self.playback.toggle_channel(channel)
+                            self.playback.toggle_music_channel(channel)
 
                 time.sleep(0.05)  # Small delay to reduce CPU usage
 

@@ -317,3 +317,7 @@ make typecheck-install
 - [ ] Automated test suite for CI/CD
 - [ ] Dynamic frequency allocation to avoid interference
 - [ ] Recording capability for debugging audio issues
+
+## Memories
+
+- Don't do attribution to claude code
