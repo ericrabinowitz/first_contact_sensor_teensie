@@ -44,9 +44,35 @@ The ADG2188 provides isolated switching to prevent loading when statues aren't a
 | GPIO 22 (optional) | **LDSW** (J2‑2)  | Latch new settings    |
 | GPIO 27 (optional) | **RESET** (J2‑3) | Opens all switches    |
 
-### Address jumpers
+### Jumper Configuration
 
-JP1 links **A2 A1 A0** → `000` by default ⇒ **address 0x70**. Change links for multiple boards.
+The EVAL-ADG2188EBZ has 5 jumpers (LK1-LK5) that must be configured:
+
+#### I²C Address Jumpers (LK1, LK2, LK3)
+- **Inserted (closed)**: Bit = 0
+- **Removed (open)**: Bit = 1
+- Default (all inserted): **Address 0x70**
+- To change address, remove jumpers (e.g., remove LK1 → 0x71)
+
+#### Power Mode Jumper (LK4)
+- **Position A**: Dual supply mode (AVSS connects to external negative supply)
+- **Position B**: Single supply mode (AVSS connects to ground) **← Use this**
+
+#### Logic Power Jumper (LK5)
+- **Inserted**: Logic power from USB (3.3V from onboard regulator)
+- **Removed**: Logic power from external VL pin **← Use this**
+
+### Recommended Configuration for Missing Link
+
+| Jumper | Setting | Purpose |
+|--------|---------|---------|
+| LK1 | Inserted | I²C address bit A0 = 0 |
+| LK2 | Inserted | I²C address bit A1 = 0 |
+| LK3 | Inserted | I²C address bit A2 = 0 |
+| LK4 | Position B | Single supply mode (5V only) |
+| LK5 | Removed | Use Pi's 3.3V for logic |
+
+This gives I²C address **0x70** with single 5V supply and 3.3V logic levels.
 
 ### Wiring Diagram
 

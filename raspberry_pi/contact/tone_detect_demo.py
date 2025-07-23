@@ -28,16 +28,30 @@ from contact import (
     initialize_audio_playback,
 )
 
+# Import TX control (optional)
+try:
+    from contact.tx_control import TXController
+    HAS_TX_CONTROL = True
+except ImportError:
+    HAS_TX_CONTROL = False
+
 
 class FrequencyController:
     """Manages dynamic frequency updates for tone generation and detection."""
 
-    def __init__(self, devices, dynamic_tone_generators):
-        """Initialize frequency controller."""
+    def __init__(self, devices, dynamic_tone_generators, tx_controller=None):
+        """Initialize frequency controller.
+        
+        Args:
+            devices: List of configured audio devices
+            dynamic_tone_generators: Dict of statue -> DynamicToneGenerator
+            tx_controller: Optional TXController for ADG2188 switching
+        """
         self.devices = devices
         self.dynamic_tone_generators = dynamic_tone_generators
         self.selected_statue_index = 0
         self.lock = threading.RLock()
+        self.tx_controller = tx_controller
 
         # Initialize current frequencies from tone generators
         self.current_frequencies = {}
@@ -95,15 +109,23 @@ class FrequencyController:
 
         with self.lock:
             if selected_statue in self.muted_statues:
-                # Unmute: restore frequency
+                # Unmute: restore frequency and enable TX
                 self.muted_statues.remove(selected_statue)
                 self.dynamic_tone_generators[selected_statue].set_frequency(self.current_frequencies[selected_statue])
                 dynConfig[selected_statue.value]["tone_freq"] = self.current_frequencies[selected_statue]
+                
+                # Enable TX if controller available
+                if self.tx_controller:
+                    self.tx_controller.enable_tx(selected_statue)
             else:
-                # Mute: set frequency to 0
+                # Mute: set frequency to 0 and disable TX
                 self.muted_statues.add(selected_statue)
                 self.dynamic_tone_generators[selected_statue].set_frequency(0)
                 dynConfig[selected_statue.value]["tone_freq"] = 0
+                
+                # Disable TX if controller available
+                if self.tx_controller:
+                    self.tx_controller.disable_tx(selected_statue)
 
     def is_muted(self, statue):
         """Check if a statue is muted."""
@@ -204,6 +226,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description='Missing Link Tone Detection Demo')
     parser.add_argument('--timeout', type=int, default=0,
                         help='Auto-exit after N seconds (0 = run forever)')
+    parser.add_argument('--tx-control', action='store_true',
+                        help='Enable ADG2188 TX switching control')
+    parser.add_argument('--tx-simulate', action='store_true',
+                        help='Simulate TX control without hardware')
     args = parser.parse_args()
 
     print("=== Missing Link Tone Detection Demo ===")
@@ -241,8 +267,24 @@ def main() -> int:
     # Create shutdown event for coordinating thread shutdown
     shutdown_event = threading.Event()
 
+    # Create TX controller if requested
+    tx_controller = None
+    if args.tx_control or args.tx_simulate:
+        if not HAS_TX_CONTROL:
+            print("TX control module not available - continuing without TX switching")
+        else:
+            print("\nInitializing TX controller...")
+            tx_controller = TXController(simulate=args.tx_simulate)
+            if tx_controller.hardware_available:
+                print("TX control hardware detected")
+            else:
+                print("TX control running in simulation mode")
+            
+            # Start with all TX disabled
+            tx_controller.disable_all_tx()
+
     # Create frequency controller
-    freq_controller = FrequencyController(devices, dynamic_tone_generators)
+    freq_controller = FrequencyController(devices, dynamic_tone_generators, tx_controller)
 
     # Create status display with frequency controller
     status_display = StatusDisplay(link_tracker, devices, freq_controller)
@@ -260,6 +302,8 @@ def main() -> int:
 
         print("\n=== Interactive Controls ===")
         print("A/D: Navigate statues | W/S: Adjust frequency (+/-500Hz) | Space: Mute/Unmute | Q/ESC: Quit")
+        if tx_controller:
+            print("TX switching: ENABLED (mute will disconnect TX)")
         print("Currently controlling frequencies in real-time...")
 
         start_time = time.time()

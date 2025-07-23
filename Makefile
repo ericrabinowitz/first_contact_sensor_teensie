@@ -76,6 +76,19 @@ audio-demo: sync ## Run interactive multi-channel audio demo with channel toggle
 freq-sweep: sync ## Run frequency sweep test to find optimal tone frequencies (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./frequency_sweep_test.py'"
 
+## TX Control Testing
+tx-test: sync ## Run interactive ADG2188 TX switching test (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./adg2188_test.py'"
+
+tx-test-sim: sync ## Run ADG2188 TX test in simulation mode (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./adg2188_test.py --simulate'"
+
+tone-detect-tx: sync ## Run tone detection demo with TX control enabled (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py --tx-control'"
+
+tone-detect-tx-sim: sync ## Run tone detection demo with TX control in simulation mode (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py --tx-simulate'"
+
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
 	@echo "Stopping running test scripts on $(SSH_TARGET)..."
@@ -123,4 +136,4 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test stop kill-all help typecheck typecheck-install lint lint-install
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install

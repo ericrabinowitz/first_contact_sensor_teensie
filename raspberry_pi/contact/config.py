@@ -10,7 +10,7 @@ from audio.devices import Statue
 # All achieved 100% detection with good SNR despite cable losses
 TONE_FREQUENCIES = {
     Statue.EROS: 10000,      # 100% detection, 33.8dB SNR, 1.5dB cable loss
-    Statue.ELEKTRA: 17000,   # Avoiding problematic 5639Hz, good spacing from neighbors
+    Statue.ELEKTRA: 8500,   # Avoiding problematic 5639Hz, good spacing from neighbors
     Statue.SOPHIA: 9500,    # 100% detection, 33.3dB SNR, 4.8dB cable loss
     Statue.ULTIMO: 13500,   # 100% detection, 36.2dB SNR, 6.8dB cable loss
     Statue.ARIEL: 19500,    # 100% detection, 36.4dB SNR, 9.8dB cable loss
