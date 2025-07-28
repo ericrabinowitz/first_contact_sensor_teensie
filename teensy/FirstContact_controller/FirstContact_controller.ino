@@ -82,6 +82,7 @@ If you don't have the real hands handy, you can short the corresponding pins on 
 I found it helpful to wire one of the buttons to the two pin contacts for convenience.
 */
 
+#include "defines.h"
 #include "AudioSense.h"
 #include "Display.h"
 #include "MusicPlayer.h"

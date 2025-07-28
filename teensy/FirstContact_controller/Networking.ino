@@ -179,7 +179,9 @@ networkErrorRetry: // Entry point if we fail to initialize network
 #else
   // Start the Ethernet connection, using static IP
   Serial.print("Initialize Ethernet using STATIC IP => ");
-  displayNetworkStatus("Static IP:" F(NETWORK_IP));
+  char staticIpMsg[32];
+  sprintf(staticIpMsg, "Static IP:%d.%d.%d.%d", NETWORK_IP[0], NETWORK_IP[1], NETWORK_IP[2], NETWORK_IP[3]);
+  displayNetworkStatus(staticIpMsg);
   Ethernet.begin(NETWORK_IP, NETWORK_MASK, NETWORK_GATEWAY, NETWORK_DNS);
 #endif
 

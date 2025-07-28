@@ -2,7 +2,7 @@
 #define defines_h
 
 #define TEENSY41_DEBUG_PORT Serial
-#define USING_DHCP true      //true
+#define USING_DHCP false     //true
 #define STANDALONE_MODE true // Set to true for standalone operation without Pi
 
 // Debug Level from 0 to 4
