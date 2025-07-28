@@ -96,13 +96,17 @@ void setup() {
   Serial.printf("_______FIRST CONTACT_______ ");
   Serial.printf("%s %sd \n", __DATE__, __TIME__);
 
-  // TCP/IP Setup
-  Serial.printf("_______Init Ethernet_______\n");
-  initEthernet();
+  #if !STANDALONE_MODE
+    // TCP/IP Setup
+    Serial.printf("_______Init Ethernet_______\n");
+    initEthernet();
 
-  // MQTT Setup
-  Serial.printf("_______Init MQTT Publisher_______\n");
-  initMqtt();
+    // MQTT Setup
+    Serial.printf("_______Init MQTT Publisher_______\n");
+    initMqtt();
+  #else
+    Serial.println("*** STANDALONE MODE - Network/MQTT Disabled ***");
+  #endif
 
   // Allow the hardware to sort itself out
   // delay(1500); XXX
@@ -120,14 +124,18 @@ void setup() {
 }
 
 void loop() {
-  // Make sure we're connected to MQTT broker.
-  mqttLoop();
+  #if !STANDALONE_MODE
+    // Make sure we're connected to MQTT broker.
+    mqttLoop();
+  #endif
 
   // Retrieve the current contact state.
   ContactState state = getContactState();
 
-  // Publish the state to the MQTT broker to update LEDs.
-  publishState(state);
+  #if !STANDALONE_MODE
+    // Publish the state to the MQTT broker to update LEDs.
+    publishState(state);
+  #endif
   // Update the music if the state changed or current song has ended.
   playMusic(state);
   // Print any changed state to the serial console for debugging.
