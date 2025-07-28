@@ -15,6 +15,8 @@ from audio.music import ToggleableMultiChannelPlayback
 from .config import TONE_FREQUENCIES
 from .tone_detect import create_tone_generator
 
+TONE_SAMPLE_RATE = 44100 * 4
+
 
 def load_audio_data(audio_file):
     """Load audio data from file.
@@ -129,7 +131,8 @@ def initialize_audio_playback(devices, audio_file=None, loop=False, duration_sec
                 freq = TONE_FREQUENCIES[statue]
                 device_sample_rate = device.get('sample_rate', sample_rate)
                 # Create dynamic tone generator
-                dynamic_generator = DynamicToneGenerator(freq, device_sample_rate)
+                #dynamic_generator = DynamicToneGenerator(freq, device_sample_rate)
+                dynamic_generator = DynamicToneGenerator(freq, TONE_SAMPLE_RATE)
                 right_channel_callbacks[i] = dynamic_generator
                 dynamic_tone_generators[statue] = dynamic_generator
                 print(f"  Created dynamic tone generator for {statue.value}: {freq}Hz")
