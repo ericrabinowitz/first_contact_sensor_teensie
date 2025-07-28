@@ -23,7 +23,7 @@ Example:
     ...     right_channel_callbacks=tone_generators
     ... )
     >>> playback.start()
-    >>> playback.toggle_channel(0)  # Enable first channel
+    >>> playback.toggle_music_channel(0)  # Enable first channel
 """
 
 import threading
@@ -212,24 +212,27 @@ class MultiChannelPlayback:
 
 
 class ToggleableMultiChannelPlayback(MultiChannelPlayback):
-    """Extended playback class with per-channel mute control.
+    """Extended playback class with independent music and tone channel control.
 
     This class extends MultiChannelPlayback with the ability to dynamically
-    enable/disable individual channels during playback. This is used to turn
-    statue audio on/off based on whether they are linked in the contact
-    detection system.
+    enable/disable music and tone channels independently during playback.
+    Music channels control statue audio playback, while tone channels control
+    detection tone generation.
 
-    Additionally supports right channel callbacks for tone generation,
-    allowing the same device to output both audio (left) and detection
-    tones (right) simultaneously.
+    Channel Architecture:
+    - Left channel (TRS tip): Music audio controlled by channel_enabled
+    - Right channel (TRS ring): Detection tones controlled by tone_enabled
+    - Independent control allows tones without music and vice versa
 
     Attributes:
-        channel_enabled (list): Boolean flags for each channel
-        active_count (int): Number of currently active channels
-        right_channel_callbacks (dict): Optional tone generators by statue
+        channel_enabled (list): Boolean flags for music channels (left)
+        tone_enabled (list): Boolean flags for tone channels (right)
+        active_count (int): Number of currently active music channels
+        right_channel_callbacks (dict): Tone generators by channel index
+        lock (threading.RLock): Reentrant lock for thread-safe state changes
     """
 
-    def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None):
+    def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None, loop=False):
         """Initialize toggleable playback with optional tone generators.
 
         Args:
@@ -238,17 +241,24 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
             devices (list): Device configurations
             right_channel_callbacks (dict, optional): Tone generators by statue.
                 Maps Statue enum to generator function that returns samples.
+            loop (bool, optional): Whether to loop audio playback. Defaults to False.
         """
         super().__init__(audio_data, sample_rate, devices)
-        # Initialize all channels as disabled
+        # Initialize all music channels as disabled
         self.channel_enabled = [False] * len(devices)
+        # Initialize all tone channels as enabled (backward compatibility)
+        self.tone_enabled = [True] * len(devices)
         self.active_count = 0
         # Optional callbacks for right channel data (e.g., for tone generation)
         self.right_channel_callbacks = right_channel_callbacks or {}
+        # Use reentrant lock to allow toggle->set method calls
+        self.lock = threading.RLock()
+        # Whether to loop audio playback
+        self.loop = loop
 
     def _create_callback(self, channel_index):
         """Create a callback function with mute control for a specific channel."""
-        def callback(outdata, frames, time_info, status):
+        def callback(outdata, frames, _time_info, status):
             if status:
                 print(f"\rStream status for channel {channel_index}: {status}")
 
@@ -260,9 +270,14 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                 # Calculate remaining frames
                 remaining_frames = len(self.audio_data) - self.frame_index
                 if remaining_frames <= 0:
-                    outdata.fill(0)
-                    self.is_playing = False
-                    return
+                    if self.loop:
+                        # Reset frame index to loop
+                        self.frame_index = 0
+                        remaining_frames = len(self.audio_data)
+                    else:
+                        outdata.fill(0)
+                        self.is_playing = False
+                        return
 
                 # Get frames to play
                 frames_to_play = min(frames, remaining_frames)
@@ -283,8 +298,9 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                 stereo_data = np.zeros((frames, 2))
                 stereo_data[:frames_to_play, 0] = channel_data  # Left channel
 
-                # Right channel: use callback if provided, otherwise silent
-                if channel_index in self.right_channel_callbacks:
+                # Right channel: use callback if tone enabled and callback provided
+                if (self.tone_enabled[channel_index] and
+                    channel_index in self.right_channel_callbacks):
                     right_data = self.right_channel_callbacks[channel_index](frames)
                     stereo_data[:, 1] = right_data
 
@@ -296,22 +312,73 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
 
         return callback
 
-    def toggle_channel(self, channel_index):
-        """Toggle a channel on/off.
+    def toggle_music_channel(self, channel_index):
+        """Toggle a music channel on/off.
 
         When a statue becomes linked/unlinked, this method is called to
-        enable/disable its audio channel. The audio fades in/out smoothly
-        to avoid clicks.
+        enable/disable its music audio channel (left channel). The audio 
+        fades in/out smoothly to avoid clicks.
 
         Args:
-            channel_index (int): Index of the channel to toggle
+            channel_index (int): Index of the music channel to toggle
 
         Returns:
             bool: True if toggle successful, False if invalid index
         """
         if 0 <= channel_index < len(self.channel_enabled):
             with self.lock:
-                self.channel_enabled[channel_index] = not self.channel_enabled[channel_index]
+                current_state = self.channel_enabled[channel_index]
+                return self.set_music_channel(channel_index, not current_state)
+        return False
+
+    def toggle_tone_channel(self, channel_index):
+        """Toggle a tone channel on/off.
+
+        This method enables/disables tone generation on the right channel
+        for the specified channel index. Tone generation is independent
+        of music playback and can be controlled separately.
+
+        Args:
+            channel_index (int): Index of the tone channel to toggle
+
+        Returns:
+            bool: True if toggle successful, False if invalid index
+        """
+        if 0 <= channel_index < len(self.tone_enabled):
+            with self.lock:
+                current_state = self.tone_enabled[channel_index]
+                return self.set_tone_channel(channel_index, not current_state)
+        return False
+
+    def set_tone_channel(self, channel_index, enabled):
+        """Set tone channel state explicitly.
+
+        Args:
+            channel_index (int): Index of the tone channel
+            enabled (bool): True to enable tone, False to disable
+
+        Returns:
+            bool: True if set successful, False if invalid index
+        """
+        if 0 <= channel_index < len(self.tone_enabled):
+            with self.lock:
+                self.tone_enabled[channel_index] = enabled
+                return True
+        return False
+
+    def set_music_channel(self, channel_index, enabled):
+        """Set music channel state explicitly.
+
+        Args:
+            channel_index (int): Index of the music channel
+            enabled (bool): True to enable music, False to disable
+
+        Returns:
+            bool: True if set successful, False if invalid index
+        """
+        if 0 <= channel_index < len(self.channel_enabled):
+            with self.lock:
+                self.channel_enabled[channel_index] = enabled
 
                 # Update active count
                 self.active_count = sum(self.channel_enabled)
@@ -321,7 +388,7 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                     # Last channel turned off - stop playback
                     self.is_playing = False
                     self.frame_index = 0  # Reset to beginning
-                elif self.active_count == 1 and not self.is_playing:
+                elif self.active_count == 1 and not self.is_playing and enabled:
                     # First channel turned on - start playback
                     self.is_playing = True
                     if self.frame_index >= len(self.audio_data):
@@ -331,8 +398,12 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
         return False
 
     def get_channel_states(self):
-        """Return current channel enabled states."""
+        """Return current music channel enabled states."""
         return self.channel_enabled.copy()
+
+    def get_tone_states(self):
+        """Return current tone channel enabled states."""
+        return self.tone_enabled.copy()
 
     def get_progress(self):
         """Get playback progress as percentage."""

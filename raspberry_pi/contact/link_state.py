@@ -82,12 +82,12 @@ class LinkStateTracker:
             channel = self.statue_to_channel[statue]
             if is_linked and not self.playback.channel_enabled[channel]:
                 # Turn on channel
-                self.playback.toggle_channel(channel)
+                self.playback.toggle_music_channel(channel)
                 if not self.quiet:
                     print(f"  ♪ Audio channel {channel} ON for {statue.value}")
             elif not is_linked and self.playback.channel_enabled[channel]:
                 # Turn off channel
-                self.playback.toggle_channel(channel)
+                self.playback.toggle_music_channel(channel)
                 if not self.quiet:
                     print(f"  ♪ Audio channel {channel} OFF for {statue.value}")
 

@@ -46,14 +46,26 @@ audio-status: ## Show detailed audio device configuration
 audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
 	@ssh $(SSH_TARGET) "sudo apt update && sudo apt install -y libportaudio2 portaudio19-dev"
 
-tone-test: sync ## Play test tone on USB audio devices (syncs files first)
-	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_test.py'"
+tone-demo: sync ## Play test tone on USB audio devices (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_demo.py'"
 
 tone-detect-demo: sync ## Run tone detection demo with multi-statue detection (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py'"
 
 tone-detect-test: sync ## Run tone detection demo with 5-second timeout for testing
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py --timeout 2'"
+
+detect-test: sync ## Run detection-only demo with 5-second timeout for testing
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./detect_demo.py --timeout 5'"
+
+detect-demo: sync ## Run standalone tone detection demo (detection only, no generation)
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./detect_demo.py'"
+
+audio-setup-test: sync ## Test audio setup with None behavior
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./test_audio_setup.py'"
+
+signal-test: sync ## Run basic transmission unittest to verify tone generation and detection
+	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./test_basic_transmission.py'"
 
 audio-test: sync ## Run multi-channel audio playback test (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./audio_test.py'"
@@ -67,7 +79,7 @@ freq-sweep: sync ## Run frequency sweep test to find optimal tone frequencies (s
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
 	@echo "Stopping running test scripts on $(SSH_TARGET)..."
-	@ssh $(SSH_TARGET) "pkill -f 'tone_test.py|tone_detect_demo.py|controller.py' || true"
+	@ssh $(SSH_TARGET) "pkill -f 'tone_demo.py|tone_detect_demo.py|controller.py' || true"
 	@echo "✓ Scripts stopped"
 
 kill-all: ## Force kill all Python scripts on Raspberry Pi
