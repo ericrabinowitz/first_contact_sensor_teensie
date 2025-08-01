@@ -3,6 +3,7 @@ Display: Printing to the small OLED display on the teensy.
 */
 
 #include "Display.h"
+#include "StatueConfig.h"
 
 // Create the OLED display object using Wire2 (as in original code).
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
@@ -198,15 +199,25 @@ void displaySplashScreen(void) {
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);             // Start at top-left corner
-  display.println(F("    1st CONTACT!!"));
-  display.println(F(""));
-  display.println(F(""));
+  display.print(F("STATUE "));
+  display.print(THIS_STATUE_ID);
+  display.print(F(": "));
+  display.println(MY_STATUE_NAME);
+  display.print(F("TX:"));
+  display.print(MY_TX_FREQ);
+  display.print(F("Hz RX:"));
+  display.print(OTHER_RX_FREQ);
+  display.println(F("Hz"));
 
-  display.setCursor(0, 10);
+  display.setCursor(0, 20);
   //display.setTextSize(2);             // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
-  display.print(F("IP:"));
-  display.print(getLocalIp());
+  #if STANDALONE_MODE
+    display.println(F("STANDALONE MODE"));
+  #else
+    display.print(F("IP:"));
+    display.print(getLocalIp());
+  #endif
 
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text

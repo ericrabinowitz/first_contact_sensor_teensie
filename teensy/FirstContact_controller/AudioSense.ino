@@ -5,6 +5,7 @@ AudioSense: The contact sensing and audio mixing logic.
 #include <Audio.h>
 
 #include "AudioSense.h"
+#include "StatueConfig.h"
 
 // ------ Audio Contact Defines - Start
 #define LED1_PIN 3
@@ -13,12 +14,9 @@ AudioSense: The contact sensing and audio mixing logic.
 // This is the volume tuned for the sense signal sensitivity.
 #define SIGNAL_AUDIO_VOLUME 0.75
 
-// Frequencies to Transmit and listen for through hands (f_1 and f_2 are the tx frequencies)
-const int f_1 = 10000;
-// These are unused.
-const int f_2 = 20;
-const int f_3 = 20;
-const int f_4 = 20;
+// Use configured frequencies from StatueConfig.h
+const int tx_freq = MY_TX_FREQ;    // This statue's transmit frequency
+const int rx_freq = OTHER_RX_FREQ; // The other statue's frequency we listen for
 
 // This is the tone dection sensitivity.  Currently set for maximum sensitivity.
 // Edit with caution and experimentation.
@@ -63,6 +61,12 @@ void audioSenseSetup() {
   // NOTE this number is simply a guess.
   // Working: 12 for Sens, 8 for Wav Player + margin.
   AudioMemory(22);
+
+  // Add debug output for statue identity
+  Serial.printf("Configuring Statue %c (%s)\n", THIS_STATUE_ID, MY_STATUE_NAME);
+  Serial.printf("  TX Frequency: %d Hz\n", tx_freq);
+  Serial.printf("  RX Frequency: %d Hz\n", rx_freq);
+
   // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
   // times of approx 30 ms.  Longer times are more precise.
@@ -77,57 +81,29 @@ void audioSenseSetup() {
 
   const int sample_time_ms = main_period_ms / 2;
 
-  // Configure the left/right tone analyzers to detect tone.
-  left_f_1.frequency(f_1, sample_time_ms * f_1 / 1000);
-  right_f_1.frequency(f_1, sample_time_ms * f_1 / 1000);
+  // Configure the left/right tone analyzers to detect the OTHER statue's frequency
+  left_f_1.frequency(rx_freq, sample_time_ms * rx_freq / 1000);
+  right_f_1.frequency(rx_freq, sample_time_ms * rx_freq / 1000);
 
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
   pinMode(LED3_PIN, OUTPUT);
 
-  // start the outputs
-  AudioNoInterrupts();  // disable audio library momentarily
-  sine1.frequency(f_1); // left
+  // Configure sine generator to transmit THIS statue's frequency
+  AudioNoInterrupts(); // disable audio library momentarily
+  sine1.frequency(tx_freq);
   sine1.amplitude(1.0);
-  /*
-  sine2.frequency(f_4); // right
-  sine2.amplitude(1.0);
-  */
-  AudioInterrupts(); // enable, both tones will start together
+  AudioInterrupts(); // enable, tone will start
 }
 
 void debugPrintAudioSense(float l1, float r1) {
-  /*
-  float l1, l2, l3, l4, r1, r2, r3, r4;
-  // read all seven tone detectors
-  l1 = left_f_1.read();
-  r1 = right_f_1.read();
-  l2 = left_f_2.read();
-  l3 = left_f_3.read();
-  l4 = left_f_4.read();
-  r1 = right_f_1.read();
-  r2 = right_f_2.read();
-  r3 = right_f_3.read();
-  r4 = right_f_4.read();
-*/
 #ifdef DEBUG_PRINT
-  // print the raw data, for troubleshooting
-  //Serial.print("tones: ");
+  Serial.print("Detecting ");
+  Serial.print(rx_freq);
+  Serial.print("Hz: L=");
   Serial.print(l1);
-  Serial.print(", ");
-  Serial.print(l2);
-  Serial.print(", ");
-  Serial.print(l3);
-  Serial.print(", ");
-  Serial.print(l4);
-  Serial.print(",   ");
+  Serial.print(", R=");
   Serial.print(r1);
-  Serial.print(", ");
-  Serial.print(r2);
-  Serial.print(", ");
-  Serial.print(r3);
-  Serial.print(", ");
-  Serial.print(r4);
   Serial.print("\n");
 #endif
 }
