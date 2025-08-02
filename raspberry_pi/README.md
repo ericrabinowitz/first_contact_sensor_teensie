@@ -96,3 +96,12 @@ mosquitto_sub -t "missing_link/touch"
 # Send a MQTT message
 mosquito_pub -t "missing_link/haptic" -m '{"statue":"eros"}'
 ```
+
+## Reference docs
+
+- https://docs.google.com/document/d/107ZdOsc81E29lZZVTtqirHpqJKrvnqui0-EGSTGGslk/edit?tab=t.0
+- https://docs.google.com/document/d/1Ke_J2RJw4KxdZ-_T9ig0PT2Xt90lASSOVepb4xZkUKM/edit?tab=t.0
+- https://blog.dusktreader.dev/2025/03/29/self-contained-python-scripts-with-uv/
+- https://docs.astral.sh/uv/
+- https://www.raspberrypi.com/documentation/computers/configuration.html#audio-3
+- https://www.raspberrypi.com/documentation/accessories/audio.html

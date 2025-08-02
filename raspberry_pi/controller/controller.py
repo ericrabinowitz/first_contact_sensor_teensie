@@ -1,55 +1,80 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["deepmerge", "just-playback", "paho-mqtt"]
+# dependencies = ["numpy", "sounddevice", "soundfile", "paho-mqtt"]
 # ///
 
-# Install
-# wget -qO- https://astral.sh/uv/install.sh | sh
+"""
+Controller for the Missing Link art installation. Receives contact events from
+each statue's Teensy and configures their signal frequencies. In response to
+events, it plays audio channels and controls the WLED lights and haptic motors.
 
-# Execute
-# ./controller.py
+Install:
+wget -qO- https://astral.sh/uv/install.sh | sh
+
+Execute: ./controller.py
+"""
 
 import json
 import os
 import subprocess
 import threading
-import time
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import paho.mqtt.client as mqtt
-from deepmerge import Merger
-from just_playback import Playback
 
-# ### Reference docs
-# https://docs.google.com/document/d/107ZdOsc81E29lZZVTtqirHpqJKrvnqui0-EGSTGGslk/edit?tab=t.0
-# https://docs.google.com/document/d/1Ke_J2RJw4KxdZ-_T9ig0PT2Xt90lASSOVepb4xZkUKM/edit?tab=t.0
-# https://blog.dusktreader.dev/2025/03/29/self-contained-python-scripts-with-uv/
-# https://docs.astral.sh/uv/
-# https://github.com/cheofusi/just_playback
-# https://pypi.org/project/deepmerge/
-# https://www.raspberrypi.com/documentation/computers/configuration.html#audio-3
-# https://www.raspberrypi.com/documentation/accessories/audio.html
+
+class Statue(Enum):
+    ALL = "all"
+    ARCHES = "arches"
+    EROS = "eros"
+    ELEKTRA = "elektra"
+    SOPHIA = "sophia"
+    ULTIMO = "ultimo"
+    ARIEL = "ariel"
+
+
+class Effect(Enum):
+    SOLID = 0
+    FIREWORKS = 42
+    NOISE = 71
 
 
 # ### Parameters
 
-VERSION = "0.2.0"  # Version of the script
+VERSION = "1.0"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
+
 # Folder for audio files
 SRC_SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
-# Use ramdisk to speed up startup
+# Use ramdisk to speed up file I/O
 SONG_DIR = "/run/audio_files"
+ACTIVE_SONG = "Missing Link Playa 1 - 6 Channel 6-7.wav"
+
+FREQUENCIES = {
+    Statue.ELEKTRA: 8_000,
+    Statue.EROS: 10_000,
+    Statue.ELEKTRA: 12_000,
+    Statue.SOPHIA: 14_000,
+    Statue.ULTIMO: 16_000,
+    Statue.ARIEL: 18_000,
+}
 
 # MQTT server settings
-LINK_MQTT_TOPIC = "missing_link/touch"  # Topic for link/unlink msgs
+LINK_MQTT_TOPIC = "missing_link/contact"  # Topic for link/unlink msgs
 # {
 #     "action": "link", # or "unlink"
-#     "statues": ["eros", "elektra"], # List of statues that are affected
+#     "detector": "eros", # Statue that detected the contact
+#     "emitters": ["elektra"], # List of statues were detected
 # }
-HAPTIC_MQTT_TOPIC = "missing_link/haptic"  # Topic for haptic motor commands
+CONFIG_MQTT_TOPIC = "missing_link/config"  # Topic for configuring the Teensy
 # {
-#     "statue": "eros",  # Statue to turn on the haptic motors for
+#     "send_config": true,
+# }
+# {
+#     "eros": {
+#         "frequency": 10000,  # Frequency in Hz
+#     }, ... # Other statues
 # }
 WLED_MQTT_TOPIC = "wled/{}/api"  # Topic template for WLED commands
 MQTT_BROKER = "127.0.0.1"  # IP address of the MQTT broker
@@ -59,65 +84,37 @@ MQTT_PASSWORD = None  # If using authentication, otherwise set as None
 
 # WLED settings
 PALETTE_ID = 3
-
-
-class Statue(Enum):
-    ALL = "all"
-    EROS = "eros"
-    ELEKTRA = "elektra"
-
-
-class Mode(Enum):
-    BASIC = "basic"
-
-
-# value = effect id in WLED
-class Effect(Enum):
-    SOLID = 0
-    FIREWORKS = 42
-    NOISE_1 = 71
-
-
-dynConfig = {
-    "debug": False,
-    "dormant_songs": [],
-    "active_songs": [],
-    "fade_ms": 2000,  # Fade time in milliseconds
-    "cool_down_ms": 2000,  # Audio recent song wait time in milliseconds
-    "current": {
-        "active_song": "",
-        "dormant_song": "",
-        "mode": Mode.BASIC.value,
-        "active_effect": Effect.NOISE_1.value,
-        "dormant_effect": Effect.FIREWORKS.value,
+FADE_MS = 2000  # Fade time in milliseconds
+COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
+COLORS = {
+    Statue.ELEKTRA: {
+        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
     },
-    Statue.ELEKTRA.value: {
-        "active_colors": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
+    Statue.EROS: {
+        "active": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
     },
-    Statue.EROS.value: {
-        "active_colors": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
+    Statue.ALL: {
+        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
+        "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
     },
-    Statue.ALL.value: {
-        "dormant_colors": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
+}
+EFFECTS = {
+    Statue.ALL: {
+        "active": Effect.FIREWORKS,
+        "dormant": Effect.NOISE,
     },
 }
 
-config_merger = Merger(
-    [  # merge strategies for each type
-        (list, ["override"]),
-        (dict, ["merge"]),
-        (set, ["override"]),
-    ],
-    ["override"],  # fallback strategy
-    ["override"],  # strategy for conflicting types
-)
+HAPTIC_FADE_MS = 1000  # Haptic motor fade time in milliseconds
+HAPTIC_BRIGHTNESS = 170  # Haptic motor strength (out of 255)
+
+
+# ### Global variables
+
+debug = False  # Enable debug mode for verbose output
 
 # MQTT client
 mqttc = None
-
-songs_to_playback = {}
-current_playback = None
-last_played_s = 0
 
 
 # ### Helper functions
@@ -130,37 +127,7 @@ def copy_files():
     print(f"Copied files from {src} to {SONG_DIR}")
 
 
-def setup_config_and_songs():
-    global dynConfig
-    global current_playback
-    global songs_to_playback
-
-    if not os.path.isdir(SONG_DIR):
-        raise Exception(f"Error: '{SONG_DIR}' is not a valid directory.")
-
-    entries = os.listdir(SONG_DIR)
-    files = [f for f in entries if os.path.isfile(os.path.join(SONG_DIR, f))]
-    files.sort()
-
-    dynConfig["active_songs"] = [f for f in files if " active " in f.lower()]
-    dynConfig["dormant_songs"] = [f for f in files if " dormant " in f.lower()]
-    dynConfig["current"]["active_song"] = dynConfig["active_songs"][0]
-    dynConfig["current"]["dormant_song"] = dynConfig["dormant_songs"][0]
-
-    for f in files:
-        # Manages playback of a single audio file
-        playback = Playback(os.path.join(SONG_DIR, f))
-        playback.loop_at_end(True)
-        playback.set_volume(1.0)
-        songs_to_playback[f] = playback
-
-    current_playback = songs_to_playback[dynConfig["current"]["dormant_song"]]
-
-    if dynConfig["debug"]:
-        print("Dynamic config:", json.dumps(dynConfig, indent=2))
-
-
-def get_statue(path: str, default: Statue = None) -> Statue | None:
+def get_statue(path: str, default: Statue | None = None) -> Statue | None:
     parts = path.split("/")
     if len(parts) < 3:
         return default
@@ -177,8 +144,9 @@ def get_statue(path: str, default: Statue = None) -> Statue | None:
         return None
 
 
-def publish_mqtt(topic: str, payload: dict):
-    if dynConfig["debug"]:
+def publish_mqtt(topic: str, payload: dict) -> int:
+    """Publish a message to the MQTT broker."""
+    if debug:
         print(f"Publishing to {topic}: {json.dumps(payload, indent=2)}")
     r = mqttc.publish(topic, json.dumps(payload))
     try:
@@ -188,108 +156,113 @@ def publish_mqtt(topic: str, payload: dict):
     return r.rc
 
 
-def send_to_wled(statue: Statue, payload: dict):
+def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
+    """Send a WLED command to control the LEDs of a statue."""
+    # TODO: map statue to a QuinLED board (client name) and segment ids
+    seg0 = seg_payload.copy()
+    seg0["id"] = 0
+    payload = {
+        "tt": 0,
+        "seg": [seg0],
+    }
     return publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
-
-
-# TODO: doesn't handle pause / resume currently
-def play_song(mode: Mode, song: str):
-    global current_playback
-    global last_played_s
-
-    new_playback = songs_to_playback.get(song)
-    if new_playback is None:
-        print(f"Error: '{song}' is not a valid song.")
-        return
-    if new_playback is current_playback:
-        if not current_playback.playing:
-            current_playback.play()
-        return
-
-    if mode == Mode.BASIC:
-        new_playback.play()
-        if current_playback.playing:
-            # TODO: test pausing first
-            current_playback.pause()
-            current_playback.stop()
-        current_playback = new_playback
-
-    last_played_s = time.time()
-    if dynConfig["debug"]:
-        print(f"Playing song: {song}")
 
 
 # ### Actions
 
 
-def haptics_on(statue: Statue):
-    publish_mqtt(HAPTIC_MQTT_TOPIC, {"statue": statue.value})
+def send_config():
+    """Send configuration to the Teensy devices."""
+    payload = {}
+    for statue, freq in FREQUENCIES.items():
+        payload[statue.value] = {"frequency": freq}
+    return publish_mqtt(CONFIG_MQTT_TOPIC, payload)
+
+
+def all_off():
+    payload = {
+        "tt": 0,
+        "on": False,
+        "bri": 0,
+    }
+    return publish_mqtt(WLED_MQTT_TOPIC.format(Statue.ALL.value), payload)
+
+
+def haptic_on(statue: Statue) -> int:
+    """Send WLED commands to turn the haptic motor on and then fade."""
+    # TODO: map statue to a QuinLED board (client name) and segment id
+    payload = {
+        "tt": 0,
+        "seg": [
+            {
+                "id": 0,
+                "on": True,
+                "bri": HAPTIC_BRIGHTNESS,
+                "col": [[255, 255, 255, 255]],
+            }
+        ],
+    }
+    publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
+    payload = {
+        "tt": HAPTIC_FADE_MS,
+        "seg": [
+            {
+                "id": 0,
+                "on": True,
+                "bri": 0,
+                "col": [[255, 255, 255, 255]],
+            }
+        ],
+    }
+    return publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
 
 
 def leds_active(statue: Statue):
-    send_to_wled(
+    send_led_cmd(
         statue,
         {
-            "tt": 0,
-            "seg": [
-                {
-                    "id": 0,
-                    "on": True,
-                    "bri": 255,
-                    "col": dynConfig[statue.value]["active_colors"],
-                    "fx": dynConfig["current"]["active_effect"],
-                    "pal": PALETTE_ID,
-                },
-            ],
+            "on": True,
+            "bri": 255,
+            "col": COLORS.get(statue, {}).get("active", COLORS[Statue.ALL]["active"]),
+            "fx": EFFECTS.get(statue, {})
+            .get("active", EFFECTS[Statue.ALL]["active"])
+            .value,
+            "pal": PALETTE_ID,
         },
     )
 
 
-def leds_dormant():
-    send_to_wled(
-        Statue.ALL,
+def leds_dormant(statue: Statue):
+    send_led_cmd(
+        statue,
         {
-            "tt": 0,
-            "seg": [
-                {
-                    "id": 0,
-                    "fx": 0,
-                    "bri": 255,
-                    "col": [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                },
-            ],
+            "fx": 0,
+            "bri": 255,
+            "col": [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
         },
     )
-    send_to_wled(
-        Statue.ALL,
+    send_led_cmd(
+        statue,
         {
-            "tt": 0,
-            "seg": [
-                {
-                    "id": 0,
-                    "on": True,
-                    "bri": 255,
-                    "col": dynConfig[Statue.ALL.value]["dormant_colors"],
-                    "fx": dynConfig["current"]["dormant_effect"],
-                    "pal": PALETTE_ID,
-                },
-            ],
+            "on": True,
+            "bri": 255,
+            "col": COLORS.get(statue, {}).get("dormant", COLORS[Statue.ALL]["dormant"]),
+            "fx": EFFECTS.get(statue, {})
+            .get("dormant", EFFECTS[Statue.ALL]["dormant"])
+            .value,
+            "pal": PALETTE_ID,
         },
     )
 
 
 def audio_active(statues: list[Statue]):
-    # TODO: cycle through active songs
-    mode = Mode(dynConfig["current"]["mode"])
-    if mode == Mode.BASIC:
-        play_song(mode, dynConfig["current"]["active_song"])
+    # TODO: implement
+    pass
 
 
-def audio_dormant():
-    # TODO: cycle through dormant songs
-    mode = Mode(dynConfig["current"]["mode"])
-    if mode == Mode.BASIC:
-        play_song(mode, dynConfig["current"]["dormant_song"])
+def audio_dormant(statues: list[Statue]):
+    # TODO: implement
+    pass
 
 
 # ### Debug server
@@ -315,7 +288,7 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
         self.wfile.write(b'{"error": "bad request"}')
 
     def do_GET(self):
-        if dynConfig["debug"]:
+        if debug:
             print(f"Received GET request on {self.path}")
 
         if self.path == "/" or self.path == "/info":
@@ -325,53 +298,48 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                     "version": VERSION,
                 }
             )
-        elif self.path == "/config":
-            self._send_response(dynConfig)
         else:
             self._send_404()
 
     def do_POST(self):
-        global dynConfig
+        global debug
 
         dataStr = self.rfile.read(int(self.headers["Content-Length"]))
         data = json.loads(dataStr)
-        if dynConfig["debug"]:
+        if debug:
             print(f"Received POST request on {self.path}: {data}")
 
-        if self.path == "/config":
-            try:
-                config_merger.merge(dynConfig, data)
-                self._send_response(dynConfig)
-                print("new config settings:", json.dumps(data, indent=2))
-            except Exception as e:
-                print(e)
+        if self.path == "/debug":
+            if isinstance(data, bool):
+                debug = data
+            else:
                 self._send_400()
-        elif self.path == "/touch":
+        elif self.path == "/contact":
             code = publish_mqtt(LINK_MQTT_TOPIC, data)
             self._send_response(
                 {
                     "status_code": code,
                 }
             )
-            print("triggered a touch event")
-        elif self.path.startswith("/wled"):
+            print("triggered a contact event")
+        elif self.path.startswith("/led"):
             statue = get_statue(self.path, Statue.ALL)
             if statue is None:
                 self._send_400()
                 return
-            code = send_to_wled(statue, data)
+            code = send_led_cmd(statue, data)
             self._send_response(
                 {
                     "status_code": code,
                 }
             )
-            print("sent a WLED cmd to:", statue)
-        elif self.path.startswith("/haptic/"):
-            statue = get_statue(self.path)
+            print("sent a LED cmd to:", statue)
+        elif self.path.startswith("/haptic"):
+            statue = get_statue(self.path, Statue.ALL)
             if statue is None:
                 self._send_400()
                 return
-            code = haptics_on(statue)
+            code = haptic_on(statue)
             self._send_response(
                 {
                     "status_code": code,
@@ -409,28 +377,34 @@ def on_connect(mqttc, userdata, flags, reason_code, properties):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(mqttc, userdata, msg):
-    if dynConfig["debug"]:
+    if debug:
         print(f"Received message on topic {msg.topic}: {msg.payload}")
     payload = json.loads(msg.payload)
+
+    if msg.topic == CONFIG_MQTT_TOPIC:
+        if "send_config" in payload:
+            send_config()
 
     if msg.topic == LINK_MQTT_TOPIC:
         run_controller(payload)
 
 
 def start_controller():
-    audio_dormant()
-    leds_dormant()
+    all_off()
+    leds_dormant(Statue.ALL)
+    send_config()
 
 
 def run_controller(msg: dict):
     action = msg.get("action", "")
+    # TODO: fix, diff with current state
 
     if action == "link":
         statues = [Statue(name) for name in msg.get("statues", [])]
         audio_active(statues)
         for statue in statues:
             leds_active(statue)
-            haptics_on(statue)
+            haptic_on(statue)
 
     elif action == "unlink":
         audio_dormant()
@@ -443,7 +417,6 @@ def run_controller(msg: dict):
 
 if __name__ == "__main__":
     copy_files()
-    setup_config_and_songs()
 
     # Should be in the global scope, mqttc is a global variable
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)

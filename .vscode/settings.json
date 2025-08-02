@@ -18,6 +18,7 @@
     "Remi",
     "samplerate",
     "teensie",
+    "Toggleable",
     "WLED"
   ],
   "files.associations": {
