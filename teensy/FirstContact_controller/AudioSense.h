@@ -33,6 +33,7 @@ bool audioSenseLoop();
 ContactState getContactState();
 void printState(const ContactState &state);
 void audioMusicSetup();
+void setToneEnabled(bool enabled);
 
 // The audio out shared between the audio sensing and music player.
 extern AudioOutputI2S audioOut;

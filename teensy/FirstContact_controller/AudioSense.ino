@@ -119,6 +119,26 @@ void audioSenseSetup() {
   AudioInterrupts(); // enable, tone will start
 }
 
+// Control the tone generator on/off via MQTT
+void setToneEnabled(bool enabled) {
+  static bool toneEnabled = true; // Track current state
+
+  if (toneEnabled != enabled) {
+    toneEnabled = enabled;
+    AudioNoInterrupts();
+    // sine1.amplitude(enabled ? 1.0 : 0.0);
+    if (enabled) {
+      patchCordM1L.connect();
+    } else {
+      patchCordM1L.disconnect();
+    }
+    AudioInterrupts();
+
+    Serial.print("Tone generator ");
+    Serial.println(enabled ? "enabled" : "disabled");
+  }
+}
+
 void debugPrintAudioSense(float l1, float r1) {
 #ifdef DEBUG_PRINT
   Serial.print("Detecting ");
