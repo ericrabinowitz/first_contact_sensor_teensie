@@ -135,7 +135,7 @@ MusicState getMusicState(ContactState state) {
     return MUSIC_STATE_NOT_STARTED;
   }
 
-  if (state.isLinked) {
+  if (state.isLinked()) {
     // Reset idle-out timer when entering active state. Each transition to
     // an unlinked or paused state starts a new idle-out timer.
   }
@@ -211,11 +211,12 @@ void playMusic(ContactState state) {
   MusicState musicState = getMusicState(state);
 
   // State transition: Connected -> Disconnected.
-  if (state.wasLinked && !state.isLinked) {
+  bool wasLinked = (state.wasLinkedMask != 0);
+  if (wasLinked && !state.isLinked()) {
     fadeMusic();
   }
   // State transition: Disconnected -> Connected.
-  else if (!state.wasLinked && state.isLinked) {
+  else if (!wasLinked && state.isLinked()) {
     if (musicState == MUSIC_STATE_FADING) {
       // If we were fading (previous disconnect), resume playback
       Serial.println("Resuming faded music");
@@ -245,7 +246,7 @@ void playMusic(ContactState state) {
     queueNextActiveSong();
     break;
   case MUSIC_STATE_FINISHED:
-    if (state.isLinked) {
+    if (state.isLinked()) {
       queueNextActiveSong();
     } else {
       queueNextIdleSong();
@@ -253,7 +254,7 @@ void playMusic(ContactState state) {
     break;
   case MUSIC_STATE_FADING:
     // Update the faded volume based on the elapsed time.
-    updateFadedVolume(state.isLinked);
+    updateFadedVolume(state.isLinked());
     break;
   default:
     // No action needed for other states.
@@ -264,7 +265,7 @@ void playMusic(ContactState state) {
   if (!playSdWav1.isPlaying()) {
     // Start the appropriate song.
     Serial.print("Starting song: ");
-    const char *songToPlay = getCurrentSong(state.isLinked);
+    const char *songToPlay = getCurrentSong(state.isLinked());
     Serial.println(songToPlay);
     if (!playSdWav1.play(songToPlay)) {
       Serial.print("Error playing: ");

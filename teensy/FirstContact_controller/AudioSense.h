@@ -7,13 +7,24 @@ AudioSense: The contact sensing and audio mixing logic.
 
 #include <Audio.h>
 
-// Bundle the state booleans in a struct.
+// Bundle the state with multi-statue support.
 struct ContactState {
   bool isInitialized;
-  bool wasLinked;
-  bool isLinked;
+  uint8_t wasLinkedMask; // Bitmask of previously connected statues
+  uint8_t isLinkedMask;  // Bitmask of currently connected statues
+
+  // Check if ANY statue is connected
+  bool isLinked() const { return isLinkedMask != 0; }
+
+  // Check if specific statue is connected (0-based index)
+  bool isLinkedTo(int statueIndex) const {
+    return (isLinkedMask & (1 << statueIndex)) != 0;
+  }
+
   // Helper method returning whether the state changed.
-  bool isUnchanged() const { return isInitialized && isLinked == wasLinked; }
+  bool isUnchanged() const {
+    return isInitialized && isLinkedMask == wasLinkedMask;
+  }
 };
 
 // Prototypes for the contact sensing code.

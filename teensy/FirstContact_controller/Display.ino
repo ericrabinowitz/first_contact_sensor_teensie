@@ -74,7 +74,7 @@ void displayState(ContactState state) {
     return;
   }
 
-  if (state.isLinked) {
+  if (state.isLinked()) {
     ++contactCount;
     display.fillRect(0, 30, 128, 10, SSD1306_BLACK);
     display.setTextSize(3);              // Normal 1:1 pixel scale
@@ -205,19 +205,29 @@ void displaySplashScreen(void) {
   display.println(MY_STATUE_NAME);
   display.print(F("TX:"));
   display.print(MY_TX_FREQ);
-  display.print(F("Hz RX:"));
-  display.print(OTHER_RX_FREQ);
+  display.println(F("Hz"));
+  display.print(F("RX:"));
+  // Show all RX frequencies (all other statues)
+  bool first = true;
+  for (int i = 0; i < NUM_STATUES; i++) {
+    if (i != MY_STATUE_INDEX) {
+      if (!first)
+        display.print(F(","));
+      display.print(STATUE_FREQUENCIES[i]);
+      first = false;
+    }
+  }
   display.println(F("Hz"));
 
-  display.setCursor(0, 20);
+  display.setCursor(0, 25);
   //display.setTextSize(2);             // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
-  #if STANDALONE_MODE
-    display.println(F("STANDALONE MODE"));
-  #else
-    display.print(F("IP:"));
-    display.print(getLocalIp());
-  #endif
+#if STANDALONE_MODE
+  display.println(F("STANDALONE MODE"));
+#else
+  display.print(F("IP:"));
+  display.print(getLocalIp());
+#endif
 
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text

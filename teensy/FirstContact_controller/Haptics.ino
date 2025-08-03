@@ -38,7 +38,7 @@ void driveHaptics(const ContactState& state) {
     return; // No change in state to report.
   }
 
-  if (state.isLinked) {
+  if (state.isLinked()) {
     hapticMotorOn();
   } else {
     hapticMotorOff();

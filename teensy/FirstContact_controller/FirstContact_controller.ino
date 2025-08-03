@@ -145,7 +145,7 @@ void loop() {
   // Update the display with the current state.
   displayState(state);
   // During idle time, animate something to show we are alive.
-  displayActivityStatus(state.isLinked);
+  displayActivityStatus(state.isLinked());
   // Update the count and time at the bottom of the display.
   displayTimeCount();
 

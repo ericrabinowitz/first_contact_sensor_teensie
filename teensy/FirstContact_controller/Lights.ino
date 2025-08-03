@@ -57,7 +57,7 @@ void publishState(ContactState state) {
     return;
   }
 
-  if (state.isLinked) {
+  if (state.isLinked()) {
     publishSucceeded = setActiveLedState();
   } else {
     publishSucceeded = setInactiveLedState();

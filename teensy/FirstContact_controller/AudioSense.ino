@@ -15,8 +15,7 @@ AudioSense: The contact sensing and audio mixing logic.
 #define SIGNAL_AUDIO_VOLUME 0.75
 
 // Use configured frequencies from StatueConfig.h
-const int tx_freq = MY_TX_FREQ;    // This statue's transmit frequency
-const int rx_freq = OTHER_RX_FREQ; // The other statue's frequency we listen for
+const int tx_freq = MY_TX_FREQ; // This statue's transmit frequency
 
 // This is the tone dection sensitivity.  Currently set for maximum sensitivity.
 // Edit with caution and experimentation.
@@ -31,9 +30,16 @@ AudioInputI2S audioIn;
 // The sine wave signal generator.
 AudioSynthWaveformSine sine1;
 
-// The input signal detectors.
-AudioAnalyzeToneDetect left_f_1;
-AudioAnalyzeToneDetect right_f_1;
+// The input signal detectors - create 2 detectors (one pair for each of the other 2 statues)
+// We need NUM_STATUES-1 pairs of detectors
+AudioAnalyzeToneDetect left_det_0; // First other statue
+AudioAnalyzeToneDetect right_det_0;
+AudioAnalyzeToneDetect left_det_1; // Second other statue
+AudioAnalyzeToneDetect right_det_1;
+
+// Arrays to hold detector pointers for easier access
+AudioAnalyzeToneDetect *leftDetectors[NUM_STATUES - 1];
+AudioAnalyzeToneDetect *rightDetectors[NUM_STATUES - 1];
 
 // The mixer to use for audio sensing.
 AudioMixer4 mixerSensingOutput;
@@ -41,9 +47,11 @@ AudioMixer4 mixerSensingOutput;
 // Connect the sine wave generator to sensing mixer.
 AudioConnection patchCordM1L(sine1, 0, mixerSensingOutput, 0);
 
-// Connect the audio input to the left/right sensing detectors
-AudioConnection patchCord2(audioIn, 0, left_f_1, 0);
-AudioConnection patchCord6(audioIn, 1, right_f_1, 0);
+// Connect the audio input to all the detectors
+AudioConnection patchCordL0(audioIn, 0, left_det_0, 0);
+AudioConnection patchCordR0(audioIn, 1, right_det_0, 0);
+AudioConnection patchCordL1(audioIn, 0, left_det_1, 0);
+AudioConnection patchCordR1(audioIn, 1, right_det_1, 0);
 
 // This audio output is shared between the audio sensing and the music player.
 AudioOutputI2S audioOut;
@@ -58,14 +66,19 @@ uint16_t main_period_ms = 150;
 // Contact Sense Start
 //
 void audioSenseSetup() {
-  // NOTE this number is simply a guess.
-  // Working: 12 for Sens, 8 for Wav Player + margin.
-  AudioMemory(22);
+  // NOTE: Increased for multiple detectors
+  AudioMemory(30);
 
   // Add debug output for statue identity
   Serial.printf("Configuring Statue %c (%s)\n", THIS_STATUE_ID, MY_STATUE_NAME);
   Serial.printf("  TX Frequency: %d Hz\n", tx_freq);
-  Serial.printf("  RX Frequency: %d Hz\n", rx_freq);
+  Serial.println("  RX Frequencies:");
+
+  // Initialize detector arrays
+  leftDetectors[0] = &left_det_0;
+  rightDetectors[0] = &right_det_0;
+  leftDetectors[1] = &left_det_1;
+  rightDetectors[1] = &right_det_1;
 
   // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
@@ -81,9 +94,19 @@ void audioSenseSetup() {
 
   const int sample_time_ms = main_period_ms / 2;
 
-  // Configure the left/right tone analyzers to detect the OTHER statue's frequency
-  left_f_1.frequency(rx_freq, sample_time_ms * rx_freq / 1000);
-  right_f_1.frequency(rx_freq, sample_time_ms * rx_freq / 1000);
+  // Configure each detector for the appropriate frequency
+  int detectorIndex = 0;
+  for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
+    if (statue_idx != MY_STATUE_INDEX) {
+      int freq = STATUE_FREQUENCIES[statue_idx];
+      int cycles = sample_time_ms * freq / 1000;
+      leftDetectors[detectorIndex]->frequency(freq, cycles);
+      rightDetectors[detectorIndex]->frequency(freq, cycles);
+      Serial.printf("    Detector %d: %s at %dHz\n", detectorIndex,
+                    STATUE_NAMES[statue_idx], freq);
+      detectorIndex++;
+    }
+  }
 
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
@@ -129,63 +152,87 @@ void printTransition(bool buffering, bool stableIsLinked,
   }
 }
 
-// Get the isLinked state, buffering over ~100ms for stable readings.
-bool getStableIsLinked() {
-  // Send signal?
+// Get the linked state bitmask, buffering over ~100ms for stable readings.
+uint8_t getStableLinkedMask() {
+  // Send signal
   sine1.amplitude(1.0);
 
-  // Read signal.
-  float l1, r1;
-  l1 = left_f_1.read();
-  r1 = right_f_1.read();
-  debugPrintAudioSense(l1, r1);
+  // Static state for buffering per statue
+  static uint8_t stableLinkedMask = 0;
+  static unsigned long bufferStartTime[NUM_STATUES] = {0};
+  static bool buffering[NUM_STATUES] = {false};
 
-  // Process signal for a stable reading.
-  static bool stableIsLinked = false;
-  static unsigned long bufferStartTime = 0;
-  static bool buffering = false;
-  bool candidateIsLinked = (l1 > thresh || r1 > thresh);
+  uint8_t candidateLinkedMask = 0;
 
-  if (!stableIsLinked && candidateIsLinked) {
-    // Immediate transition to Linked for quick contact latency.
-    printTransition(buffering, stableIsLinked, candidateIsLinked);
-    stableIsLinked = true;
-    buffering = false;
-  } else if (stableIsLinked && !candidateIsLinked) {
-    // Buffer transition to Unlinked to mitigate flakiness.
-    if (!buffering) {
-      buffering = true;
-      bufferStartTime = millis();
-      printTransition(buffering, stableIsLinked, candidateIsLinked);
-    } else if (millis() - bufferStartTime >= TRANSITION_BUFFER_MS) {
-      // Finished buffering. Finalize the transition to the new state.
-      buffering = false;
-      printTransition(buffering, stableIsLinked, candidateIsLinked);
-      stableIsLinked = candidateIsLinked;
-    } else {
-      // Still buffering. Do not change stableIsLinked.
+  // Check all detectors
+  int detectorIndex = 0;
+  for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
+    if (statue_idx != MY_STATUE_INDEX) {
+      float left = leftDetectors[detectorIndex]->read();
+      float right = rightDetectors[detectorIndex]->read();
+
+      bool isDetected = (left > thresh || right > thresh);
+      if (isDetected) {
+        candidateLinkedMask |= (1 << statue_idx);
+      }
+
+// Debug output for each detector
+#ifdef DEBUG_PRINT
+      if (isDetected) {
+        Serial.printf("Detected %s: L=%.3f R=%.3f\n", STATUE_NAMES[statue_idx],
+                      left, right);
+      }
+#endif
+
+      // Handle buffering for this specific statue
+      bool wasLinked = (stableLinkedMask & (1 << statue_idx)) != 0;
+      bool nowLinked = (candidateLinkedMask & (1 << statue_idx)) != 0;
+
+      if (!wasLinked && nowLinked) {
+        // Immediate transition to Linked for quick contact latency
+        stableLinkedMask |= (1 << statue_idx);
+        buffering[statue_idx] = false;
+        Serial.printf("Link detected: %s\n", STATUE_NAMES[statue_idx]);
+      } else if (wasLinked && !nowLinked) {
+        // Buffer transition to Unlinked
+        if (!buffering[statue_idx]) {
+          buffering[statue_idx] = true;
+          bufferStartTime[statue_idx] = millis();
+        } else if (millis() - bufferStartTime[statue_idx] >=
+                   TRANSITION_BUFFER_MS) {
+          // Finished buffering, unlink
+          stableLinkedMask &= ~(1 << statue_idx);
+          buffering[statue_idx] = false;
+          Serial.printf("Link lost: %s\n", STATUE_NAMES[statue_idx]);
+        }
+      } else {
+        // No transition needed
+        buffering[statue_idx] = false;
+      }
+
+      detectorIndex++;
     }
-  } else {
-    // If stable and candidate are the same, do nothing and stop buffering.
-    buffering = false;
   }
-  return stableIsLinked;
+
+  return stableLinkedMask;
 }
 
 // Static state variables.
 bool isInitialized = false;
-bool wasLinked = false;
+uint8_t wasLinkedMask = 0;
 
-// This function wraps getStableIsLinked() and returns all state info.
+// This function gets the contact state with multi-statue support.
 ContactState getContactState() {
   ContactState state;
-  state.isLinked = getStableIsLinked();
+
+  // Get the current linked mask
+  state.isLinkedMask = getStableLinkedMask();
+  state.wasLinkedMask = wasLinkedMask;
   state.isInitialized = isInitialized;
-  state.wasLinked = wasLinked;
 
   // Update our persistent state for next call.
   isInitialized = true;
-  wasLinked = state.isLinked;
+  wasLinkedMask = state.isLinkedMask;
 
   return state;
 }
@@ -204,8 +251,20 @@ void printState(const ContactState &state) {
   if (state.isUnchanged()) {
     return;
   }
-  if (state.isLinked) {
-    Serial.println("CONTACT");
+
+  // Print overall status
+  if (state.isLinked()) {
+    Serial.print("CONTACT with: ");
+    bool first = true;
+    for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
+      if (state.isLinkedTo(statue_idx)) {
+        if (!first)
+          Serial.print(", ");
+        Serial.print(STATUE_NAMES[statue_idx]);
+        first = false;
+      }
+    }
+    Serial.println();
   } else {
     Serial.println("--OFF---");
   }
