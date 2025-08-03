@@ -2,30 +2,58 @@
 StatueConfig.h - Configuration for multi-statue bidirectional tone detection
 This file defines which statue this code is running on and sets the appropriate
 transmit and receive frequencies for detecting connections to multiple statues.
+
+3. Optimized Non-Harmonic Set
+Based on avoiding common intermodulation products:
+
+10.3 kHz
+13.7 kHz
+16.1 kHz
+18.9 kHz
+
+1. Align with FFT Bin Centers
+Your frequencies should fall exactly on FFT bin centers to maximize detection accuracy:
+// Example with 44.1kHz sample rate, 1024-point FFT
+float binWidth = 44100.0 / 1024.0; // = 43.07 Hz per bin
+
+// Choose frequencies that are integer multiples of binWidth
+float freq1 = binWidth * 239; // = 10,293 Hz (bin 239)
+float freq2 = binWidth * 318; // = 13,695 Hz (bin 318)
+float freq3 = binWidth * 374; // = 16,097 Hz (bin 374)
+float freq4 = binWidth * 439; // = 18,906 Hz (bin 439)
+
+// Recommended: At least 3-5 bins separation
+// This prevents spectral leakage overlap
+Bin 239: 10,293 Hz
+Bin 318: 13,695 Hz (79 bins apart ✓)
+Bin 374: 16,097 Hz (56 bins apart ✓)
+Bin 439: 18,906 Hz (65 bins apart ✓)
 */
 
 #ifndef STATUE_CONFIG_H
 #define STATUE_CONFIG_H
 
 // Total number of statues defined (don't change this)
-#define MAX_STATUES 3
+#define MAX_STATUES 4
 
 // Number of statues active in current test (can be 2 or 3)
 #define NUM_STATUES 3 // Change to 2 for two-statue test
 
 // Define which statue this code is running on
 // Change this to 'B' or 'C' when compiling for other statues
-#define THIS_STATUE_ID 'B'
+#define THIS_STATUE_ID 'C'
 
 // Frequency table for all statues (in Hz) - always define all 3
 const int STATUE_FREQUENCIES[MAX_STATUES] = {
-    10000, // Statue A - EROS
-    17000, // Statue B - ELEKTRA
-    14000  // Statue C - SOPHIA
+    10293, // Statue A - EROS
+    13695, // Statue B - ELEKTRA
+    16097, // Statue C - ARIEL
+    18906, // Statue D - SOPHIA
 };
 
 // Name table for all statues - always define all 3
-const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "SOPHIA"};
+const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "ARIEL",
+                                            "SOPHIA"};
 
 // Get this statue's index based on ID
 #if THIS_STATUE_ID == 'A'
@@ -34,6 +62,8 @@ const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "SOPHIA"};
 #define MY_STATUE_INDEX 1
 #elif THIS_STATUE_ID == 'C'
 #define MY_STATUE_INDEX 2
+#elif THIS_STATUE_ID == 'D'
+#define MY_STATUE_INDEX 3
 #else
 #error "Invalid THIS_STATUE_ID. Must be 'A', 'B', or 'C'"
 #endif
