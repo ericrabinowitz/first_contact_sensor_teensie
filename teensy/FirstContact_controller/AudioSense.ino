@@ -45,7 +45,7 @@ AudioAnalyzeToneDetect *rightDetectors[NUM_STATUES - 1];
 AudioMixer4 mixerSensingOutput;
 
 // Connect the sine wave generator to sensing mixer.
-AudioConnection patchCordM1L(sine1, 0, mixerSensingOutput, 0);
+AudioConnection patchCordToneOut(sine1, 0, mixerSensingOutput, 0);
 
 // Connect the audio input to all the detectors
 AudioConnection patchCordL0(audioIn, 0, left_det_0, 0);
@@ -128,9 +128,9 @@ void setToneEnabled(bool enabled) {
     AudioNoInterrupts();
     // sine1.amplitude(enabled ? 1.0 : 0.0);
     if (enabled) {
-      patchCordM1L.connect();
+      patchCordToneOut.connect();
     } else {
-      patchCordM1L.disconnect();
+      patchCordToneOut.disconnect();
     }
     AudioInterrupts();
 
