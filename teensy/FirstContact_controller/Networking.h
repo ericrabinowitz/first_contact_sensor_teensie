@@ -22,7 +22,7 @@ String parsePtrResponse(byte *buffer, int buflen, int queryLength);
 // Replace printLocalIp declaration with getLocalIp
 String getLocalIp();
 
-// Networking accessors for Lights.ino
+// Networking accessors for Messaging.ino
 IPAddress getServer();
 char* getHostname();
 EthernetClient& getEthClient();

@@ -243,7 +243,7 @@ String getLocalIp() {
          String(ip[3]);
 }
 
-// Networking accessors for Lights.ino
+// Networking accessors for Messaging.ino
 IPAddress getServer() {
   return server;
 }

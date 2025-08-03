@@ -1,9 +1,9 @@
 /*
-Lights: MQTT, state publishing, and LED state logic.
+Messaging: MQTT, state publishing, and LED state logic.
 */
 
-#ifndef LIGHTS_H
-#define LIGHTS_H
+#ifndef MESSAGING_H
+#define MESSAGING_H
 
 #include <Arduino.h>
 #include <PubSubClient.h>
@@ -20,4 +20,4 @@ bool setActiveLedState();
 
 extern PubSubClient client;
 
-#endif // LIGHTS_H
+#endif // MESSAGING_H
