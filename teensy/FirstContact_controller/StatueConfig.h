@@ -34,14 +34,14 @@ Bin 439: 18,906 Hz (65 bins apart ✓)
 #define STATUE_CONFIG_H
 
 // Total number of statues defined (don't change this)
-#define MAX_STATUES 4
+#define MAX_STATUES 5
 
-// Number of statues active in current test (can be 2 or 3)
-#define NUM_STATUES 3 // Change to 2 for two-statue test
+// Number of statues active in current test (can be 2-5)
+#define NUM_STATUES 4
 
 // Define which statue this code is running on
 // Change this to 'B' or 'C' when compiling for other statues
-#define THIS_STATUE_ID 'C'
+#define THIS_STATUE_ID 'A'
 
 // Frequency table for all statues (in Hz) - always define all 3
 const int STATUE_FREQUENCIES[MAX_STATUES] = {
@@ -65,7 +65,7 @@ const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "ARIEL",
 #elif THIS_STATUE_ID == 'D'
 #define MY_STATUE_INDEX 3
 #else
-#error "Invalid THIS_STATUE_ID. Must be 'A', 'B', or 'C'"
+#error "Invalid THIS_STATUE_ID. Must be 'A', 'B', 'C', or 'D'"
 #endif
 
 // Validate configuration

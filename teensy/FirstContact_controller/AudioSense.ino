@@ -30,16 +30,17 @@ AudioInputI2S audioIn;
 // The sine wave signal generator.
 AudioSynthWaveformSine sine1;
 
-// The input signal detectors - create 2 detectors (one pair for each of the other 2 statues)
-// We need NUM_STATUES-1 pairs of detectors
-AudioAnalyzeToneDetect left_det_0; // First other statue
-AudioAnalyzeToneDetect right_det_0;
-AudioAnalyzeToneDetect left_det_1; // Second other statue
-AudioAnalyzeToneDetect right_det_1;
+// The input signal detectors - create MAX_STATUES-1 detector pairs to support all configurations
+// We'll only use NUM_STATUES-1 pairs at runtime
+AudioAnalyzeToneDetect left_det_0, right_det_0; // First other statue
+AudioAnalyzeToneDetect left_det_1, right_det_1; // Second other statue
+AudioAnalyzeToneDetect left_det_2, right_det_2; // Third other statue
+AudioAnalyzeToneDetect left_det_3, right_det_3; // Fourth other statue
 
 // Arrays to hold detector pointers for easier access
-AudioAnalyzeToneDetect *leftDetectors[NUM_STATUES - 1];
-AudioAnalyzeToneDetect *rightDetectors[NUM_STATUES - 1];
+// Size to MAX_STATUES-1 to support all configurations, but only NUM_STATUES-1 will be used
+AudioAnalyzeToneDetect *leftDetectors[MAX_STATUES - 1];
+AudioAnalyzeToneDetect *rightDetectors[MAX_STATUES - 1];
 
 // The mixer to use for audio sensing.
 AudioMixer4 mixerSensingOutput;
@@ -47,11 +48,15 @@ AudioMixer4 mixerSensingOutput;
 // Connect the sine wave generator to sensing mixer.
 AudioConnection patchCordToneOut(sine1, 0, mixerSensingOutput, 0);
 
-// Connect the audio input to all the detectors
+// Connect the audio input to all the detectors (MAX_STATUES-1 pairs)
 AudioConnection patchCordL0(audioIn, 0, left_det_0, 0);
 AudioConnection patchCordR0(audioIn, 1, right_det_0, 0);
 AudioConnection patchCordL1(audioIn, 0, left_det_1, 0);
 AudioConnection patchCordR1(audioIn, 1, right_det_1, 0);
+AudioConnection patchCordL2(audioIn, 0, left_det_2, 0);
+AudioConnection patchCordR2(audioIn, 1, right_det_2, 0);
+AudioConnection patchCordL3(audioIn, 0, left_det_3, 0);
+AudioConnection patchCordR3(audioIn, 1, right_det_3, 0);
 
 // This audio output is shared between the audio sensing and the music player.
 AudioOutputI2S audioOut;
@@ -74,11 +79,21 @@ void audioSenseSetup() {
   Serial.printf("  TX Frequency: %d Hz\n", tx_freq);
   Serial.println("  RX Frequencies:");
 
-  // Initialize detector arrays
+  // Initialize detector arrays for all MAX_STATUES-1 pairs
   leftDetectors[0] = &left_det_0;
   rightDetectors[0] = &right_det_0;
-  leftDetectors[1] = &left_det_1;
-  rightDetectors[1] = &right_det_1;
+  if (MAX_STATUES > 2) {
+    leftDetectors[1] = &left_det_1;
+    rightDetectors[1] = &right_det_1;
+  }
+  if (MAX_STATUES > 3) {
+    leftDetectors[2] = &left_det_2;
+    rightDetectors[2] = &right_det_2;
+  }
+  if (MAX_STATUES > 4) {
+    leftDetectors[3] = &left_det_3;
+    rightDetectors[3] = &right_det_3;
+  }
 
   // Configure the tone detectors with the frequency and number
   // of cycles to match.  These numbers were picked for match
@@ -178,9 +193,10 @@ uint8_t getStableLinkedMask() {
   sine1.amplitude(1.0);
 
   // Static state for buffering per statue
+  // Use MAX_STATUES for array size to support all configurations
   static uint8_t stableLinkedMask = 0;
-  static unsigned long bufferStartTime[NUM_STATUES] = {0};
-  static bool buffering[NUM_STATUES] = {false};
+  static unsigned long bufferStartTime[MAX_STATUES] = {0};
+  static bool buffering[MAX_STATUES] = {false};
 
   uint8_t candidateLinkedMask = 0;
 
@@ -274,6 +290,8 @@ void printState(const ContactState &state) {
 
   // Print overall status
   if (state.isLinked()) {
+    Serial.print("LINK STATE MASK: ");
+    Serial.println(state.isLinkedMask, BIN);
     Serial.print("CONTACT with: ");
     bool first = true;
     for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
