@@ -7,7 +7,6 @@ Networking: The ethernet, DNS, and MQTT WLED messaging logic.
 
 //using namespace qindesign::network;
 
-
 // --- UDP and DNS Setup ---
 EthernetUDP udp;
 const unsigned int DNS_PORT = 53;
@@ -180,7 +179,8 @@ networkErrorRetry: // Entry point if we fail to initialize network
   // Start the Ethernet connection, using static IP
   Serial.print("Initialize Ethernet using STATIC IP => ");
   char staticIpMsg[32];
-  sprintf(staticIpMsg, "Static IP:%d.%d.%d.%d", NETWORK_IP[0], NETWORK_IP[1], NETWORK_IP[2], NETWORK_IP[3]);
+  sprintf(staticIpMsg, "%d.%d.%d.%d", NETWORK_IP[0], NETWORK_IP[1],
+          NETWORK_IP[2], NETWORK_IP[3]);
   displayNetworkStatus(staticIpMsg);
   Ethernet.begin(NETWORK_IP, NETWORK_MASK, NETWORK_GATEWAY, NETWORK_DNS);
 #endif
@@ -202,8 +202,8 @@ networkErrorRetry: // Entry point if we fail to initialize network
     IPAddress ipAddress = Ethernet.localIP();
 
     char ipString[128];
-    sprintf(ipString, "IP:%d.%d.%d.%d", ipAddress[0], ipAddress[1],
-            ipAddress[2], ipAddress[3]);
+    sprintf(ipString, "%d.%d.%d.%d", ipAddress[0], ipAddress[1], ipAddress[2],
+            ipAddress[3]);
 
     displayNetworkStatus(ipString);
 
@@ -231,6 +231,9 @@ networkErrorRetry: // Entry point if we fail to initialize network
 
   displayHostname(hostname);
 
+  // Display TX/RX frequencies on line 2
+  displayFrequencies();
+
   /* The data was allocated, but we will not delete it since we may need to print again */
   /* Remove this commment to delete the allocated string *
   delete[] hostname;
@@ -244,14 +247,8 @@ String getLocalIp() {
 }
 
 // Networking accessors for Messaging.ino
-IPAddress getServer() {
-  return server;
-}
+IPAddress getServer() { return server; }
 
-char* getHostname() {
-  return hostname;
-}
+char *getHostname() { return hostname; }
 
-EthernetClient& getEthClient() {
-  return ethClient;
-}
+EthernetClient &getEthClient() { return ethClient; }

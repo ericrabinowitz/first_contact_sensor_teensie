@@ -90,9 +90,33 @@ void displayState(ContactState state) {
 }
 
 void displayHostname(char *hostname) {
-  display.setCursor(0, 20);
-  display.print("name:");
+  // Append hostname to the statue info on line 0
+  display.setCursor(70, 0); // Position after statue name
+  display.print(F(" "));
   display.print(hostname);
+  display.display();
+}
+
+void displayFrequencies(void) {
+  // Display RX frequencies on line 3 (y=20) in kHz
+  display.fillRect(0, 20, 128, 10, SSD1306_BLACK); // Clear line 3
+  display.setCursor(0, 20);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  // Show RX frequencies in kHz on line 3
+  display.print(F("RX:"));
+  bool first = true;
+  for (int i = 0; i < NUM_STATUES; i++) {
+    if (i != MY_STATUE_INDEX) {
+      if (!first)
+        display.print(F(","));
+      display.print(STATUE_FREQUENCIES[i] / 1000.0, 1);
+      display.print(F("k"));
+      first = false;
+    }
+  }
+
   display.display();
 }
 
@@ -185,10 +209,15 @@ void displayActivityStatus(bool isLinked) {
 
 void displayNetworkStatus(const char string[]) {
   display.setTextColor(SSD1306_WHITE);
-  display.fillRect(0, 10, 128, 20, SSD1306_BLACK); // Erase text area
+  display.fillRect(0, 10, 128, 10, SSD1306_BLACK); // Erase line 2 only
 
   display.setCursor(0, 10);
   display.print(string);
+
+  // Add TX frequency after IP address on same line
+  display.print(F(" TX:"));
+  display.print(MY_TX_FREQ / 1000.0, 1);
+  display.print(F("k"));
 
   display.display();
 }
@@ -199,25 +228,10 @@ void displaySplashScreen(void) {
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);             // Start at top-left corner
-  display.print(F("STATUE "));
+  display.print(F("ST "));
   display.print(THIS_STATUE_ID);
   display.print(F(": "));
-  display.println(MY_STATUE_NAME);
-  display.print(F("TX:"));
-  display.print(MY_TX_FREQ);
-  display.println(F("Hz"));
-  display.print(F("RX:"));
-  // Show all RX frequencies (all other statues)
-  bool first = true;
-  for (int i = 0; i < NUM_STATUES; i++) {
-    if (i != MY_STATUE_INDEX) {
-      if (!first)
-        display.print(F(","));
-      display.print(STATUE_FREQUENCIES[i]);
-      first = false;
-    }
-  }
-  display.println(F("Hz"));
+  display.print(MY_STATUE_NAME);
 
   display.setCursor(0, 25);
   //display.setTextSize(2);             // Draw 2X-scale text
