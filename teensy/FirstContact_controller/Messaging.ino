@@ -45,8 +45,8 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     if (client.connect(getHostname())) {
       Serial.println("connected");
-      setInactiveLedState();
-      client.subscribe("wled/all/api");
+      // LED control now handled by Pi controller
+      // client.subscribe("wled/all/api"); // No longer needed
 
       // Subscribe to statue-specific tone control topic
       char toneTopic[32];
@@ -79,27 +79,65 @@ void initMqtt() {
 }
 
 /*
-  publishState() - Publish via MQTT if we are on(Connected) or off
+  publishState() - Publish current detection state to MQTT
       - This routine is called at high-speed in our main loop
       - It only publishes changes to state
 */
 void publishState(ContactState state) {
-  static bool publishSucceeded = false;
-
-  if (publishSucceeded && state.isUnchanged()) {
+  if (state.isUnchanged()) {
     // No change in state to report.
     return;
   }
 
-  if (state.isLinked()) {
-    publishSucceeded = setActiveLedState();
+  // Build JSON message with current detection state
+  char jsonMsg[256];
+  char emittersList[128] = "[";
+  bool first = true;
+
+  // Build list of currently detected statues
+  for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
+    if (statue_idx == MY_STATUE_INDEX)
+      continue;
+
+    if (state.isLinkedTo(statue_idx)) {
+      if (!first) {
+        strcat(emittersList, ",");
+      }
+      strcat(emittersList, "\"");
+
+      // Convert statue name to lowercase
+      String emitterName = String(STATUE_NAMES[statue_idx]);
+      emitterName.toLowerCase();
+      strcat(emittersList, emitterName.c_str());
+
+      strcat(emittersList, "\"");
+      first = false;
+    }
+  }
+  strcat(emittersList, "]");
+
+  // Get detector name (this statue)
+  String detectorName = String(MY_STATUE_NAME);
+  detectorName.toLowerCase();
+
+  // Format complete JSON message
+  snprintf(jsonMsg, sizeof(jsonMsg), "{\"detector\":\"%s\",\"emitters\":%s}",
+           detectorName.c_str(), emittersList);
+
+  // Publish to missing_link/contact topic
+  if (client.publish("missing_link/contact", jsonMsg)) {
+    Serial.print("Published: ");
+    Serial.println(jsonMsg);
   } else {
-    publishSucceeded = setInactiveLedState();
+    Serial.println("Failed to publish detection state");
   }
 }
 
-// segment 0 = all LEDs
+// LED state functions removed - now handled by Raspberry Pi controller
+// based on messages published to missing_link/contact topic
 
+/*
+// Legacy LED control functions - kept for reference
 bool setActiveLedState() {
   bool result = client.publish("wled/elektra/api", "{\"tt\": 0, \"seg\": [{ \
     \"id\": 0, \
@@ -136,3 +174,4 @@ bool setInactiveLedState() {
     \"pal\": 3 \
   }]}");
 }
+*/
