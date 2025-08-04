@@ -68,25 +68,35 @@ void displayTimeCount() {
       - It only publishes changes to state
 */
 void displayState(ContactState state) {
-  char str[128];
-
   if (state.isUnchanged()) {
     return;
   }
 
+  // Clear the connection display area
+  display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
+
   if (state.isLinked()) {
     ++contactCount;
-    display.fillRect(0, 30, 128, 10, SSD1306_BLACK);
-    display.setTextSize(3);              // Normal 1:1 pixel scale
+    display.setTextSize(1);              // Normal text size for full names
     display.setTextColor(SSD1306_WHITE); // Draw white text
     display.setCursor(0, 30);
-    sprintf(str, "%07lu", contactCount);
-    display.printf(str);
-    display.display();
-  } else {
-    display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
-    display.display();
+
+    // Display connected statue names
+    display.print(F("LINK:"));
+    bool first = true;
+    for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
+      if (state.isLinkedTo(statue_idx)) {
+        if (!first) {
+          display.print(F("<>"));
+        }
+        // Display full statue name
+        display.print(STATUE_NAMES[statue_idx]);
+        first = false;
+      }
+    }
   }
+
+  display.display();
 }
 
 void displayHostname(char *hostname) {
