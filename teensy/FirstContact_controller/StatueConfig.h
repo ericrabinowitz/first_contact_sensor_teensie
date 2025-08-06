@@ -6,28 +6,21 @@ transmit and receive frequencies for detecting connections to multiple statues.
 3. Optimized Non-Harmonic Set
 Based on avoiding common intermodulation products:
 
-10.3 kHz
-13.7 kHz
-16.1 kHz
-18.9 kHz
-
 1. Align with FFT Bin Centers
 Your frequencies should fall exactly on FFT bin centers to maximize detection accuracy:
 // Example with 44.1kHz sample rate, 1024-point FFT
 float binWidth = 44100.0 / 1024.0; // = 43.07 Hz per bin
 
-// Choose frequencies that are integer multiples of binWidth
-float freq1 = binWidth * 239; // = 10,293 Hz (bin 239)
-float freq2 = binWidth * 318; // = 13,695 Hz (bin 318)
-float freq3 = binWidth * 374; // = 16,097 Hz (bin 374)
-float freq4 = binWidth * 439; // = 18,906 Hz (bin 439)
+⚠️ Problem Found: 3rd Order Intermodulation
+2×11,972 - 10,293 = 13,651 Hz
+This is only 44 Hz (1 bin) away from 13,695 Hz!
 
-// Recommended: At least 3-5 bins separation
-// This prevents spectral leakage overlap
-Bin 239: 10,293 Hz
-Bin 318: 13,695 Hz (79 bins apart ✓)
-Bin 374: 16,097 Hz (56 bins apart ✓)
-Bin 439: 18,906 Hz (65 bins apart ✓)
+// Choose frequencies that are integer multiples of binWidth
+10,077 Hz (bin 234)
+12,274 Hz (bin 285)
+14,643 Hz (bin 340)
+17,227 Hz (bin 400)
+19,467 Hz (bin 452)
 */
 
 #ifndef STATUE_CONFIG_H
