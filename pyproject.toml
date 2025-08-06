@@ -46,3 +46,6 @@ indent-style = "space"
 
 # Unix line endings
 line-ending = "lf"
+
+[tool.pyright]
+reportMissingImports = false
