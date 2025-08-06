@@ -4,6 +4,7 @@
     "CONNACK",
     "cpconf",
     "dnsmasq",
+    "dormants",
     "elektra",
     "Goertzel",
     "journalctl",
