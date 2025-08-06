@@ -16,13 +16,15 @@ Execute: ./controller.py
 
 import json
 import os
-import subprocess
+import re
 import threading
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, List, Set
 
 import paho.mqtt.client as mqtt
+import sounddevice as sd
+import soundfile as sf
 
 # TODO:
 # move global variables separate store lib
@@ -58,9 +60,7 @@ VERSION = "1.0"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
 
 # Folder for audio files
-SRC_SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
-# Use ramdisk to speed up file I/O
-SONG_DIR = "/run/audio_files"
+SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONG = "Missing Link Playa 1 - 6 Channel 6-7.wav"
 DNSMASQ_FILE = os.path.join(os.path.dirname(__file__), "../setup/dnsmasq.conf")
 
@@ -71,12 +71,13 @@ LINK_MQTT_TOPIC = "missing_link/contact"  # Topic for link/ msgs
 #     "emitters": ["elektra"], # Statues are currently linked to the detector
 # }
 # Topics for configuring the Teensy
-REQ_CONFIG_MQTT_TOPIC = "missing_link/req_config"
+CONFIG_REQ_MQTT_TOPIC = "missing_link/config/request"
 # "true"       # request to send the Teensy config
-CONFIG_MQTT_TOPIC = "missing_link/config"
+CONFIG_RESP_MQTT_TOPIC = "missing_link/config/response"
 # {
 #     "eros": {
-#         "frequency": 10000,                 # Frequency in Hz to emit tones on
+#         "emit": 10000,                 # Frequency in Hz to emit a tone on
+#         "detect": ["elektra", ...],    # Statues to receive tones from
 #         "mac_address": "aa:bb:cc:dd:ee:ff", # MAC address of the Teensy
 #         "ip_address": "192.168.4.11",       # IP address of the Teensy
 #     },
@@ -97,6 +98,7 @@ MQTT_PASSWORD = None  # If using authentication, otherwise set as None
 PALETTE_ID = 3
 FADE_MS = 2000  # Fade time in milliseconds
 COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
+
 # Defaults to the settings for ALL
 COLORS = {
     Statue.ELEKTRA: {
@@ -110,6 +112,7 @@ COLORS = {
         "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
     },
 }
+
 # Defaults to the settings for ALL
 EFFECTS = {
     Statue.ALL: {
@@ -169,35 +172,74 @@ debug = False  # Enable debug mode for verbose output
 # MQTT client
 mqttc: Any = None
 
+# Derived from audio file
+audio = {
+    "data": None,  # Loaded audio data
+    "sample_rate": 0,
+}
+
+devices = {
+    Statue.EROS: {
+        "port_id": "hw:3,0",
+        "output": 0,
+        "type": "",  # Derived from device info, ie "c-media usb headphone set"
+        "sample_rate": 0,  # Derived from device info, ie 44100
+    },
+    Statue.ELEKTRA: {
+        "port_id": "hw:3,0",
+        "output": 1,
+        "type": "",
+        "sample_rate": 0,
+    },
+    Statue.SOPHIA: {
+        "port_id": "hw:3,1",
+        "output": 0,
+        "type": "",
+        "sample_rate": 0,
+    },
+    Statue.ULTIMO: {
+        "port_id": "hw:3,1",
+        "output": 1,
+        "type": "",
+        "sample_rate": 0,
+    },
+    Statue.ARIEL: {
+        "port_id": "hw:3,2",
+        "output": 0,
+        "type": "",
+        "sample_rate": 0,
+    },
+}
+
 # Teensy configuration
 teensy_config = {
-    Statue.ELEKTRA: {
-        "frequency": 8_000,
-        "mac_address": "",  # derived from the dnsmasq.conf file
-        "ip_address": "",
-    },
     Statue.EROS: {
-        "frequency": 10_000,
-        "mac_address": "",
-        "ip_address": "",
+        "emit": 10077,
+        "detect": [Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
+        "mac_address": "",  # derived from the dnsmasq.conf file
+        "ip_address": "",  # derived from the dnsmasq.conf file
     },
     Statue.ELEKTRA: {
-        "frequency": 12_000,
+        "emit": 12274,
+        "detect": [Statue.EROS, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
         "mac_address": "",
         "ip_address": "",
     },
     Statue.SOPHIA: {
-        "frequency": 14_000,
+        "emit": 17227,
+        "detect": [Statue.EROS, Statue.ELEKTRA, Statue.ULTIMO, Statue.ARIEL],
         "mac_address": "",
         "ip_address": "",
     },
     Statue.ULTIMO: {
-        "frequency": 16_000,
+        "emit": 19467,
+        "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ARIEL],
         "mac_address": "",
         "ip_address": "",
     },
     Statue.ARIEL: {
-        "frequency": 18_000,
+        "emit": 14643,
+        "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
         "mac_address": "",
         "ip_address": "",
     },
@@ -216,13 +258,6 @@ active_statues: Set[Statue] = set()
 
 
 # ### Helper functions
-
-
-def copy_files():
-    src = os.path.join(SRC_SONG_DIR, "")
-    subprocess.call(["sudo", "rsync", "-a", "--no-compress", src, SONG_DIR])
-    subprocess.call(["sudo", "chmod", "-R", "777", SONG_DIR])
-    print(f"Copied files from {src} to {SONG_DIR}")
 
 
 def extract_addresses():
@@ -254,6 +289,84 @@ def extract_addresses():
                     )
                 except ValueError:
                     print(f"Unknown statue name: {statue_name}")
+
+
+def load_audio():
+    """Load audio files into memory."""
+    global audio
+    file = os.path.join(SONG_DIR, ACTIVE_SONG)
+    if not os.path.exists(file):
+        print(f"Audio file not found: {file}")
+        return
+    try:
+        audio_data, sample_rate = sf.read(file)
+        # Ensure audio_data is 2D
+        if audio_data.ndim == 1:
+            audio_data = audio_data.reshape(-1, 1)
+
+        if debug:
+            print(f"\nLoaded: {os.path.basename(file)}")
+            print(f"Duration: {len(audio_data) / sample_rate:.1f} seconds")
+            print(f"Channels: {audio_data.shape[1]}")
+    except Exception as e:
+        print(f"Error loading audio file: {e}")
+        return
+    audio["data"] = audio_data
+    audio["sample_rate"] = sample_rate
+
+
+def load_devices():
+    """Query audio devices and map them to statues."""
+    global devices
+    all_devices = sd.query_devices()
+    if debug:
+        print("Available audio devices:")
+        for d in all_devices:
+            print(
+                f"  {d['index']}: {d['name']} ({d['max_input_channels']} in, {d['max_output_channels']} out)"
+            )
+
+    # Updated pattern for "USB PnP Sound Device: Audio (hw:2,0)" format
+    pattern = r"^([^:]*): [^(]* \((hw:\d+,\d+)\)$"
+
+    transformed_devices = []
+    for device in all_devices:
+        match = re.search(pattern, device["name"])
+        if match:
+            transformed_devices.append(
+                {
+                    "index": device["index"],
+                    "type": match.group(1).lower(),
+                    "port_id": match.group(2),
+                    "num_outputs": int(device["max_output_channels"]),
+                    "sample_rate": int(device["default_samplerate"]),
+                }
+            )
+
+    total_outputs = sum(d["num_outputs"] for d in transformed_devices)
+    if total_outputs < len(devices.keys()):
+        print(
+            f"Warning: Not enough audio outputs available ({total_outputs} < {len(devices.keys())})"
+        )
+        return
+
+    for device in transformed_devices:
+        curr_output = 0
+        for statue, config in devices.items():
+            if (
+                config["port_id"] == device["port_id"]
+                and curr_output == device["output"]
+            ):
+                config["type"] = device["type"]
+                config["sample_rate"] = device["sample_rate"]
+                curr_output += 1
+                if curr_output >= device["num_outputs"]:
+                    break
+
+    for statue, config in devices.items():
+        if config["type"] == "" or config["sample_rate"] == 0:
+            print(f"Warning: No device found for {statue.value} ({config['port_id']})")
+            continue
 
 
 def get_statue(path: str, default: Statue | None = None) -> Statue | None:
@@ -344,7 +457,15 @@ def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
 
 
 def send_config():
-    return publish_mqtt(CONFIG_MQTT_TOPIC, teensy_config)
+    config = {}
+    for statue, config in teensy_config.items():
+        config[statue.value] = {
+            "emit": config["emit"],
+            "detect": [s.value for s in config.get("detect", [])],
+            "ip_address": config["ip_address"],
+            "mac_address": config["mac_address"],
+        }
+    return publish_mqtt(CONFIG_RESP_MQTT_TOPIC, config)
 
 
 def all_off():
@@ -460,6 +581,7 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'{"error": "bad request"}')
 
+    # TODO: report network status of various connected devices
     def do_GET(self):
         if debug:
             print(f"Received GET request on {self.path}")
@@ -558,7 +680,7 @@ def on_message(mqttc, userdata, msg):
         print(e)
         return
 
-    if msg.topic == REQ_CONFIG_MQTT_TOPIC:
+    if msg.topic == CONFIG_REQ_MQTT_TOPIC:
         send_config()
 
     if msg.topic == LINK_MQTT_TOPIC:
@@ -573,8 +695,9 @@ def on_message(mqttc, userdata, msg):
 
 
 if __name__ == "__main__":
-    copy_files()
     extract_addresses()
+    load_audio()
+    load_devices()
 
     # Should be in the global scope, mqttc is a global variable
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
