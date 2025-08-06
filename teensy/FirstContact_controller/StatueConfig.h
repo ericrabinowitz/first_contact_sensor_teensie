@@ -41,7 +41,7 @@ Bin 439: 18,906 Hz (65 bins apart ✓)
 
 // Define which statue this code is running on
 // Change this to 'B' or 'C' when compiling for other statues
-#define THIS_STATUE_ID 'E'
+#define THIS_STATUE_ID 'A'
 
 // Frequency table for all statues (in Hz) - always define all 5
 const int STATUE_FREQUENCIES[MAX_STATUES] = {

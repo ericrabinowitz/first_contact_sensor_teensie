@@ -120,9 +120,9 @@ void displayFrequencies(void) {
   for (int i = 0; i < NUM_STATUES; i++) {
     if (i != MY_STATUE_INDEX) {
       if (!first)
-        display.print(F(","));
+        display.print(F("/"));
       display.print(STATUE_FREQUENCIES[i] / 1000.0, 1);
-      display.print(F("k"));
+      //display.print(F("k"));
       first = false;
     }
   }
