@@ -37,23 +37,24 @@ Bin 439: 18,906 Hz (65 bins apart ✓)
 #define MAX_STATUES 5
 
 // Number of statues active in current test (can be 2-5)
-#define NUM_STATUES 4
+#define NUM_STATUES 5
 
 // Define which statue this code is running on
 // Change this to 'B' or 'C' when compiling for other statues
-#define THIS_STATUE_ID 'D'
+#define THIS_STATUE_ID 'E'
 
-// Frequency table for all statues (in Hz) - always define all 3
+// Frequency table for all statues (in Hz) - always define all 5
 const int STATUE_FREQUENCIES[MAX_STATUES] = {
-    10293, // Statue A - EROS
-    13695, // Statue B - ELEKTRA
-    16097, // Statue C - ARIEL
-    18906, // Statue D - SOPHIA
+    10077, // Statue A - EROS (bin 234)
+    12274, // Statue B - ELEKTRA (bin 285)
+    14643, // Statue C - ARIEL (bin 340)
+    17227, // Statue D - SOPHIA (bin 400)
+    19467, // Statue E - ULTIMO (bin 452)
 };
 
 // Name table for all statues - always define all 3
 const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "ARIEL",
-                                            "SOPHIA"};
+                                            "SOPHIA", "ULTIMO"};
 
 // Get this statue's index based on ID
 #if THIS_STATUE_ID == 'A'
@@ -64,8 +65,10 @@ const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "ARIEL",
 #define MY_STATUE_INDEX 2
 #elif THIS_STATUE_ID == 'D'
 #define MY_STATUE_INDEX 3
+#elif THIS_STATUE_ID == 'E'
+#define MY_STATUE_INDEX 4
 #else
-#error "Invalid THIS_STATUE_ID. Must be 'A', 'B', 'C', or 'D'"
+#error "Invalid THIS_STATUE_ID. Must be 'A', 'B', 'C', 'D', or 'E'"
 #endif
 
 // Validate configuration
