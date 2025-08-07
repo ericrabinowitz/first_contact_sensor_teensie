@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["numpy", "sounddevice", "soundfile", "paho-mqtt"]
+# dependencies = ["backports.strenum", "numpy", "paho-mqtt", "sounddevice", "soundfile", "ultraimport"]
 # ///
 
 """
@@ -17,16 +17,26 @@ Execute: ./controller.py
 import json
 import os
 import re
+import sys
 import threading
-from enum import IntEnum, StrEnum, auto
+from enum import IntEnum, auto
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, List, Set
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
 
 import paho.mqtt.client as mqtt
 import sounddevice as sd
 import soundfile as sf
+import ultraimport as ui
 
-from audio.music import ToggleableMultiChannelPlayback
+# from ..audio.music import ToggleableMultiChannelPlayback
+ToggleableMultiChannelPlayback = ui.ultraimport(
+    "__dir__/../audio/music.py", "ToggleableMultiChannelPlayback"
+)
 
 # TODO:
 # document how to configure the QuinLed boards via WLED app
@@ -425,7 +435,7 @@ def initialize_playback():
     music_playback.start()
 
 
-def get_statue(path: str, default: Statue | None = None) -> Statue | None:
+def get_statue(path: str, default=None):
     parts = path.split("/")
     if len(parts) < 3:
         return default

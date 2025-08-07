@@ -1,3 +1,7 @@
+[project]
+name = "missing_link"
+version = "1.0.0"
+
 [tool.ruff]
 # Target Python 3.9
 target-version = "py39"

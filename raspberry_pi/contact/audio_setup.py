@@ -83,7 +83,9 @@ class DynamicToneGenerator:
         with self.lock:
             self.frequency = max(500, new_frequency)  # Enforce minimum
             # Create new generator with updated frequency
-            self.base_generator = create_tone_generator(self.frequency, self.sample_rate)
+            self.base_generator = create_tone_generator(
+                self.frequency, self.sample_rate
+            )
 
     def get_frequency(self):
         """Get current frequency."""
@@ -96,7 +98,9 @@ class DynamicToneGenerator:
             return self.base_generator(frames)
 
 
-def initialize_audio_playback(devices, audio_file=None, loop=False, duration_seconds=300):
+def initialize_audio_playback(
+    devices, audio_file=None, loop=False, duration_seconds=300
+):
     """Initialize 6-channel audio playback for link detection with tone generation.
 
     Args:
@@ -112,7 +116,9 @@ def initialize_audio_playback(devices, audio_file=None, loop=False, duration_sec
     if audio_file is None:
         # Tone-only mode - create silent audio
         num_channels = len(devices) if devices else 1
-        audio_data, sample_rate = generate_silent_audio_data(num_channels, duration_seconds)
+        audio_data, sample_rate = generate_silent_audio_data(
+            num_channels, duration_seconds
+        )
     else:
         # Load audio file
         audio_data, sample_rate = load_audio_data(audio_file)
@@ -126,12 +132,12 @@ def initialize_audio_playback(devices, audio_file=None, loop=False, duration_sec
         right_channel_callbacks = {}
         dynamic_tone_generators = {}
         for i, device in enumerate(devices):
-            statue = device['statue']
+            statue = device["statue"]
             if statue in TONE_FREQUENCIES:
                 freq = TONE_FREQUENCIES[statue]
-                device_sample_rate = device.get('sample_rate', sample_rate)
+                device_sample_rate = device.get("sample_rate", sample_rate)
                 # Create dynamic tone generator
-                #dynamic_generator = DynamicToneGenerator(freq, device_sample_rate)
+                # dynamic_generator = DynamicToneGenerator(freq, device_sample_rate)
                 dynamic_generator = DynamicToneGenerator(freq, TONE_SAMPLE_RATE)
                 right_channel_callbacks[i] = dynamic_generator
                 dynamic_tone_generators[statue] = dynamic_generator
@@ -139,9 +145,11 @@ def initialize_audio_playback(devices, audio_file=None, loop=False, duration_sec
 
         # Create toggleable playback instance with tone generators
         playback = ToggleableMultiChannelPlayback(
-            audio_data, sample_rate, devices,
+            audio_data,
+            sample_rate,
+            devices,
             right_channel_callbacks=right_channel_callbacks,
-            loop=loop
+            loop=loop,
         )
         playback.start()
         print("  ✓ Audio playback initialized with dynamic tone generators")
