@@ -18,7 +18,7 @@ import json
 import os
 import re
 import threading
-from enum import Enum
+from enum import IntEnum, StrEnum, auto
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, List, Set
 
@@ -26,29 +26,31 @@ import paho.mqtt.client as mqtt
 import sounddevice as sd
 import soundfile as sf
 
+from audio.music import ToggleableMultiChannelPlayback
+
 # TODO:
+# document how to configure the QuinLed boards via WLED app
 # move global variables separate store lib
-# handle device selection
 
 
-class Statue(Enum):
-    ALL = "all"
-    ARCHES = "arches"
-    EROS = "eros"
-    ELEKTRA = "elektra"
-    SOPHIA = "sophia"
-    ULTIMO = "ultimo"
-    ARIEL = "ariel"
+class Statue(StrEnum):
+    ALL = auto()
+    ARCHES = auto()
+    EROS = auto()
+    ELEKTRA = auto()
+    SOPHIA = auto()
+    ULTIMO = auto()
+    ARIEL = auto()
 
 
-class Board(Enum):
-    FIVE_V_1 = "five_v_1"
-    FIVE_V_2 = "five_v_2"
-    FIVE_V_3 = "five_v_3"
-    TWELVE_V_1 = "twelve_v_1"
+class Board(StrEnum):
+    FIVE_V_1 = auto()
+    FIVE_V_2 = auto()
+    FIVE_V_3 = auto()
+    TWELVE_V_1 = auto()
 
 
-class Effect(Enum):
+class Effect(IntEnum):
     SOLID = 0
     FIREWORKS = 42
     NOISE = 71
@@ -76,8 +78,9 @@ CONFIG_REQ_MQTT_TOPIC = "missing_link/config/request"
 CONFIG_RESP_MQTT_TOPIC = "missing_link/config/response"
 # {
 #     "eros": {
-#         "emit": 10000,                 # Frequency in Hz to emit a tone on
-#         "detect": ["elektra", ...],    # Statues to receive tones from
+#         "emit": 10000,              # Frequency in Hz to emit a tone on
+#         "detect": ["elektra", ...], # Statues to receive tones from
+#         "threshold": 0.01,          # Detection threshold, using the Goertzel algorithm
 #         "mac_address": "aa:bb:cc:dd:ee:ff", # MAC address of the Teensy
 #         "ip_address": "192.168.4.11",       # IP address of the Teensy
 #     },
@@ -88,6 +91,7 @@ HAPTIC_MQTT_TOPIC = "missing_link/haptic"  # Topic for haptic motor commands
 #     "statue": "eros",  # Statue to turn on the haptic motors for
 # }
 WLED_MQTT_TOPIC = "wled/{}/api"  # Topic template for WLED commands, fill in board name
+STATUS_TOPIC = "$SYS/broker/clients/connected"  # Topic for MQTT client status
 MQTT_BROKER = "127.0.0.1"  # IP address of the MQTT broker
 MQTT_PORT = 1883  # Default MQTT port
 MQTT_USER = None  # If using authentication, otherwise set as None
@@ -178,35 +182,45 @@ audio = {
     "sample_rate": 0,
 }
 
-devices = {
+device_map = {
     Statue.EROS: {
-        "port_id": "hw:3,0",
-        "output": 0,
+        "port_id": "hw:3,0",  # ID of (USB) port that the device is connected to
+        "output": 0,  # Output channel index, ie 0 for first output
+        "input": 0,  # Input channel index of the audio file, ie 0 for first channel
         "type": "",  # Derived from device info, ie "c-media usb headphone set"
+        "index": -1,  # Derived from device info, ie 0
         "sample_rate": 0,  # Derived from device info, ie 44100
     },
     Statue.ELEKTRA: {
-        "port_id": "hw:3,0",
-        "output": 1,
+        "port_id": "hw:3,1",
+        "output": 0,
+        "input": 1,
         "type": "",
+        "index": -1,
         "sample_rate": 0,
     },
     Statue.SOPHIA: {
-        "port_id": "hw:3,1",
+        "port_id": "hw:3,2",
         "output": 0,
+        "input": 2,
         "type": "",
+        "index": -1,
         "sample_rate": 0,
     },
     Statue.ULTIMO: {
-        "port_id": "hw:3,1",
-        "output": 1,
+        "port_id": "hw:3,3",
+        "output": 0,
+        "input": 3,
         "type": "",
+        "index": -1,
         "sample_rate": 0,
     },
     Statue.ARIEL: {
-        "port_id": "hw:3,2",
+        "port_id": "hw:3,4",
         "output": 0,
+        "input": 4,
         "type": "",
+        "index": -1,
         "sample_rate": 0,
     },
 }
@@ -216,30 +230,35 @@ teensy_config = {
     Statue.EROS: {
         "emit": 10077,
         "detect": [Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
+        "threshold": 0.01,
         "mac_address": "",  # derived from the dnsmasq.conf file
         "ip_address": "",  # derived from the dnsmasq.conf file
     },
     Statue.ELEKTRA: {
         "emit": 12274,
         "detect": [Statue.EROS, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
+        "threshold": 0.01,
         "mac_address": "",
         "ip_address": "",
     },
     Statue.SOPHIA: {
         "emit": 17227,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.ULTIMO, Statue.ARIEL],
+        "threshold": 0.01,
         "mac_address": "",
         "ip_address": "",
     },
     Statue.ULTIMO: {
         "emit": 19467,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ARIEL],
+        "threshold": 0.01,
         "mac_address": "",
         "ip_address": "",
     },
     Statue.ARIEL: {
         "emit": 14643,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
+        "threshold": 0.01,
         "mac_address": "",
         "ip_address": "",
     },
@@ -256,6 +275,9 @@ linked_statues: Dict[Statue, List[Statue]] = {
 # Statues that are currently active
 active_statues: Set[Statue] = set()
 
+music_playback: Any = None
+
+mqtt_num_connected = 0
 
 # ### Helper functions
 
@@ -264,7 +286,7 @@ def extract_addresses():
     """Extracts MAC and IP addresses from the dnsmasq.conf file."""
     global teensy_config
     if not os.path.exists(DNSMASQ_FILE):
-        print(f"DNSMASQ file not found: {DNSMASQ_FILE}")
+        print(f"Error: DNSMASQ file not found: {DNSMASQ_FILE}")
         return
 
     with open(DNSMASQ_FILE, "r") as f:
@@ -288,7 +310,7 @@ def extract_addresses():
                         }
                     )
                 except ValueError:
-                    print(f"Unknown statue name: {statue_name}")
+                    print(f"Error: Unknown statue name: {statue_name}")
 
 
 def load_audio():
@@ -296,7 +318,7 @@ def load_audio():
     global audio
     file = os.path.join(SONG_DIR, ACTIVE_SONG)
     if not os.path.exists(file):
-        print(f"Audio file not found: {file}")
+        print(f"Error: Audio file not found: {file}")
         return
     try:
         audio_data, sample_rate = sf.read(file)
@@ -309,64 +331,98 @@ def load_audio():
             print(f"Duration: {len(audio_data) / sample_rate:.1f} seconds")
             print(f"Channels: {audio_data.shape[1]}")
     except Exception as e:
-        print(f"Error loading audio file: {e}")
+        print(f"Error: Failed to load audio file: {e}")
         return
     audio["data"] = audio_data
-    audio["sample_rate"] = sample_rate
+    audio["sample_rate"] = int(sample_rate)
 
 
 def load_devices():
     """Query audio devices and map them to statues."""
-    global devices
+    global device_map
     all_devices = sd.query_devices()
     if debug:
         print("Available audio devices:")
         for d in all_devices:
             print(
-                f"  {d['index']}: {d['name']} ({d['max_input_channels']} in, {d['max_output_channels']} out)"
+                f"  {d['index']}: {d['name']} ({d['max_input_channels']} in, {d['max_output_channels']} out)"  # noqa: E501
             )
 
     # Updated pattern for "USB PnP Sound Device: Audio (hw:2,0)" format
     pattern = r"^([^:]*): [^(]* \((hw:\d+,\d+)\)$"
 
     transformed_devices = []
-    for device in all_devices:
-        match = re.search(pattern, device["name"])
+    for d in all_devices:
+        match = re.search(pattern, d["name"])
         if match:
             transformed_devices.append(
                 {
-                    "index": device["index"],
+                    "index": d["index"],
                     "type": match.group(1).lower(),
                     "port_id": match.group(2),
-                    "num_outputs": int(device["max_output_channels"]),
-                    "sample_rate": int(device["default_samplerate"]),
+                    "num_outputs": int(d["max_output_channels"]),
+                    "sample_rate": int(d["default_samplerate"]),
                 }
             )
 
     total_outputs = sum(d["num_outputs"] for d in transformed_devices)
-    if total_outputs < len(devices.keys()):
+    if total_outputs < len(device_map.keys()):
         print(
-            f"Warning: Not enough audio outputs available ({total_outputs} < {len(devices.keys())})"
+            f"Error: Not enough audio outputs ({total_outputs} < {len(device_map.keys())})"
         )
         return
 
     for device in transformed_devices:
-        curr_output = 0
-        for statue, config in devices.items():
-            if (
-                config["port_id"] == device["port_id"]
-                and curr_output == device["output"]
-            ):
+        for statue, config in device_map.items():
+            if config["port_id"] == device["port_id"]:
+                if config["output"] >= device["num_outputs"]:
+                    print(
+                        f"Error: Device {device['port_id']} does not have output {config['output']}"
+                    )
+                    continue
+                if config["input"] >= audio["data"].shape[1]:
+                    print(
+                        f"Error: {statue.value} does not have music channel {config['input']}"
+                    )
+                    continue
+                if device["sample_rate"] != audio["sample_rate"]:
+                    print(
+                        f"Error: Device {device['port_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
+                    )
+                    continue
+
                 config["type"] = device["type"]
                 config["sample_rate"] = device["sample_rate"]
-                curr_output += 1
-                if curr_output >= device["num_outputs"]:
-                    break
+                config["index"] = device["index"]
 
-    for statue, config in devices.items():
+    for statue, config in device_map.items():
         if config["type"] == "" or config["sample_rate"] == 0:
-            print(f"Warning: No device found for {statue.value} ({config['port_id']})")
+            print(
+                f"Error: No device found for {statue.value} ({config['port_id']}, {config['output']})"  # noqa: E501
+            )
             continue
+
+
+def initialize_playback():
+    """Initialize the music playback object."""
+    global music_playback
+
+    devices = []
+    for statue, config in device_map.items():
+        devices.append(
+            {
+                "statue": statue.value,
+                "device_index": config["index"],
+                "sample_rate": config["sample_rate"],
+                "channel_index": config["input"],
+            }
+        )
+    devices.sort(key=lambda d: d["channel_index"])
+
+    music_playback = ToggleableMultiChannelPlayback(
+        audio["data"], audio["sample_rate"], devices
+    )
+    music_playback.start()
 
 
 def get_statue(path: str, default: Statue | None = None) -> Statue | None:
@@ -374,7 +430,7 @@ def get_statue(path: str, default: Statue | None = None) -> Statue | None:
     if len(parts) < 3:
         return default
     if len(parts) > 3:
-        print(f"Invalid path: {path}")
+        print(f"Warning: Invalid path: {path}")
         return None
     param = parts[-1]
     if param == "":
@@ -382,7 +438,7 @@ def get_statue(path: str, default: Statue | None = None) -> Statue | None:
     try:
         return Statue(param)
     except ValueError:
-        print(f"Unknown statue: {path}")
+        print(f"Warning: Unknown statue: {path}")
         return None
 
 
@@ -395,14 +451,16 @@ def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
     try:
         detector = Statue(statue_name)
     except ValueError:
-        print(f"Unknown statue: {statue_name}")
+        print(f"Error: Unknown statue: {statue_name}")
+        return set(), set()
+
     emitters = []
     for statue_name in payload.get("emitters", []):
         try:
             statue = Statue(statue_name)
             emitters.append(statue)
         except ValueError:
-            print(f"Unknown statue: {statue_name}")
+            print(f"Error: Unknown statue, ignoring: {statue_name}")
 
     linked_statues[detector] = emitters
     old_actives = active_statues.copy()
@@ -437,35 +495,39 @@ def publish_mqtt(topic: str, payload: dict) -> int:
     try:
         r.wait_for_publish(1)
     except Exception as e:
-        print(f"Failed to publish message: {e}")
+        print(f"Warning: Failed to publish message: {e}")
     return r.rc
 
 
 def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
     """Send a WLED command to control the LEDs of a statue."""
-    # TODO: map statue to a QuinLED board (client name) and segment ids
-    seg0 = seg_payload.copy()
-    seg0["id"] = 0
-    payload = {
-        "tt": 0,
-        "seg": [seg0],
-    }
-    return publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
+    if statue == Statue.ALL:
+        print("Error: Cannot send LED command to ALL statue")
+        return -1
+
+    last_rc = 0
+    for board, seg_map in SEGMENT_MAP[statue].items():
+        payload = {
+            "tt": 0,
+            "seg": [],
+        }
+        for part, seg_id in seg_map.items():
+            payload["seg"].append(
+                {
+                    "id": seg_id,
+                    **seg_payload,
+                }
+            )
+        last_rc = publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
+    return last_rc
 
 
 # ### Actions
 
 
 def send_config():
-    config = {}
-    for statue, config in teensy_config.items():
-        config[statue.value] = {
-            "emit": config["emit"],
-            "detect": [s.value for s in config.get("detect", [])],
-            "ip_address": config["ip_address"],
-            "mac_address": config["mac_address"],
-        }
-    return publish_mqtt(CONFIG_RESP_MQTT_TOPIC, config)
+    """Send the Teensy configuration via MQTT."""
+    return publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
 
 
 def all_off():
@@ -474,7 +536,6 @@ def all_off():
         "on": False,
         "bri": 0,
     }
-    # TODO: send to all boards
     return publish_mqtt(WLED_MQTT_TOPIC.format(Statue.ALL.value), payload)
 
 
@@ -549,14 +610,24 @@ def leds_dormant(statue: Statue):
     )
 
 
-def audio_active(statue: Statue):
-    # TODO: implement
-    pass
+def audio_active(statue: Statue) -> bool:
+    """Enable audio playback for a statue."""
+    input_channel = device_map.get(statue, {}).get("input", -1)
+    if input_channel < 0:
+        print(f"Error: No audio input configured for statue {statue.value}")
+        return False
+
+    return music_playback.set_music_channel(input_channel, True)
 
 
 def audio_dormant(statue: Statue):
-    # TODO: implement
-    pass
+    """Disable audio playback for a statue."""
+    input_channel = device_map.get(statue, {}).get("input", -1)
+    if input_channel < 0:
+        print(f"Error: No audio input configured for statue {statue.value}")
+        return False
+
+    return music_playback.set_music_channel(input_channel, False)
 
 
 # ### Debug server
@@ -581,7 +652,6 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'{"error": "bad request"}')
 
-    # TODO: report network status of various connected devices
     def do_GET(self):
         if debug:
             print(f"Received GET request on {self.path}")
@@ -591,6 +661,25 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                 {
                     "description": "Missing Link rpi controller script",
                     "version": VERSION,
+                    "mqtt_num_connected": mqtt_num_connected,
+                }
+            )
+        elif self.path == "/config/static":
+            self._send_response(
+                {
+                    "colors": COLORS,
+                    "effects": EFFECTS,
+                    "segment_map": SEGMENT_MAP,
+                }
+            )
+        elif self.path == "/config/dynamic":
+            self._send_response(
+                {
+                    "debug": debug,
+                    "device_map": device_map,
+                    "teensy_config": teensy_config,
+                    "linked_statues": linked_statues,
+                    "active_statues": list(active_statues),
                 }
             )
         else:
@@ -664,14 +753,18 @@ def start_debug_server():
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(mqttc, userdata, flags, reason_code, properties):
-    print(f"Connected with result code {reason_code}")
+    print(f"Connected to MQTT broker with result code {reason_code}")
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     mqttc.subscribe(LINK_MQTT_TOPIC)
+    mqttc.subscribe(CONFIG_REQ_MQTT_TOPIC)
+    mqttc.subscribe(STATUS_TOPIC)
 
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(mqttc, userdata, msg):
+    global mqtt_num_connected
+
     if debug:
         print(f"Received message on topic {msg.topic}: {msg.payload}")
     try:
@@ -688,16 +781,22 @@ def on_message(mqttc, userdata, msg):
         for statue in new_actives:
             audio_active(statue)
             leds_active(statue)
+            leds_active(Statue.ARCHES)
             haptics_on(statue)
         for statue in new_dormants:
             audio_dormant(statue)
             leds_dormant(statue)
+            leds_dormant(Statue.ARCHES)
+
+    if msg.topic == STATUS_TOPIC:
+        mqtt_num_connected = int(payload)
 
 
 if __name__ == "__main__":
     extract_addresses()
     load_audio()
     load_devices()
+    initialize_playback()
 
     # Should be in the global scope, mqttc is a global variable
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
