@@ -22,6 +22,7 @@
     "samplerate",
     "teensie",
     "Toggleable",
+    "ultraimport",
     "WLED"
   ],
   "files.associations": {
