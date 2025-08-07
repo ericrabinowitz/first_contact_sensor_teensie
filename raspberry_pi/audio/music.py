@@ -6,258 +6,88 @@ devices, with support for channel toggling based on statue connection states.
 
 Key Features:
 - Synchronized playback across up to 6 audio channels
-- Real-time channel muting/unmuting based on link state
+- Real-time channel muting/un-muting based on link state
 - Support for multi-channel WAV files
-- Integration with tone generation for contact detection
 
 Architecture:
-- MultiChannelPlayback: Base class for synchronized playback
-- ToggleableMultiChannelPlayback: Extends base with channel control
+- ToggleableMultiChannelPlayback: Class for synchronized playback with channel control
 - Each statue gets one channel from the source audio file
-- Playback callbacks can include tone generators for right channel
 
 Example:
     >>> from audio.music import ToggleableMultiChannelPlayback
     >>> playback = ToggleableMultiChannelPlayback(
-    ...     audio_data, sample_rate, devices,
-    ...     right_channel_callbacks=tone_generators
-    ... )
+    ...     audio_data, sample_rate, devices)
     >>> playback.start()
     >>> playback.toggle_music_channel(0)  # Enable first channel
 """
+
+# TODO:
+# Add support for more than 1 statue per audio device
+# Add support for audio devices with more than 2 outputs
+# if all are muted, stop/pause playback
+# consider options for switching songs
 
 import threading
 from typing import Any, Callable
 
 import numpy as np
 import sounddevice as sd
-import soundfile as sf
-
-from .devices import Statue, dynConfig, get_audio_devices
 
 
-def play_audio(statue: Statue, audio_file: str) -> None:
-    """Play a WAV file on the audio channel for the specified statue.
-
-    This is a simple single-statue playback function, primarily used
-    for testing. For production use, see MultiChannelPlayback classes.
-
-    Args:
-        statue (Statue): The statue to play audio on
-        audio_file (str): Path to WAV file to play
-
-    Note:
-        Audio is routed to the left channel (TRS tip) of the statue's
-        assigned USB device. The right channel remains silent.
-    """
-    config = dynConfig[statue.value]["audio"]
-
-    if config["device_index"] == -1:
-        print(f"WARNING: No audio device configured for {statue.value}")
-        return
-
-    channel_name = "left" if config["channel"] == 0 else "right"
-    print(f"Playing audio file for {statue.value} on device {config['device_index']} ({channel_name} channel)")
-
-    try:
-        # Load the audio file
-        data, samplerate = sf.read(audio_file)
-
-        # Handle multi-channel files - extract first channel if needed
-        if len(data.shape) > 1:
-            data = data[:, 0]  # Use first channel
-
-        # Convert to stereo and route to specific channel
-        if config["channel"] == 0:  # Left channel (TRS tip)
-            stereo_data = np.column_stack([data, np.zeros_like(data)])
-        else:  # Right channel (TRS ring)
-            stereo_data = np.column_stack([np.zeros_like(data), data])
-
-        # Play with specific channel routing
-        sd.play(
-            stereo_data,
-            samplerate=samplerate,
-            device=config["device_index"]
-        )
-        print(f"✓ Audio playback started for {statue.value} on channel {config['channel']}")
-
-    except ImportError:
-        print("WARNING: soundfile library not available, falling back to simple method")
-        # Fallback: use sd.play without soundfile (limited format support)
-        try:
-            # This is a simple fallback - won't work with all file formats
-            print("Please install soundfile: pip install soundfile")
-        except Exception as e:
-            print(f"Error playing audio: {e}")
-    except Exception as e:
-        print(f"Error playing audio file {audio_file}: {e}")
+BLOCK_SIZE = 1024  # Default block size for audio processing
 
 
-class MultiChannelPlayback:
-    """Manages synchronized multi-channel audio playback across multiple devices."""
+class ToggleableMultiChannelPlayback:
+    """Manages synchronized multi-channel audio playback across multiple devices.
 
-    def __init__(self, audio_data: np.ndarray, sample_rate: int, devices: list[dict[str, Any]]) -> None:
-        self.audio_data = audio_data
-        self.sample_rate = sample_rate
-        self.devices = devices
-        self.streams = []
-        self.is_playing = False
-        self.is_paused = False
-        self.frame_index = 0
-        self.lock = threading.Lock()
-
-    def _create_callback(self, channel_index: int) -> Callable:
-        """Create a callback function for a specific channel.
-
-        Each device gets its own callback that reads from the shared
-        frame index. Only the first device updates the index to maintain
-        synchronization.
-
-        Args:
-            channel_index (int): Index of the channel in the audio data
-
-        Returns:
-            function: Callback function for sounddevice stream
-        """
-        def callback(outdata, frames, time_info, status):
-            if status:
-                print(f"Stream status for channel {channel_index}: {status}")
-
-            with self.lock:
-                if self.is_paused:
-                    outdata.fill(0)
-                    return
-
-                # Calculate remaining frames
-                remaining_frames = len(self.audio_data) - self.frame_index
-                if remaining_frames <= 0:
-                    outdata.fill(0)
-                    self.is_playing = False
-                    return
-
-                # Get frames to play
-                frames_to_play = min(frames, remaining_frames)
-
-                # Extract channel data
-                if self.audio_data.ndim == 1 or channel_index >= self.audio_data.shape[1]:
-                    # Mono or channel doesn't exist - use silence
-                    channel_data = np.zeros(frames_to_play)
-                else:
-                    # Get specific channel
-                    channel_data = self.audio_data[self.frame_index:self.frame_index + frames_to_play, channel_index]
-
-                # Create stereo output with audio on left channel only
-                stereo_data = np.zeros((frames, 2))
-                stereo_data[:frames_to_play, 0] = channel_data  # Left channel
-                # Right channel stays silent (reserved for tone)
-
-                outdata[:] = stereo_data
-
-                # Update frame index (only one callback should do this)
-                if channel_index == 0:
-                    self.frame_index += frames_to_play
-
-        return callback
-
-    def start(self):
-        """Start synchronized playback on all devices."""
-        if self.is_playing:
-            return
-
-        # Create output streams for each device
-        for i, device in enumerate(self.devices):
-            channel_index = i  # Map device index to audio channel
-
-            stream = sd.OutputStream(
-                device=device["device_index"],
-                channels=2,  # Stereo output
-                samplerate=self.sample_rate,
-                callback=self._create_callback(channel_index),
-                blocksize=dynConfig.get("block_size", 1024)
-            )
-            self.streams.append(stream)
-
-        # Start all streams
-        self.is_playing = True
-        for stream in self.streams:
-            stream.start()
-
-        print(f"Started {len(self.streams)}-channel playback")
-
-    def pause(self):
-        """Pause playback."""
-        with self.lock:
-            self.is_paused = True
-
-    def resume(self):
-        """Resume playback."""
-        with self.lock:
-            self.is_paused = False
-
-    def stop(self):
-        """Stop playback and clean up resources."""
-        self.is_playing = False
-
-        # Stop and close all streams
-        for stream in self.streams:
-            stream.stop()
-            stream.close()
-
-        self.streams = []
-        print("Playback stopped")
-
-    def is_active(self):
-        """Check if playback is still active."""
-        return self.is_playing and self.frame_index < len(self.audio_data)
-
-
-class ToggleableMultiChannelPlayback(MultiChannelPlayback):
-    """Extended playback class with independent music and tone channel control.
-
-    This class extends MultiChannelPlayback with the ability to dynamically
-    enable/disable music and tone channels independently during playback.
-    Music channels control statue audio playback, while tone channels control
-    detection tone generation.
+    Has the ability to dynamically enable/disable music channels independently
+    during playback. Music channels control statue audio playback.
 
     Channel Architecture:
     - Left channel (TRS tip): Music audio controlled by channel_enabled
-    - Right channel (TRS ring): Detection tones controlled by tone_enabled
-    - Independent control allows tones without music and vice versa
+    - Right channel (TRS ring): Muted
 
     Attributes:
         channel_enabled (list): Boolean flags for music channels (left)
-        tone_enabled (list): Boolean flags for tone channels (right)
         active_count (int): Number of currently active music channels
-        right_channel_callbacks (dict): Tone generators by channel index
         lock (threading.RLock): Reentrant lock for thread-safe state changes
     """
 
-    def __init__(self, audio_data, sample_rate, devices, right_channel_callbacks=None, loop=False):
-        """Initialize toggleable playback with optional tone generators.
+    def __init__(
+        self,
+        audio_data: np.ndarray,
+        sample_rate: int,
+        devices: list[dict[str, Any]],
+        loop: bool = True,
+    ):
+        """Initialize toggleable playback.
 
         Args:
             audio_data (np.ndarray): Multi-channel audio data
             sample_rate (int): Sample rate in Hz
             devices (list): Device configurations
-            right_channel_callbacks (dict, optional): Tone generators by statue.
-                Maps Statue enum to generator function that returns samples.
-            loop (bool, optional): Whether to loop audio playback. Defaults to False.
+            loop (bool, optional): Whether to loop audio playback. Defaults to True.
         """
-        super().__init__(audio_data, sample_rate, devices)
+        self.audio_data = audio_data
+        self.sample_rate = sample_rate
+        self.devices = devices
+        self.streams = []
+        self.is_stopped = True
+        self.is_paused = False
+        self.frame_index = 0
+        self.lock = threading.Lock()
+
         # Initialize all music channels as disabled
         self.channel_enabled = [False] * len(devices)
-        # Initialize all tone channels as enabled (backward compatibility)
-        self.tone_enabled = [True] * len(devices)
         self.active_count = 0
-        # Optional callbacks for right channel data (e.g., for tone generation)
-        self.right_channel_callbacks = right_channel_callbacks or {}
         # Use reentrant lock to allow toggle->set method calls
         self.lock = threading.RLock()
         # Whether to loop audio playback
         self.loop = loop
 
-    def _create_callback(self, channel_index):
+    def _create_callback(self, channel_index: int) -> Callable:
         """Create a callback function with mute control for a specific channel."""
+
         def callback(outdata, frames, _time_info, status):
             if status:
                 print(f"\rStream status for channel {channel_index}: {status}")
@@ -276,33 +106,35 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
                         remaining_frames = len(self.audio_data)
                     else:
                         outdata.fill(0)
-                        self.is_playing = False
+                        self.is_stopped = True
                         return
 
                 # Get frames to play
                 frames_to_play = min(frames, remaining_frames)
 
                 # Extract channel data
-                if self.audio_data.ndim == 1 or channel_index >= self.audio_data.shape[1]:
+                if (
+                    self.audio_data.ndim == 1
+                    or channel_index >= self.audio_data.shape[1]
+                ):
                     # Mono or channel doesn't exist - use silence
+                    channel_data = np.zeros(frames_to_play)
+                elif not self.channel_enabled[channel_index]:
+                    # Apply mute if channel is disabled
                     channel_data = np.zeros(frames_to_play)
                 else:
                     # Get specific channel
-                    channel_data = self.audio_data[self.frame_index:self.frame_index + frames_to_play, channel_index]
-
-                # Apply mute if channel is disabled
-                if not self.channel_enabled[channel_index]:
-                    channel_data = np.zeros_like(channel_data)
+                    channel_data = self.audio_data[
+                        self.frame_index : self.frame_index  # noqa: E203
+                        + frames_to_play,
+                        channel_index,
+                    ]
 
                 # Create stereo output with audio on left channel
                 stereo_data = np.zeros((frames, 2))
                 stereo_data[:frames_to_play, 0] = channel_data  # Left channel
 
-                # Right channel: use callback if tone enabled and callback provided
-                if (self.tone_enabled[channel_index] and
-                    channel_index in self.right_channel_callbacks):
-                    right_data = self.right_channel_callbacks[channel_index](frames)
-                    stereo_data[:, 1] = right_data
+                # Leave the right channel muted
 
                 outdata[:] = stereo_data
 
@@ -312,11 +144,62 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
 
         return callback
 
-    def toggle_music_channel(self, channel_index):
+    def start(self):
+        """Start synchronized playback on all devices."""
+        if not self.is_stopped:
+            return
+
+        # Create output streams for each device
+        for i, device in enumerate(self.devices):
+            channel_index = i  # Map device index to audio channel
+
+            stream = sd.OutputStream(
+                device=device["device_index"],
+                channels=2,  # Stereo output
+                samplerate=self.sample_rate,
+                callback=self._create_callback(channel_index),
+                blocksize=BLOCK_SIZE,
+            )
+            self.streams.append(stream)
+
+        # Start all streams
+        self.is_stopped = False
+        for stream in self.streams:
+            stream.start()
+
+        print(f"Started {len(self.streams)}-channel playback")
+
+    def pause(self):
+        """Pause playback."""
+        with self.lock:
+            self.is_paused = True
+
+    def resume(self):
+        """Resume playback."""
+        with self.lock:
+            self.is_paused = False
+
+    def stop(self):
+        """Stop playback and clean up resources."""
+        self.is_stopped = True
+
+        # Stop and close all streams
+        for stream in self.streams:
+            stream.stop()
+            stream.close()
+
+        self.streams = []
+        print("Playback stopped")
+
+    def is_active(self):
+        """Check if playback is still active."""
+        return (not self.is_stopped) and self.frame_index < len(self.audio_data)
+
+    def toggle_music_channel(self, channel_index: int) -> bool:
         """Toggle a music channel on/off.
 
         When a statue becomes linked/unlinked, this method is called to
-        enable/disable its music audio channel (left channel). The audio 
+        enable/disable its music audio channel (left channel). The audio
         fades in/out smoothly to avoid clicks.
 
         Args:
@@ -325,48 +208,19 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
         Returns:
             bool: True if toggle successful, False if invalid index
         """
-        if 0 <= channel_index < len(self.channel_enabled):
-            with self.lock:
-                current_state = self.channel_enabled[channel_index]
-                return self.set_music_channel(channel_index, not current_state)
-        return False
+        if channel_index < 0 or channel_index >= len(self.channel_enabled):
+            return False
+        with self.lock:
+            current_state = self.channel_enabled[channel_index]
+            return self.set_music_channel(channel_index, not current_state)
 
-    def toggle_tone_channel(self, channel_index):
-        """Toggle a tone channel on/off.
+    def enable_all_music_channels(self):
+        """Enable all music channels."""
+        with self.lock:
+            for i in range(len(self.channel_enabled)):
+                self.set_music_channel(i, True)
 
-        This method enables/disables tone generation on the right channel
-        for the specified channel index. Tone generation is independent
-        of music playback and can be controlled separately.
-
-        Args:
-            channel_index (int): Index of the tone channel to toggle
-
-        Returns:
-            bool: True if toggle successful, False if invalid index
-        """
-        if 0 <= channel_index < len(self.tone_enabled):
-            with self.lock:
-                current_state = self.tone_enabled[channel_index]
-                return self.set_tone_channel(channel_index, not current_state)
-        return False
-
-    def set_tone_channel(self, channel_index, enabled):
-        """Set tone channel state explicitly.
-
-        Args:
-            channel_index (int): Index of the tone channel
-            enabled (bool): True to enable tone, False to disable
-
-        Returns:
-            bool: True if set successful, False if invalid index
-        """
-        if 0 <= channel_index < len(self.tone_enabled):
-            with self.lock:
-                self.tone_enabled[channel_index] = enabled
-                return True
-        return False
-
-    def set_music_channel(self, channel_index, enabled):
+    def set_music_channel(self, channel_index: int, enabled: bool) -> bool:
         """Set music channel state explicitly.
 
         Args:
@@ -376,93 +230,33 @@ class ToggleableMultiChannelPlayback(MultiChannelPlayback):
         Returns:
             bool: True if set successful, False if invalid index
         """
-        if 0 <= channel_index < len(self.channel_enabled):
-            with self.lock:
-                self.channel_enabled[channel_index] = enabled
+        if channel_index < 0 or channel_index >= len(self.channel_enabled):
+            return False
 
-                # Update active count
-                self.active_count = sum(self.channel_enabled)
+        with self.lock:
+            self.channel_enabled[channel_index] = enabled
 
-                # Handle playback state changes
-                if self.active_count == 0 and self.is_playing:
-                    # Last channel turned off - stop playback
-                    self.is_playing = False
-                    self.frame_index = 0  # Reset to beginning
-                elif self.active_count == 1 and not self.is_playing and enabled:
-                    # First channel turned on - start playback
-                    self.is_playing = True
-                    if self.frame_index >= len(self.audio_data):
-                        self.frame_index = 0  # Reset if at end
+            # Update active count
+            self.active_count = sum(self.channel_enabled)
 
-                return True
-        return False
+            # Handle playback state changes
+            if self.active_count == 0 and not self.is_stopped:
+                # Last channel turned off - stop playback
+                self.is_stopped = True
+                self.frame_index = 0  # Reset to beginning
+            elif self.active_count == 1 and self.is_stopped and enabled:
+                # First channel turned on - start playback
+                self.is_stopped = False
+                if self.frame_index >= len(self.audio_data):
+                    self.frame_index = 0  # Reset if at end
+            return True
 
     def get_channel_states(self):
         """Return current music channel enabled states."""
         return self.channel_enabled.copy()
-
-    def get_tone_states(self):
-        """Return current tone channel enabled states."""
-        return self.tone_enabled.copy()
 
     def get_progress(self):
         """Get playback progress as percentage."""
         if len(self.audio_data) == 0:
             return 0
         return min(100, int(self.frame_index / len(self.audio_data) * 100))
-
-
-def play_multichannel_audio(audio_file, devices=None):
-    """
-    Play a multi-channel audio file across multiple devices.
-
-    Args:
-        audio_file: Path to the multi-channel WAV file
-        devices: List of device configurations. If None, uses all configured audio devices.
-
-    Returns:
-        MultiChannelPlayback instance for control, or None on error
-    """
-    try:
-        # Load the audio file
-        audio_data, sample_rate = sf.read(audio_file)
-
-        # Ensure audio_data is 2D (samples x channels)
-        if audio_data.ndim == 1:
-            audio_data = audio_data.reshape(-1, 1)
-
-        print(f"Loaded audio file: {audio_file}")
-        print(f"  Sample rate: {sample_rate} Hz")
-        print(f"  Duration: {len(audio_data) / sample_rate:.2f} seconds")
-        print(f"  Channels: {audio_data.shape[1]}")
-
-        # Get devices if not provided
-        if devices is None:
-            devices = get_audio_devices()
-
-        if not devices:
-            print("ERROR: No audio devices configured")
-            return None
-
-        # Limit to available channels
-        num_channels = min(len(devices), audio_data.shape[1])
-        devices = devices[:num_channels]
-
-        print(f"\nMapping {num_channels} audio channels to devices:")
-        for i, device in enumerate(devices):
-            statue_name = device['statue'].value if hasattr(device['statue'], 'value') else str(device['statue'])
-            print(f"  Channel {i} → {statue_name} (device {device['device_index']})")
-
-        # Create and start playback
-        playback = MultiChannelPlayback(audio_data, sample_rate, devices)
-        playback.start()
-
-        return playback
-
-    except ImportError:
-        print("ERROR: soundfile library not available")
-        print("Install with: pip install soundfile")
-        return None
-    except Exception as e:
-        print(f"Error loading audio file {audio_file}: {e}")
-        return None
