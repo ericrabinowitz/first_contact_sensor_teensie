@@ -51,6 +51,7 @@ class Statue(Enum):
     SOPHIA = "sophia"
     ULTIMO = "ultimo"
     ARIEL = "ariel"
+    CH6 = "ch6"
 
 
 # ALSA system has a default limit of 32 cards

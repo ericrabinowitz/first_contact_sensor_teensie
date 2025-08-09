@@ -3,6 +3,7 @@ Display: Printing to the small OLED display on the teensy.
 */
 
 #include "Display.h"
+#include "StatueConfig.h"
 
 // Create the OLED display object using Wire2 (as in original code).
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
@@ -67,31 +68,65 @@ void displayTimeCount() {
       - It only publishes changes to state
 */
 void displayState(ContactState state) {
-  char str[128];
-
   if (state.isUnchanged()) {
     return;
   }
 
-  if (state.isLinked) {
+  // Clear the connection display area
+  display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
+
+  if (state.isLinked()) {
     ++contactCount;
-    display.fillRect(0, 30, 128, 10, SSD1306_BLACK);
-    display.setTextSize(3);              // Normal 1:1 pixel scale
+    display.setTextSize(1);              // Normal text size for full names
     display.setTextColor(SSD1306_WHITE); // Draw white text
     display.setCursor(0, 30);
-    sprintf(str, "%07lu", contactCount);
-    display.printf(str);
-    display.display();
-  } else {
-    display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
-    display.display();
+
+    // Display connected statue names
+    display.print(F("LINK:"));
+    bool first = true;
+    for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
+      if (state.isLinkedTo(statue_idx)) {
+        if (!first) {
+          display.print(F("<>"));
+        }
+        // Display full statue name
+        display.print(STATUE_NAMES[statue_idx]);
+        first = false;
+      }
+    }
   }
+
+  display.display();
 }
 
 void displayHostname(char *hostname) {
-  display.setCursor(0, 20);
-  display.print("name:");
+  // Append hostname to the statue info on line 0
+  display.setCursor(70, 0); // Position after statue name
+  display.print(F(" "));
   display.print(hostname);
+  display.display();
+}
+
+void displayFrequencies(void) {
+  // Display RX frequencies on line 3 (y=20) in kHz
+  display.fillRect(0, 20, 128, 10, SSD1306_BLACK); // Clear line 3
+  display.setCursor(0, 20);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  // Show RX frequencies in kHz on line 3
+  display.print(F("RX:"));
+  bool first = true;
+  for (int i = 0; i < NUM_STATUES; i++) {
+    if (i != MY_STATUE_INDEX) {
+      if (!first)
+        display.print(F("/"));
+      display.print(STATUE_FREQUENCIES[i] / 1000.0, 1);
+      //display.print(F("k"));
+      first = false;
+    }
+  }
+
   display.display();
 }
 
@@ -184,10 +219,15 @@ void displayActivityStatus(bool isLinked) {
 
 void displayNetworkStatus(const char string[]) {
   display.setTextColor(SSD1306_WHITE);
-  display.fillRect(0, 10, 128, 20, SSD1306_BLACK); // Erase text area
+  display.fillRect(0, 10, 128, 10, SSD1306_BLACK); // Erase line 2 only
 
   display.setCursor(0, 10);
   display.print(string);
+
+  // Add TX frequency after IP address on same line
+  display.print(F(" TX:"));
+  display.print(MY_TX_FREQ / 1000.0, 1);
+  display.print(F("k"));
 
   display.display();
 }
@@ -198,15 +238,20 @@ void displaySplashScreen(void) {
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);             // Start at top-left corner
-  display.println(F("    1st CONTACT!!"));
-  display.println(F(""));
-  display.println(F(""));
+  display.print(F("ST "));
+  display.print(THIS_STATUE_ID);
+  display.print(F(": "));
+  display.print(MY_STATUE_NAME);
 
-  display.setCursor(0, 10);
+  display.setCursor(0, 25);
   //display.setTextSize(2);             // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
+#if STANDALONE_MODE
+  display.println(F("STANDALONE MODE"));
+#else
   display.print(F("IP:"));
   display.print(getLocalIp());
+#endif
 
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text

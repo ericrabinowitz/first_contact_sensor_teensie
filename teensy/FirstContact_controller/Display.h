@@ -30,6 +30,7 @@ void displaySetup();
 void displaySplashScreen();
 void displayHostname(char *hostname);
 void displayNetworkStatus(const char *status);
+void displayFrequencies();
 void displayTimeCount();
 void displayState(ContactState state);
 void displayActivityStatus(bool isLinked);
