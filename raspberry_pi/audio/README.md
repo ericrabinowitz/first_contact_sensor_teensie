@@ -5,6 +5,7 @@ The audio module provides multi-channel audio playback and device management for
 ## Overview
 
 This module handles:
+
 - USB audio device enumeration and configuration
 - Multi-channel synchronized audio playback
 - Channel routing for audio and tone separation
@@ -26,18 +27,21 @@ This module handles:
 ## Components
 
 ### devices.py
+
 - `Statue`: Enum of the 5 statue names
 - `configure_devices()`: Main device configuration function
 - `get_audio_devices()`: Returns configured audio devices
 - `dynConfig`: Global configuration dictionary
 
 ### music.py
+
 - `play_audio()`: Simple single-channel playback
-- `MultiChannelPlayback`: Base synchronized playback class
-- `ToggleableMultiChannelPlayback`: Adds channel enable/disable
+- `ToggleableMultiChannelPlayback`: Synchronized playback class with channel enable/disable
 
 ### multichannel_audio_demo.py
+
 Interactive demo showing:
+
 - Channel mapping visualization
 - Real-time channel toggling
 - Progress and status display
@@ -45,6 +49,7 @@ Interactive demo showing:
 ## Usage
 
 ### Basic Configuration
+
 ```python
 from audio.devices import configure_devices, Statue
 
@@ -57,6 +62,7 @@ for device in devices:
 ```
 
 ### Multi-Channel Playback
+
 ```python
 from audio.music import ToggleableMultiChannelPlayback
 import soundfile as sf
@@ -74,6 +80,7 @@ playback.toggle_channel(1)  # Enable ELEKTRA
 ```
 
 ### With Tone Generation
+
 ```python
 # Create tone generators for each statue
 tone_generators = {}
@@ -92,6 +99,7 @@ playback = ToggleableMultiChannelPlayback(
 ## Channel Mapping
 
 The TRS (Tip-Ring-Sleeve) jack mapping:
+
 - **Tip (Left)**: Audio playback channel
 - **Ring (Right)**: Tone generation channel
 - **Sleeve**: Ground
@@ -107,6 +115,6 @@ This allows a single stereo cable to carry both the music audio and the detectio
 ## Testing
 
 Run the interactive demo:
-```make audio-demo```
+`make audio-demo`
 
 Press number keys 1-5 to toggle channels on/off.

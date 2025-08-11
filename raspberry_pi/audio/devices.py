@@ -46,6 +46,7 @@ class Statue(Enum):
     Each statue represents a figure in the art installation and requires
     its own USB audio device for contact sensing and audio playback.
     """
+
     EROS = "eros"
     ELEKTRA = "elektra"
     SOPHIA = "sophia"
@@ -131,23 +132,27 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
     if dynConfig["debug"]:
         print("Available audio devices:")
         for d in devices:
-            print(f"  {d['index']}: {d['name']} ({d['max_input_channels']} in, {d['max_output_channels']} out)")
+            print(
+                f"  {d['index']}: {d['name']} ({d['max_input_channels']} in, {d['max_output_channels']} out)"  # noqa: E501
+            )
 
     # Updated pattern for "USB PnP Sound Device: Audio (hw:2,0)" format
-    pattern = r'^([^:]*): ([^(]*) \((hw:\d+,\d+)\)$'
+    pattern = r"^([^:]*): ([^(]*) \((hw:\d+,\d+)\)$"
 
     usb_devices = []
     for device in devices:
         match = re.search(pattern, device["name"])
         if match and USB_ADAPTER in device["name"].lower():
-            usb_devices.append({
-                "index": device["index"],
-                "name": device["name"],
-                "device_id": match.group(3),
-                "max_input": device["max_input_channels"],
-                "max_output": device["max_output_channels"],
-                "sample_rate": int(device["default_samplerate"])
-            })
+            usb_devices.append(
+                {
+                    "index": device["index"],
+                    "name": device["name"],
+                    "device_id": match.group(3),
+                    "max_input": device["max_input_channels"],
+                    "max_output": device["max_output_channels"],
+                    "sample_rate": int(device["default_samplerate"]),
+                }
+            )
 
     if len(usb_devices) == 0:
         print("ERROR: No USB audio devices found")
@@ -168,14 +173,20 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
     # Configure each USB device with a statue
     for i, usb_device in enumerate(usb_devices):
         if i >= len(statue_list):
-            print(f"WARNING: More USB devices than defined statues. Device {i} skipped.")
+            print(
+                f"WARNING: More USB devices than defined statues. Device {i} skipped."
+            )
             break
 
         statue = statue_list[i]
-        print(f"\nConfiguring {statue.value.upper()} with device {usb_device['index']}: {usb_device['name']}")
+        print(
+            f"\nConfiguring {statue.value.upper()} with device {usb_device['index']}: {usb_device['name']}"  # noqa: E501
+        )
 
         # Configure input if available
-        if usb_device["max_input"] > 0:  # Configure input for all devices with input capability
+        if (
+            usb_device["max_input"] > 0
+        ):  # Configure input for all devices with input capability
             print(f"  {statue.value} (detect): input channel")
             dynConfig[statue.value]["detect"]["device_index"] = usb_device["index"]
             dynConfig[statue.value]["detect"]["device_id"] = usb_device["device_id"]
@@ -202,11 +213,13 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
             dynConfig[statue.value]["tone"]["device_type"] = usb_device["name"]
             dynConfig[statue.value]["tone"]["channel"] = 1  # right channel (TRS ring)
 
-            configured_devices.append({
-                "statue": statue,
-                "device_index": usb_device["index"],
-                "sample_rate": usb_device["sample_rate"]
-            })
+            configured_devices.append(
+                {
+                    "statue": statue,
+                    "device_index": usb_device["index"],
+                    "sample_rate": usb_device["sample_rate"],
+                }
+            )
 
     if dynConfig["debug"]:
         print("\nConfiguration summary:")
@@ -239,12 +252,17 @@ def get_audio_devices() -> list[dict[str, Any]]:
         statue_config = dynConfig.get(statue.value, {})
         if isinstance(statue_config, dict):
             audio_config = statue_config.get("audio", {})
-            if isinstance(audio_config, dict) and audio_config.get("device_index", -1) != -1:
-                audio_devices.append({
-                    "statue": statue,
-                    "device_index": audio_config["device_index"],
-                    "sample_rate": audio_config["sample_rate"],
-                    "channel": audio_config["channel"]
-                })
+            if (
+                isinstance(audio_config, dict)
+                and audio_config.get("device_index", -1) != -1
+            ):
+                audio_devices.append(
+                    {
+                        "statue": statue,
+                        "device_index": audio_config["device_index"],
+                        "sample_rate": audio_config["sample_rate"],
+                        "channel": audio_config["channel"],
+                    }
+                )
 
     return audio_devices
