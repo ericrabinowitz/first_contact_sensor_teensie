@@ -2,7 +2,7 @@
 # Commands for managing the Missing Link art installation
 
 # Default SSH target for Raspberry Pi commands
-SSH_TARGET ?= rpi5
+SSH_TARGET ?= rpi4
 
 # Project directories
 PROJECT_ROOT := ~/workspace/first_contact_sensor_teensie
@@ -31,6 +31,9 @@ sync: ## Sync project files to Raspberry Pi
 		./ $(SSH_TARGET):~/workspace/first_contact_sensor_teensie/
 	@echo "✓ Sync complete"
 
+controller: sync ## Run multi-channel audio playback test (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && $(PYTHON_WITH_PATH) ./controller.py'"
+
 ## Audio Device Management (runs on rpi5)
 audio-list: ## List all audio devices on the Raspberry Pi
 	@ssh $(SSH_TARGET) "echo '=== USB Audio Devices ===' && lsusb | grep -i audio || echo 'No USB audio devices found'; \
@@ -41,6 +44,9 @@ audio-status: ## Show detailed audio device configuration
 	@ssh $(SSH_TARGET) "echo '=== Sound Cards ===' && cat /proc/asound/cards; \
 	echo && echo '=== Loaded Audio Modules ===' && lsmod | grep -E 'snd_usb|snd_' | head -10; \
 	echo && echo '=== USB Audio Details ===' && lsusb -v 2>/dev/null | grep -A 5 -B 5 -i audio | head -20"
+
+print-devices:
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./print_devices.py'"
 
 ## Audio Testing
 audio-deps: ## Install audio dependencies (PortAudio) on Raspberry Pi
@@ -136,4 +142,4 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller
