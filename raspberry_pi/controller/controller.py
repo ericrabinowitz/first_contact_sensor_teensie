@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["backports.strenum", "numpy", "paho-mqtt", "sounddevice", "soundfile", "ultraimport"]
+# dependencies = ["backports.strenum", "numpy", "paho-mqtt", "requests", "sounddevice", "soundfile", "ultraimport"]
 # ///
 
 """
@@ -18,10 +18,10 @@ import json
 import os
 import re
 import sys
-import threading
+import time
 from enum import IntEnum, auto
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Union
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -29,6 +29,7 @@ else:
     from backports.strenum import StrEnum
 
 import paho.mqtt.client as mqtt
+import requests
 import sounddevice as sd
 import soundfile as sf
 import ultraimport as ui
@@ -38,25 +39,21 @@ ToggleableMultiChannelPlayback = ui.ultraimport(
     "__dir__/../audio/music.py", "ToggleableMultiChannelPlayback"
 )
 
-# TODO:
-# document how to configure the QuinLed boards via WLED app
-# move global variables separate store lib
-
 
 class Statue(StrEnum):
-    ALL = auto()
+    DEFAULT = auto()
     ARCHES = auto()
     EROS = auto()
     ELEKTRA = auto()
+    ARIEL = auto()
     SOPHIA = auto()
     ULTIMO = auto()
-    ARIEL = auto()
 
 
 class Board(StrEnum):
+    ALL = auto()
     FIVE_V_1 = auto()
     FIVE_V_2 = auto()
-    FIVE_V_3 = auto()
     TWELVE_V_1 = auto()
 
 
@@ -66,10 +63,17 @@ class Effect(IntEnum):
     NOISE = 71
 
 
+# TODO:
+# Support more complex audio channel to audio device mappings
+# Support playing different audio when in dormant mode
+# Multiple output channels
+# Audio device to port id mapping, check stability
+
 # ### Parameters
 
-VERSION = "1.0"  # Version of the script
+VERSION = "1.1"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
+STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -113,70 +117,28 @@ PALETTE_ID = 3
 FADE_MS = 2000  # Fade time in milliseconds
 COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
 
-# Defaults to the settings for ALL
+# Defaults to the settings for DEFAULT
+# TODO: pick colors
 COLORS = {
-    Statue.ELEKTRA: {
-        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
-    },
     Statue.EROS: {
         "active": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
     },
-    Statue.ALL: {
+    Statue.ELEKTRA: {
+        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
+    },
+    Statue.DEFAULT: {
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
         "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
     },
 }
 
-# Defaults to the settings for ALL
+# Defaults to the settings for DEFAULT
 EFFECTS = {
-    Statue.ALL: {
+    Statue.DEFAULT: {
         "active": Effect.FIREWORKS,
         "dormant": Effect.NOISE,
     },
 }
-
-# Maps statues to QuinLED boards and segment ids.
-# The control pin to segment id mapping is done in the WLED app.
-SEGMENT_MAP = {
-    Statue.ARCHES: {
-        Board.TWELVE_V_1: {
-            "all": 0,  # WLED segment id
-        },
-    },
-    Statue.ELEKTRA: {
-        Board.FIVE_V_1: {
-            "hands": 0,
-            "rest": 1,
-        },
-    },
-    Statue.EROS: {
-        Board.FIVE_V_1: {
-            "hands": 2,
-            "rest": 3,
-        },
-    },
-    Statue.SOPHIA: {
-        Board.FIVE_V_2: {
-            "hands": 0,
-            "rest": 1,
-        },
-    },
-    Statue.ULTIMO: {
-        Board.FIVE_V_2: {
-            "hands": 2,
-            "rest": 3,
-        },
-    },
-    Statue.ARIEL: {
-        Board.FIVE_V_3: {
-            "hands": 0,
-            "rest": 1,
-        },
-    },
-}
-
-# HAPTIC_FADE_MS = 1000  # Haptic motor fade time in milliseconds
-# HAPTIC_BRIGHTNESS = 170  # Haptic motor strength (out of 255)
 
 
 # ### Global variables
@@ -192,9 +154,38 @@ audio = {
     "sample_rate": 0,
 }
 
+# Maps statues to QuinLED boards and segment ids.
+# The control pin to segment id mapping is done in the WLED app.
+segment_map = {
+    Statue.ARCHES: {
+        # Board.TWELVE_V_1: [0],  # WLED segment ids
+    },
+    Statue.EROS: {},
+    Statue.ELEKTRA: {},
+    Statue.ARIEL: {},
+    Statue.SOPHIA: {},
+    Statue.ULTIMO: {},
+}
+
+board_config = {
+    Board.FIVE_V_1: {
+        "mac_address": "",
+        "ip_address": "",
+    },
+    Board.FIVE_V_2: {
+        "mac_address": "",
+        "ip_address": "",
+    },
+    Board.TWELVE_V_1: {
+        "mac_address": "",
+        "ip_address": "",
+    },
+}
+
+# Maps statues to detailed info about its audio device and channels.
 device_map = {
     Statue.EROS: {
-        "port_id": "hw:3,0",  # ID of (USB) port that the device is connected to
+        "port_id": "hw:0,0",  # ID of (USB) port that the device is connected to
         "output": 0,  # Output channel index, ie 0 for first output
         "input": 0,  # Input channel index of the audio file, ie 0 for first channel
         "type": "",  # Derived from device info, ie "c-media usb headphone set"
@@ -202,31 +193,31 @@ device_map = {
         "sample_rate": 0,  # Derived from device info, ie 44100
     },
     Statue.ELEKTRA: {
-        "port_id": "hw:3,1",
+        "port_id": "hw:1,0",
         "output": 0,
         "input": 1,
         "type": "",
         "index": -1,
         "sample_rate": 0,
     },
-    Statue.SOPHIA: {
-        "port_id": "hw:3,2",
+    Statue.ARIEL: {
+        "port_id": "hw:2,0",
         "output": 0,
         "input": 2,
         "type": "",
         "index": -1,
         "sample_rate": 0,
     },
-    Statue.ULTIMO: {
-        "port_id": "hw:3,3",
+    Statue.SOPHIA: {
+        "port_id": "hw:3,0",
         "output": 0,
         "input": 3,
         "type": "",
         "index": -1,
         "sample_rate": 0,
     },
-    Statue.ARIEL: {
-        "port_id": "hw:3,4",
+    Statue.ULTIMO: {
+        "port_id": "hw:4,0",
         "output": 0,
         "input": 4,
         "type": "",
@@ -235,7 +226,7 @@ device_map = {
     },
 }
 
-# Teensy configuration
+# Teensy configuration. Maps statues to their Teensy settings.
 teensy_config = {
     Statue.EROS: {
         "emit": 10077,
@@ -247,6 +238,13 @@ teensy_config = {
     Statue.ELEKTRA: {
         "emit": 12274,
         "detect": [Statue.EROS, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
+        "threshold": 0.01,
+        "mac_address": "",
+        "ip_address": "",
+    },
+    Statue.ARIEL: {
+        "emit": 14643,
+        "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
         "threshold": 0.01,
         "mac_address": "",
         "ip_address": "",
@@ -265,22 +263,15 @@ teensy_config = {
         "mac_address": "",
         "ip_address": "",
     },
-    Statue.ARIEL: {
-        "emit": 14643,
-        "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
-        "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
-    },
 }
 
 # Detected contact pairings
 linked_statues: Dict[Statue, List[Statue]] = {
-    Statue.ELEKTRA: [],
     Statue.EROS: [],
+    Statue.ELEKTRA: [],
+    Statue.ARIEL: [],
     Statue.SOPHIA: [],
     Statue.ULTIMO: [],
-    Statue.ARIEL: [],
 }
 # Statues that are currently active
 active_statues: Set[Statue] = set()
@@ -295,6 +286,7 @@ mqtt_num_connected = 0
 def extract_addresses():
     """Extracts MAC and IP addresses from the dnsmasq.conf file."""
     global teensy_config
+    global board_config
     if not os.path.exists(DNSMASQ_FILE):
         print(f"Error: DNSMASQ file not found: {DNSMASQ_FILE}")
         return
@@ -303,24 +295,28 @@ def extract_addresses():
         lines = f.readlines()
 
     statues = teensy_config.keys()
+    boards = board_config.keys()
     for line in lines:
         if "dhcp-host" in line:
             parts = line.split("=")
             parts = parts[1].split(",")
             mac_address = parts[0].strip()
             ip_address = parts[1].strip()
-            statue_name = parts[2].strip() if len(parts) >= 3 else ""
-            if statue_name in statues:
-                try:
-                    statue = Statue(statue_name)
-                    teensy_config[statue].update(
-                        {
-                            "mac_address": mac_address,
-                            "ip_address": ip_address,
-                        }
-                    )
-                except ValueError:
-                    print(f"Error: Unknown statue name: {statue_name}")
+            hostname = parts[2].strip() if len(parts) >= 3 else ""
+            if hostname in statues:
+                statue = Statue(hostname)
+                teensy_config[statue].update(
+                    {
+                        "mac_address": mac_address,
+                        "ip_address": ip_address,
+                    }
+                )
+            if hostname in boards:
+                board = Board(hostname)
+                board_config[board] = {
+                    "mac_address": mac_address,
+                    "ip_address": ip_address,
+                }
 
 
 def load_audio():
@@ -347,7 +343,7 @@ def load_audio():
     audio["sample_rate"] = int(sample_rate)
 
 
-def load_devices():
+def load_audio_devices():
     """Query audio devices and map them to statues."""
     global device_map
     all_devices = sd.query_devices()
@@ -435,16 +431,15 @@ def initialize_playback():
     music_playback.start()
 
 
-def get_statue(path: str, default=None):
+def get_statue(path: str) -> Union[Statue, None]:
     parts = path.split("/")
-    if len(parts) < 3:
-        return default
-    if len(parts) > 3:
+    if len(parts) != 3:
         print(f"Warning: Invalid path: {path}")
         return None
     param = parts[-1]
     if param == "":
-        return default
+        print("Warning: Empty statue")
+        return None
     try:
         return Statue(param)
     except ValueError:
@@ -511,28 +506,25 @@ def publish_mqtt(topic: str, payload: dict) -> int:
 
 def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
     """Send a WLED command to control the LEDs of a statue."""
-    if statue == Statue.ALL:
-        print("Error: Cannot send LED command to ALL statue")
+    if statue == Statue.DEFAULT:
+        print("Error: Cannot send LED command to DEFAULT statue")
         return -1
 
     last_rc = 0
-    for board, seg_map in SEGMENT_MAP[statue].items():
+    for board, seg_ids in segment_map[statue].items():
         payload = {
             "tt": 0,
             "seg": [],
         }
-        for part, seg_id in seg_map.items():
+        for seg_id in seg_ids:
             payload["seg"].append(
                 {
                     "id": seg_id,
                     **seg_payload,
                 }
             )
-        last_rc = publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
+        last_rc = publish_mqtt(WLED_MQTT_TOPIC.format(board), payload)
     return last_rc
-
-
-# ### Actions
 
 
 def send_config():
@@ -540,46 +532,41 @@ def send_config():
     return publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
 
 
-def all_off():
+def initialize_leds():
+    """Initialize the segment map and turn the LEDs on."""
+    global segment_map
     payload = {
         "tt": 0,
-        "on": False,
+        "on": True,
         "bri": 0,
+        "v": True,
     }
-    return publish_mqtt(WLED_MQTT_TOPIC.format(Statue.ALL.value), payload)
+    statues = segment_map.keys()
+
+    for board in board_config.keys():
+        resp = requests.post("http://{}/json/state".format(board), data=payload)
+        if resp.status_code != 200:
+            print(f"Error: Failed to initialize board {board}: {resp.text}")
+            continue
+
+        segments = resp.json().get("seg", [])
+        for segment in segments:
+            # "n" field only exists if the segment has been renamed
+            name = segment.get("n", "").strip().lower()
+            parts = name.split(" ")
+            if len(parts) < 1:
+                continue
+            for parts[0] in statues:
+                segment_map[Statue(parts[0])].setdefault(board, []).append(
+                    segment["id"]
+                )
 
 
-# def haptics_on(statue: Statue) -> int:
-#     """Send WLED commands to turn the haptic motor on and then fade."""
-#     # TODO: map statue to a QuinLED board (client name) and segment id
-#     payload = {
-#         "tt": 0,
-#         "seg": [
-#             {
-#                 "id": 0,
-#                 "on": True,
-#                 "bri": HAPTIC_BRIGHTNESS,
-#                 "col": [[255, 255, 255, 255]],
-#             }
-#         ],
-#     }
-#     publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
-#     payload = {
-#         "tt": HAPTIC_FADE_MS,
-#         "seg": [
-#             {
-#                 "id": 0,
-#                 "on": True,
-#                 "bri": 0,
-#                 "col": [[255, 255, 255, 255]],
-#             }
-#         ],
-#     }
-#     return publish_mqtt(WLED_MQTT_TOPIC.format(statue.value), payload)
+# ### Actions
 
 
 def haptics_on(statue: Statue) -> int:
-    return publish_mqtt(HAPTIC_MQTT_TOPIC, {"statue": statue.value})
+    return publish_mqtt(HAPTIC_MQTT_TOPIC, {"statue": statue})
 
 
 def leds_active(statue: Statue):
@@ -588,10 +575,12 @@ def leds_active(statue: Statue):
         {
             "on": True,
             "bri": 255,
-            "col": COLORS.get(statue, {}).get("active", COLORS[Statue.ALL]["active"]),
-            "fx": EFFECTS.get(statue, {})
-            .get("active", EFFECTS[Statue.ALL]["active"])
-            .value,
+            "col": COLORS.get(statue, {}).get(
+                "active", COLORS[Statue.DEFAULT]["active"]
+            ),
+            "fx": EFFECTS.get(statue, {}).get(
+                "active", EFFECTS[Statue.DEFAULT]["active"]
+            ),
             "pal": PALETTE_ID,
         },
     )
@@ -611,10 +600,12 @@ def leds_dormant(statue: Statue):
         {
             "on": True,
             "bri": 255,
-            "col": COLORS.get(statue, {}).get("dormant", COLORS[Statue.ALL]["dormant"]),
-            "fx": EFFECTS.get(statue, {})
-            .get("dormant", EFFECTS[Statue.ALL]["dormant"])
-            .value,
+            "col": COLORS.get(statue, {}).get(
+                "dormant", COLORS[Statue.DEFAULT]["dormant"]
+            ),
+            "fx": EFFECTS.get(statue, {}).get(
+                "dormant", EFFECTS[Statue.DEFAULT]["dormant"]
+            ),
             "pal": PALETTE_ID,
         },
     )
@@ -624,7 +615,7 @@ def audio_active(statue: Statue) -> bool:
     """Enable audio playback for a statue."""
     input_channel = device_map.get(statue, {}).get("input", -1)
     if input_channel < 0:
-        print(f"Error: No audio input configured for statue {statue.value}")
+        print(f"Error: No audio input configured for statue {statue}")
         return False
 
     return music_playback.set_music_channel(input_channel, True)
@@ -634,7 +625,7 @@ def audio_dormant(statue: Statue):
     """Disable audio playback for a statue."""
     input_channel = device_map.get(statue, {}).get("input", -1)
     if input_channel < 0:
-        print(f"Error: No audio input configured for statue {statue.value}")
+        print(f"Error: No audio input configured for statue {statue}")
         return False
 
     return music_playback.set_music_channel(input_channel, False)
@@ -679,15 +670,17 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                 {
                     "colors": COLORS,
                     "effects": EFFECTS,
-                    "segment_map": SEGMENT_MAP,
+                    "board_config": board_config,
+                    "teensy_config": teensy_config,
+                    "segment_map": segment_map,
+                    "device_map": device_map,
                 }
             )
         elif self.path == "/config/dynamic":
             self._send_response(
                 {
                     "debug": debug,
-                    "device_map": device_map,
-                    "teensy_config": teensy_config,
+                    "active_song": ACTIVE_SONG,
                     "linked_statues": linked_statues,
                     "active_statues": list(active_statues),
                 }
@@ -716,8 +709,8 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                 }
             )
             print("triggered a contact event")
-        elif self.path.startswith("/led"):
-            statue = get_statue(self.path, Statue.ALL)
+        elif self.path.startswith("/led/"):
+            statue = get_statue(self.path)
             if statue is None:
                 self._send_400()
                 return
@@ -728,8 +721,8 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                 }
             )
             print("sent a LED cmd to:", statue)
-        elif self.path.startswith("/haptic"):
-            statue = get_statue(self.path, Statue.ALL)
+        elif self.path.startswith("/haptic/"):
+            statue = get_statue(self.path)
             if statue is None:
                 self._send_400()
                 return
@@ -742,20 +735,6 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
             print("sent a haptic motor cmd to:", statue)
         else:
             self._send_404()
-
-
-def start_debug_server():
-    server = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
-    try:
-        print(f"Starting debug server on port {DEBUG_PORT}")
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    except Exception as e:
-        print(e)
-    finally:
-        server.server_close()
-        print("Debug server stopped")
 
 
 # ### MQTT client
@@ -805,8 +784,11 @@ def on_message(mqttc, userdata, msg):
 if __name__ == "__main__":
     extract_addresses()
     load_audio()
-    load_devices()
+    load_audio_devices()
     initialize_playback()
+
+    # Give some time for MQTT server to start and for other clients to connect
+    time.sleep(STARTUP_DELAY)
 
     # Should be in the global scope, mqttc is a global variable
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -816,19 +798,25 @@ if __name__ == "__main__":
     mqttc.on_message = on_message
     mqttc.connect(MQTT_BROKER, MQTT_PORT)
 
-    thread = threading.Thread(target=start_debug_server, args=(), daemon=True)
-    thread.start()
+    print("Starting MQTT client")
+    mqttc.loop_start()
 
-    all_off()
-    leds_dormant(Statue.ALL)
+    initialize_leds()
+    for statue in segment_map.keys():
+        leds_dormant(statue)
     send_config()
 
+    server = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
     try:
-        print("Starting MQTT client")
-        mqttc.loop_forever(retry_first_connection=True)
+        print(f"Starting debug server on port {DEBUG_PORT}")
+        server.serve_forever()
     except KeyboardInterrupt:
         pass
     except Exception as e:
         print(e)
-    mqttc.disconnect()
-    print("Disconnected from MQTT broker")
+    finally:
+        server.server_close()
+        print("Debug server stopped")
+
+        mqttc.loop_stop()
+        print("Disconnected from MQTT broker")

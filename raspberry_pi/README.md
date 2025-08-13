@@ -40,23 +40,26 @@ git pull
 # Get basic info
 curl http://192.168.4.1:8080/info
 
-# Get dynamic config data
-curl http://192.168.4.1:8080/config
+# Get static config data
+curl http://192.168.4.1:8080/config/static
 
-# Override any part of the dynamic config
-curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/config \
+# Get dynamic config data
+curl http://192.168.4.1:8080/config/dynamic
+
+# Turn on debug logging
+curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/debug \
   -d '{"debug":true}'
 
 # Simulate linking
-curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/touch \
-  -d '{"action":"link", "statues":["eros","elektra"]}'
+curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/contact \
+  -d '{"detector":"eros", "emitters":["elektra"]}'
 
 # Simulate unlinking
-curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/touch \
-  -d '{"action":"unlink"}'
+curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/contact \
+  -d '{"detector":"eros", "emitters":[]}'
 
 # Toggle the lights on and off
-curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/wled/all \
+curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/led/eros \
   -d '{"on":"t"}'
 
 # Turn the haptic motor on
@@ -91,7 +94,7 @@ controller.logs
 aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav"
 
 # Subscribe to a MQTT topic
-mosquitto_sub -t "missing_link/touch"
+mosquitto_sub -t "missing_link/contact"
 
 # Send a MQTT message
 mosquito_pub -t "missing_link/haptic" -m '{"statue":"eros"}'

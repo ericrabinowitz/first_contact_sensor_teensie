@@ -46,6 +46,8 @@ controller.enable
 controller.restart
 controller.status
 
+tools.install
+
 # Add additional commands above this line. Script might fail after
 # attempting to start dnsmasq.
 

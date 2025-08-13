@@ -78,3 +78,16 @@ cpconf() {
   esac
 }
 
+tools.install() {
+  sudo apt install -y vim git less curl wget net-tools arp-scan iproute2 dnsutils ethtool libusb-dev
+  
+  wget --output-document=teensy_cli.tar.gz "https://github.com/PaulStoffregen/teensy_loader_cli/archive/refs/tags/2.3.tar.gz"
+  tar xzf teensy_cli.tar.gz
+  cd teensy_loader_cli-2.3 || exit 1
+  make teensy_loader_cli
+  sudo chown root:root teensy_loader_cli
+  sudo chmod +x teensy_loader_cli
+  sudo mv teensy_loader_cli /usr/local/bin/
+  cd ..
+  rm -rf teensy_loader_cli-2.3 teensy_cli.tar.gz
+}
