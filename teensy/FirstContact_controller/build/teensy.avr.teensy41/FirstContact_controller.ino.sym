@@ -1,0 +1,2259 @@
+
+/Users/babraham/Library/Caches/arduino/sketches/8806370570F9DD3875953225FE92EFE8/FirstContact_controller.ino.elf:     file format elf32-littlearm
+
+SYMBOL TABLE:
+60000000 l    d  .text.headers	00000000 .text.headers
+60001400 l    d  .text.code	00000000 .text.code
+60002900 l    d  .text.progmem	00000000 .text.progmem
+00000000 l    d  .text.itcm	00000000 .text.itcm
+00032270 l    d  .fini	00000000 .fini
+00032274 l    d  .ARM.exidx	00000000 .ARM.exidx
+20000000 l    d  .data	00000000 .data
+200072c0 l    d  .bss	00000000 .bss
+20200000 l    d  .bss.dma	00000000 .bss.dma
+70000000 l    d  .bss.extram	00000000 .bss.extram
+6003c814 l    d  .text.csf	00000000 .text.csf
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_frame	00000000 .debug_frame
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .ARM.attributes	00000000 .ARM.attributes
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .debug_loclists	00000000 .debug_loclists
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_rnglists	00000000 .debug_rnglists
+00000000 l    d  .debug_line_str	00000000 .debug_line_str
+00000000 l    df *ABS*	00000000 bootdata.c
+00000000 l    df *ABS*	00000000 startup.c
+60001400 l     F .text.code	00000012 memory_copy
+60001414 l     F .text.code	0000001c memory_clear.constprop.0
+60001430 l     F .text.code	0000021c ResetHandler2
+00000000 l    df *ABS*	00000000 QNEthernet.cpp
+0000deec l     F .text.itcm	00000108 qindesign::network::EthernetClass::start() [clone .part.0]
+0000dff4 l     F .text.itcm	0000006c qindesign::network::attachLoopToYield()::{lambda(EventResponder&)#1}::_FUN(EventResponder&)
+0000e304 l     F .text.itcm	000000a8 _GLOBAL__sub_I__ZN10StaticInitIN9qindesign7network13EthernetClassEE13nifty_counterE
+20007b38 l     O .bss	00000008 INADDR_NONE
+200080a4 l     O .bss	00000001 qindesign::network::EthernetInit
+200095b3 l     O .bss	00000001 qindesign::network::loopAttached
+200080c0 l     O .bss	00000001 qindesign::network::MDNSInit
+20006684 l     O .data	00000020 qindesign::network::ethLoop
+00000000 l    df *ABS*	00000000 QNMDNS.cpp
+0000fd7c l     F .text.itcm	00000074 _GLOBAL__sub_I__ZN10StaticInitIN9qindesign7network9MDNSClassEE13nifty_counterE
+200095b2 l     O .bss	00000001 qindesign::network::netifAdded
+200080d0 l     O .bss	00000001 qindesign::network::MDNSInit
+00000000 l    df *ABS*	00000000 driver_teensy41.c
+0000fdf0 l     F .text.itcm	00000028 enet_isr
+6000179c l     F .text.code	000001dc init_phy
+2020a900 l     O .bss.dma	00001e00 s_rxBufs
+20208b00 l     O .bss.dma	00001e00 s_txBufs
+200085b4 l     O .bss	00000004 collisionGALR.3
+200085b8 l     O .bss	00000004 collisionGAUR.1
+200085bc l     O .bss	00000004 collisionIALR.2
+200085c0 l     O .bss	00000004 collisionIAUR.0
+200095c3 l     O .bss	00000001 is_link_up.5
+20009594 l     O .bss	00000002 physts.4
+2000941c l     O .bss	00000004 s_checkLinkStatusState
+200095c9 l     O .bss	00000001 s_initState
+200095cb l     O .bss	00000001 s_linkIsCrossover
+200095cc l     O .bss	00000001 s_linkIsFullDuplex
+200095cd l     O .bss	00000001 s_linkSpeed10Not100
+20009470 l     O .bss	00000001 s_rxNotAvail
+200072c0 l     O .bss	000000a0 s_rxRing
+20007380 l     O .bss	000000a0 s_txRing
+20006d20 l     O .data	00000004 s_pRxBD
+20006d24 l     O .data	00000004 s_pTxBD
+00000000 l    df *ABS*	00000000 lwip_driver.c
+60001b5c l     F .text.code	00000060 init_netif
+00011090 l     F .text.itcm	0000000e link_output
+000110a0 l     F .text.itcm	00000038 multicast_filter
+20008d34 l     O .bss	00000008 netif_callback
+20009400 l     O .bss	0000001c s_autoip
+20009420 l     O .bss	00000034 s_dhcp
+200095ca l     O .bss	00000001 s_isNetifAdded
+20009464 l     O .bss	00000006 s_mac
+20006d4c l     O .data	00000001 isFirstInit.1
+20006ccc l     O .data	00000006 multicastMAC.0
+20006cd4 l     O .data	0000004c s_netif
+00000000 l    df *ABS*	00000000 imxrt_hw.cpp
+00000000 l    df *ABS*	00000000 WireIMXRT.cpp
+00000000 l    df *ABS*	00000000 AudioStream.cpp
+00000000 l    df *ABS*	00000000 tempmon.c
+20009458 l     O .bss	00000004 s_hotCount
+2000945c l     O .bss	00000004 s_hotTemp
+20009460 l     O .bss	00000004 s_hot_ROOM
+2000946c l     O .bss	00000004 s_roomC_hotC
+00000000 l    df *ABS*	00000000 usb.c
+0001f0fc l     F .text.itcm	00000088 schedule_transfer
+0001f184 l     F .text.itcm	00000036 run_callbacks
+0001f1bc l     F .text.itcm	00000098 endpoint0_transmit.constprop.0
+20008b18 l     O .bss	00000008 endpoint0_buffer
+20008b20 l     O .bss	00000004 endpoint0_notify_mask
+20007640 l     O .bss	00000008 endpoint0_setupdata
+20008b24 l     O .bss	00000004 endpointN_notify_mask
+200090c8 l     O .bss	00000008 reply_buffer
+200095ce l     O .bss	00000001 sof_usage
+200095d8 l     O .bss	00000001 usb_reboot_timer
+00000000 l    df *ABS*	00000000 analog.c
+200095ba l     O .bss	00000001 calibrating
+00000000 l    df *ABS*	00000000 crti.o
+00000000 l    df *ABS*	00000000 crtn.o
+00000000 l    df *ABS*	00000000 crtstuff.c
+00000020 l     F .text.itcm	00000000 register_tm_clones
+00000044 l     F .text.itcm	00000000 frame_dummy
+20008d44 l     O .bss	00000000 object.0
+60002868 l     O .text.code	00000000 __frame_dummy_init_array_entry
+00000000 l    df *ABS*	00000000 FirstContact_controller.ino.cpp
+00000970 l     F .text.itcm	00000074 setToneEnabled(bool) [clone .part.0]
+20200000 l     O .bss.dma	00001e78 audioSenseSetup()::data
+00001c28 l     F .text.itcm	0000048c _GLOBAL__sub_I_setup
+00002308 l     F .text.itcm	00000118 displayActivityStatus(bool) [clone .part.0]
+20007b54 l     O .bss	00000004 hapticTimerStart
+20007b58 l     O .bss	00000004 idleOutStartTime
+200095aa l     O .bss	00000001 hapticTimerActive
+200095ab l     O .bss	00000001 idleOutTimerStarted
+2000809c l     O .bss	00000001 qindesign::network::EthernetInit
+200080b8 l     O .bss	00000001 qindesign::network::MDNSInit
+200095b4 l     O .bss	00000001 displayTimeCount()::isInitialized
+200080e8 l     O .bss	00000014 getStableLinkedMask()::bufferStartTime
+200095b5 l     O .bss	00000001 getStableLinkedMask()::stableLinkedMask
+200080fc l     O .bss	00000005 getStableLinkedMask()::buffering
+200095b6 l     O .bss	00000001 displayActivityStatus(bool)::isInitialized
+20008104 l     O .bss	00000004 displayActivityStatus(bool)::Xposition_last
+20008108 l     O .bss	00000004 displayActivityStatus(bool)::time
+20006d49 l     O .data	00000001 setToneEnabled(bool)::toneEnabled
+200066a4 l     O .data	00000004 updateFadedVolume(bool)::lastSigVolume
+20006d4a l     O .data	00000001 displayActivityStatus(bool)::direction
+20000d58 l     O .data	00000032 STATUE_NAMES
+20000d8c l     O .data	00000014 STATUE_FREQUENCIES
+00000000 l    df *ABS*	00000000 QNDNSClient.cpp
+0000dad8 l     F .text.itcm	00000020 std::_Function_handler<void (ip4_addr const*), qindesign::network::DNSClient::getHostByName(char const*, IPAddress&, unsigned long)::{lambda(ip4_addr const*)#1}>::_M_invoke(std::_Any_data const&, ip4_addr const*&&)
+0000daf8 l     F .text.itcm	00000044 std::_Function_handler<void (ip4_addr const*), qindesign::network::DNSClient::getHostByName(char const*, IPAddress&, unsigned long)::{lambda(ip4_addr const*)#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)
+0000db8c l     F .text.itcm	0000010c qindesign::network::DNSClient::getHostByName(char const*, std::function<void (ip4_addr const*)>, unsigned long) [clone .part.0]
+0000dda4 l     F .text.itcm	00000088 _GLOBAL__sub_I__ZN9qindesign7network9DNSClient12dnsFoundFuncEPKcPK8ip4_addrPv
+20007b30 l     O .bss	00000008 INADDR_NONE
+200080a0 l     O .bss	00000001 qindesign::network::EthernetInit
+200080bc l     O .bss	00000001 qindesign::network::MDNSInit
+00000000 l    df *ABS*	00000000 QNEthernetClient.cpp
+0000ef44 l     F .text.itcm	00000088 _GLOBAL__sub_I__ZN9qindesign7network14EthernetClientC2Ev
+20007b40 l     O .bss	00000008 INADDR_NONE
+200080a8 l     O .bss	00000001 qindesign::network::EthernetInit
+200080c4 l     O .bss	00000001 qindesign::network::MDNSInit
+00000000 l    df *ABS*	00000000 QNEthernetServer.cpp
+0000efcc l     F .text.itcm	00000078 _GLOBAL__sub_I__ZN9qindesign7network14EthernetServerC2Ev
+200080ac l     O .bss	00000001 qindesign::network::EthernetInit
+200080c8 l     O .bss	00000001 qindesign::network::MDNSInit
+00000000 l    df *ABS*	00000000 QNEthernetUDP.cpp
+0000fcc4 l     F .text.itcm	00000088 _GLOBAL__sub_I__ZN9qindesign7network11EthernetUDP8recvFuncEPvP7udp_pcbP4pbufPK8ip4_addrt
+20007b48 l     O .bss	00000008 INADDR_NONE
+200080b0 l     O .bss	00000001 qindesign::network::EthernetInit
+200080cc l     O .bss	00000001 qindesign::network::MDNSInit
+00000000 l    df *ABS*	00000000 ConnectionManager.cpp
+000102e4 l     F .text.itcm	00000108 qindesign::network::internal::maybeCopyRemaining(qindesign::network::internal::ConnectionHolder*)
+000103ec l     F .text.itcm	00000148 void std::vector<unsigned char, std::allocator<unsigned char> >::_M_range_insert<unsigned char*>(__gnu_cxx::__normal_iterator<unsigned char*, std::vector<unsigned char, std::allocator<unsigned char> > >, unsigned char*, unsigned char*, std::forward_iterator_tag) [clone .isra.0]
+000106e4 l     F .text.itcm	00000074 std::_Function_handler<void (qindesign::network::internal::ConnectionState*), qindesign::network::internal::ConnectionManager::addConnection(std::shared_ptr<qindesign::network::internal::ConnectionHolder> const&)::{lambda(qindesign::network::internal::ConnectionState*)#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)
+00010eb8 l     F .text.itcm	0000015e std::_Function_handler<void (qindesign::network::internal::ConnectionState*), qindesign::network::internal::ConnectionManager::addConnection(std::shared_ptr<qindesign::network::internal::ConnectionHolder> const&)::{lambda(qindesign::network::internal::ConnectionState*)#1}>::_M_invoke(std::_Any_data const&, qindesign::network::internal::ConnectionState*&&)
+00011018 l     F .text.itcm	00000078 _GLOBAL__sub_I__ZN9qindesign7network8internal17ConnectionManager8instanceEv
+20007b1c l     O .bss	00000004 guard variable for qindesign::network::internal::ConnectionManager::instance()::instance
+200080b4 l     O .bss	00000001 qindesign::network::EthernetInit
+200080d4 l     O .bss	00000001 qindesign::network::MDNSInit
+2000810c l     O .bss	00000018 qindesign::network::internal::ConnectionManager::instance()::instance
+00000000 l    df *ABS*	00000000 async_input_spdif3.cpp
+000113b8 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN21AsyncAudioInputSPDIF310microsLastE
+00000000 l    df *ABS*	00000000 input_adc.cpp
+000118cc l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN16AudioInputAnalog3dmaE
+00000000 l    df *ABS*	00000000 input_i2s.cpp
+00011b10 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN13AudioInputI2S10block_leftE
+2020c740 l     O .bss.dma	00000200 i2s_rx_buffer
+00000000 l    df *ABS*	00000000 input_i2s2.cpp
+00011b28 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN14AudioInputI2S210block_leftE
+00000000 l    df *ABS*	00000000 input_i2s_hex.cpp
+00011b40 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN16AudioInputI2SHex9block_ch1E
+00000000 l    df *ABS*	00000000 input_i2s_oct.cpp
+00011b58 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN16AudioInputI2SOct9block_ch1E
+00000000 l    df *ABS*	00000000 input_i2s_quad.cpp
+00011b70 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN17AudioInputI2SQuad9block_ch1E
+00000000 l    df *ABS*	00000000 input_pdm.cpp
+00011b88 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN13AudioInputPDM10block_leftE
+00000000 l    df *ABS*	00000000 input_pdm_i2s2.cpp
+00011ba0 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN14AudioInputPDM210block_leftE
+00000000 l    df *ABS*	00000000 input_spdif3.cpp
+00011bb8 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN16AudioInputSPDIF310block_leftE
+00000000 l    df *ABS*	00000000 input_tdm.cpp
+00011bd0 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN13AudioInputTDM14block_incomingE
+00000000 l    df *ABS*	00000000 input_tdm2.cpp
+00011be8 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN14AudioInputTDM214block_incomingE
+00000000 l    df *ABS*	00000000 output_i2s.cpp
+0001217c l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN14AudioOutputI2S14block_left_1stE
+2020c940 l     O .bss.dma	00000200 i2s_tx_buffer
+00000000 l    df *ABS*	00000000 output_i2s2.cpp
+00012194 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN15AudioOutputI2S214block_left_1stE
+00000000 l    df *ABS*	00000000 output_i2s_hex.cpp
+000121ac l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN17AudioOutputI2SHex13block_ch1_1stE
+00000000 l    df *ABS*	00000000 output_i2s_oct.cpp
+000121c4 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN17AudioOutputI2SOct13block_ch1_1stE
+00000000 l    df *ABS*	00000000 output_i2s_quad.cpp
+000121dc l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN18AudioOutputI2SQuad13block_ch1_1stE
+00000000 l    df *ABS*	00000000 output_mqs.cpp
+000121f4 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN14AudioOutputMQS14block_left_1stE
+00000000 l    df *ABS*	00000000 output_pt8211.cpp
+0001220c l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN17AudioOutputPT821114block_left_1stE
+00000000 l    df *ABS*	00000000 output_pt8211_2.cpp
+00012224 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN19AudioOutputPT8211_214block_left_1stE
+00000000 l    df *ABS*	00000000 output_pwm.cpp
+0001223c l     F .text.itcm	0000001c __tcf_0
+00012258 l     F .text.itcm	00000030 _GLOBAL__sub_I__ZN14AudioOutputPWM21update_responsibilityE
+00000000 l    df *ABS*	00000000 output_spdif.cpp
+00012288 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN16AudioOutputSPDIF14block_left_1stE
+00000000 l    df *ABS*	00000000 output_spdif2.cpp
+000122a0 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN17AudioOutputSPDIF214block_left_1stE
+00000000 l    df *ABS*	00000000 output_spdif3.cpp
+000122b8 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN17AudioOutputSPDIF314block_left_1stE
+00000000 l    df *ABS*	00000000 output_tdm.cpp
+000122d0 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN14AudioOutputTDM11block_inputE
+00000000 l    df *ABS*	00000000 output_tdm2.cpp
+000122e8 l     F .text.itcm	00000018 _GLOBAL__sub_I__ZN15AudioOutputTDM211block_inputE
+00000000 l    df *ABS*	00000000 SD.cpp
+000139e8 l     F .text.itcm	00000080 _GLOBAL__sub_I_SD
+00000000 l    df *ABS*	00000000 IntervalTimer.cpp
+0001d8dc l     F .text.itcm	00000084 pit_isr()
+0001d960 l     F .text.itcm	00000020 __tcf_0
+0001da84 l     F .text.itcm	0000002c _GLOBAL__sub_I__ZN13IntervalTimer14nvic_prioritesE
+20007420 l     O .bss	00000060 funct_table
+00000000 l    df *ABS*	00000000 eh_alloc.o
+00021394 l     F .text.itcm	00000088 (anonymous namespace)::pool::free(void*) [clone .constprop.0]
+0002141c l     F .text.itcm	00000058 (anonymous namespace)::pool::allocate(unsigned int) [clone .constprop.0]
+000214c4 l     F .text.itcm	00000028 _GLOBAL__sub_I__ZN9__gnu_cxx9__freeresEv
+00000000 l    df *ABS*	00000000 Adafruit_SSD1306.cpp
+0001bce8 l     F .text.itcm	00000088 Adafruit_SSD1306::drawFastHLineInternal(short, short, short, unsigned short) [clone .part.0]
+0001bd70 l     F .text.itcm	00000160 Adafruit_SSD1306::drawFastVLineInternal(short, short, short, unsigned short) [clone .part.0]
+600029f0 l     O .text.progmem	00000008 Adafruit_SSD1306::drawFastVLineInternal(short, short, short, unsigned short)::premask
+600029f8 l     O .text.progmem	00000008 Adafruit_SSD1306::drawFastVLineInternal(short, short, short, unsigned short)::postmask
+60002a00 l     O .text.progmem	000002c0 splash1_data
+60002cc0 l     O .text.progmem	000001e0 splash2_data
+60002ea0 l     O .text.progmem	00000004 Adafruit_SSD1306::begin(unsigned char, unsigned char, bool, bool)::init1
+60002ea4 l     O .text.progmem	00000004 Adafruit_SSD1306::begin(unsigned char, unsigned char, bool, bool)::init2
+60002ea8 l     O .text.progmem	00000004 Adafruit_SSD1306::begin(unsigned char, unsigned char, bool, bool)::init3
+60002eac l     O .text.progmem	00000006 Adafruit_SSD1306::begin(unsigned char, unsigned char, bool, bool)::init5
+60002eb4 l     O .text.progmem	00000005 Adafruit_SSD1306::display()::dlist1
+60002ebc l     O .text.progmem	00000002 Adafruit_SSD1306::startscrollright(unsigned char, unsigned char)::scrollList1a
+60002ec0 l     O .text.progmem	00000003 Adafruit_SSD1306::startscrollright(unsigned char, unsigned char)::scrollList1b
+60002ec4 l     O .text.progmem	00000002 Adafruit_SSD1306::startscrollleft(unsigned char, unsigned char)::scrollList2a
+60002ec8 l     O .text.progmem	00000003 Adafruit_SSD1306::startscrollleft(unsigned char, unsigned char)::scrollList2b
+60002ecc l     O .text.progmem	00000002 Adafruit_SSD1306::startscrolldiagright(unsigned char, unsigned char)::scrollList3a
+60002ed0 l     O .text.progmem	00000002 Adafruit_SSD1306::startscrolldiagright(unsigned char, unsigned char)::scrollList3b
+60002ed4 l     O .text.progmem	00000002 Adafruit_SSD1306::startscrolldiagright(unsigned char, unsigned char)::scrollList3c
+60002ed8 l     O .text.progmem	00000002 Adafruit_SSD1306::startscrolldiagleft(unsigned char, unsigned char)::scrollList4a
+60002edc l     O .text.progmem	00000002 Adafruit_SSD1306::startscrolldiagleft(unsigned char, unsigned char)::scrollList4b
+60002ee0 l     O .text.progmem	00000002 Adafruit_SSD1306::startscrolldiagleft(unsigned char, unsigned char)::scrollList4c
+00000000 l    df *ABS*	00000000 usb_desc.c
+20006c70 l     O .data	00000012 device_descriptor
+20006c90 l     O .data	00000028 microsoft_os_compatible_id_desc
+20006cb8 l     O .data	00000012 microsoft_os_string_desc
+60002fe0 l     O .text.progmem	0000000a qualifier_descriptor
+00000000 l    df *ABS*	00000000 sys_arch.c
+00000000 l    df *ABS*	00000000 err.c
+20003670 l     O .data	00000044 err_to_errno_table
+00000000 l    df *ABS*	00000000 mdns.c
+00002a08 l     F .text.itcm	0000006c mdns_define_probe_rrs_to_send
+00002bd4 l     F .text.itcm	000000e8 mdns_probe_and_announce
+20008c94 l     O .bss	00000004 mdns_name_result_cb
+200095c4 l     O .bss	00000001 mdns_netif_client_id
+20008c98 l     O .bss	00000004 mdns_pcb
+20001ed4 l     O .data	00000013 __func__.1
+200020ac l     O .data	00000017 __func__.6
+200060f4 l     O .data	00000004 v4group
+00000000 l    df *ABS*	00000000 mdns_domain.c
+00002cbc l     F .text.itcm	00000100 mdns_readname_loop
+00002dbc l     F .text.itcm	000000be mdns_compress_domain.part.0
+200035dc l     O .data	00000008 dnssd_protos
+00000000 l    df *ABS*	00000000 mdns_out.c
+00003360 l     F .text.itcm	0000009a mdns_add_question.constprop.0
+000033fc l     F .text.itcm	000000e2 mdns_add_answer.constprop.0
+000034e0 l     F .text.itcm	0000001c mdns_add_any_host_question.constprop.0
+000034fc l     F .text.itcm	0000001e mdns_add_any_service_question.constprop.0
+0000351c l     F .text.itcm	0000005c mdns_add_servicetype_ptr_answer
+00003578 l     F .text.itcm	00000058 mdns_add_a_answer
+000035d0 l     F .text.itcm	00000076 mdns_add_srv_answer
+00003648 l     F .text.itcm	00000060 mdns_add_servicename_ptr_answer
+000036a8 l     F .text.itcm	00000064 mdns_add_hostv4_ptr_answer
+0000370c l     F .text.itcm	00000032 mdns_add_query_question_to_outpacket.isra.0
+00003740 l     F .text.itcm	00000070 mdns_add_txt_answer
+00000000 l    df *ABS*	00000000 def.c
+00000000 l    df *ABS*	00000000 dns.c
+00003bb4 l     F .text.itcm	000000a8 dns_call_found
+00003c5c l     F .text.itcm	00000190 dns_send.isra.0
+00003dec l     F .text.itcm	00000120 dns_check_entry
+00003f0c l     F .text.itcm	00000328 dns_recv
+200095bc l     O .bss	00000001 dns_last_pcb_idx
+20008680 l     O .bss	00000010 dns_pcbs
+20008690 l     O .bss	00000030 dns_requests
+200095bd l     O .bss	00000001 dns_seqno
+200086c0 l     O .bss	00000008 dns_servers
+200086c8 l     O .bss	00000450 dns_table
+00000000 l    df *ABS*	00000000 inet_chksum.c
+00000000 l    df *ABS*	00000000 init.c
+00000000 l    df *ABS*	00000000 acd.c
+20001ee8 l     O .data	00000008 __func__.1
+00000000 l    df *ABS*	00000000 autoip.c
+00004a0c l     F .text.itcm	0000007c autoip_conflict_callback
+20001e1c l     O .data	0000000c __func__.0
+20001ef0 l     O .data	0000000d __func__.1
+20002008 l     O .data	00000012 __func__.3
+00000000 l    df *ABS*	00000000 dhcp.c
+00004af0 l     F .text.itcm	00000150 dhcp_create_msg
+00004c40 l     F .text.itcm	00000084 dhcp_inc_pcb_refcount
+000053ac l     F .text.itcm	00000554 dhcp_recv
+00004cc4 l     F .text.itcm	0000010c dhcp_bind
+00004dd0 l     F .text.itcm	0000002c dhcp_option_short.part.0
+00004dfc l     F .text.itcm	0000002c dhcp_option.part.0
+00004e28 l     F .text.itcm	0000002c dhcp_option_byte.part.0
+00004e54 l     F .text.itcm	00000060 dhcp_option_long
+00004eb4 l     F .text.itcm	00000050 dhcp_dec_pcb_refcount
+00004f04 l     F .text.itcm	0000009c dhcp_handle_ack.isra.0
+00004fa0 l     F .text.itcm	000000a8 dhcp_option_hostname.isra.0
+00005048 l     F .text.itcm	00000190 dhcp_discover
+000051d8 l     F .text.itcm	000001d4 dhcp_select.isra.0
+00005900 l     F .text.itcm	000001c4 dhcp_reboot.isra.0
+200085d4 l     O .bss	00000004 dhcp_pcb
+200095bb l     O .bss	00000001 dhcp_pcb_refcount
+200085d8 l     O .bss	0000000a dhcp_rx_options_given
+200085e4 l     O .bss	00000028 dhcp_rx_options_val
+20009578 l     O .bss	00000004 xid.6
+20001e28 l     O .data	00000016 __func__.0
+20001f00 l     O .data	0000000b __func__.1
+2000201c l     O .data	0000000b __func__.3
+20002070 l     O .data	00000010 __func__.5
+20003040 l     O .data	00000004 dhcp_discover_request_options
+00000000 l    df *ABS*	00000000 etharp.c
+000061a4 l     F .text.itcm	000000f8 etharp_raw
+0000629c l     F .text.itcm	00000164 etharp_find_entry.constprop.0
+00006400 l     F .text.itcm	000000f4 etharp_output_to_arp_index
+20008440 l     O .bss	000000f0 arp_table
+200095be l     O .bss	00000001 etharp_cached_entry
+20001e40 l     O .data	0000000e __func__.0
+20001f0c l     O .data	0000000d __func__.1
+00000000 l    df *ABS*	00000000 icmp.c
+00006aac l     F .text.itcm	000000b4 icmp_send_response
+00000000 l    df *ABS*	00000000 igmp.c
+00006cac l     F .text.itcm	000000b0 igmp_lookup_group
+00006d5c l     F .text.itcm	0000003e igmp_delaying_member
+00006d9c l     F .text.itcm	000000c0 igmp_send
+20008438 l     O .bss	00000004 allrouters
+2000843c l     O .bss	00000004 allsystems
+20001e50 l     O .data	00000016 __func__.0
+20001fd4 l     O .data	00000015 __func__.2
+00000000 l    df *ABS*	00000000 ip4.c
+20009590 l     O .bss	00000002 ip_id
+20001e68 l     O .data	00000016 __func__.0
+20001f1c l     O .data	0000000a __func__.1
+00000000 l    df *ABS*	00000000 ip4_addr.c
+00000000 l    df *ABS*	00000000 ip4_frag.c
+00007710 l     F .text.itcm	0000002c ip_reass_dequeue_datagram.part.0
+0000773c l     F .text.itcm	00000044 ipfrag_free_pbuf_custom
+00007780 l     F .text.itcm	00000104 ip_reass_free_complete_datagram
+00007884 l     F .text.itcm	00000074 ip_reass_remove_oldest_datagram
+20009592 l     O .bss	00000002 ip_reass_pbufcount
+200090c0 l     O .bss	00000004 reassdatagrams
+00000000 l    df *ABS*	00000000 mem.c
+00000000 l    df *ABS*	00000000 memp.c
+00007f84 l     F .text.itcm	0000002c do_memp_malloc_pool.part.0
+00007fb0 l     F .text.itcm	0000002c do_memp_free_pool.part.0
+20008c9c l     O .bss	00000004 memp_tab_FRAG_PBUF
+20008ca0 l     O .bss	00000004 memp_tab_IGMP_GROUP
+20008ca4 l     O .bss	00000004 memp_tab_PBUF
+20008ca8 l     O .bss	00000004 memp_tab_PBUF_POOL
+20008cac l     O .bss	00000004 memp_tab_REASSDATA
+20008cb0 l     O .bss	00000004 memp_tab_SYS_TIMEOUT
+20008cb4 l     O .bss	00000004 memp_tab_TCP_PCB
+20008cb8 l     O .bss	00000004 memp_tab_TCP_PCB_LISTEN
+20008cbc l     O .bss	00000004 memp_tab_TCP_SEG
+20008cc0 l     O .bss	00000004 memp_tab_UDP_PCB
+00000000 l    df *ABS*	00000000 netif.c
+00008088 l     F .text.itcm	00000006 netif_null_output_ip4
+00008090 l     F .text.itcm	00000088 netif_do_set_ipaddr
+20008b50 l     O .bss	00000004 ext_callback
+20001e80 l     O .data	0000001a __func__.0
+20001f28 l     O .data	00000017 __func__.1
+20001f78 l     O .data	0000000d __func__.10
+20001f94 l     O .data	0000000f __func__.11
+20001fb0 l     O .data	0000000a __func__.15
+20002028 l     O .data	00000013 __func__.3
+20002080 l     O .data	00000014 __func__.5
+200020c4 l     O .data	00000012 __func__.6
+200020e0 l     O .data	0000000f __func__.7
+20002108 l     O .data	0000000d __func__.8
+2000212c l     O .data	00000012 __func__.9
+00000000 l    df *ABS*	00000000 pbuf.c
+000086ac l     F .text.itcm	0000002c pbuf_ref.part.0
+000086d8 l     F .text.itcm	0000002c pbuf_clone.part.0
+00000000 l    df *ABS*	00000000 tcp.c
+00009004 l     F .text.itcm	00000064 tcp_new_port
+00009068 l     F .text.itcm	00000070 tcp_close_shutdown_fin
+000090d8 l     F .text.itcm	0000002c tcp_free.part.0
+00009104 l     F .text.itcm	0000002c tcp_next_iss.part.0
+00009130 l     F .text.itcm	0000002c tcp_eff_send_mss_netif.part.0
+00009fb4 l     F .text.itcm	000001bc tcp_close_shutdown
+200095d0 l     O .bss	00000001 tcp_timer
+200095d1 l     O .bss	00000001 tcp_timer_ctr
+20006c8c l     O .data	00000004 iss.0
+20006d44 l     O .data	00000002 tcp_port
+20001f88 l     O .data	0000000b __func__.10
+20001fa4 l     O .data	00000009 __func__.14
+20001fbc l     O .data	0000000c __func__.15
+20001fc8 l     O .data	0000000a __func__.17
+2000203c l     O .data	00000008 __func__.3
+20002094 l     O .data	00000009 __func__.5
+200020d8 l     O .data	00000008 __func__.6
+200020f0 l     O .data	0000000a __func__.7
+20002140 l     O .data	0000000c __func__.9
+20004f7c l     O .data	0000000d tcp_backoff
+20005760 l     O .data	00000007 tcp_persist_backoff
+00000000 l    df *ABS*	00000000 tcp_in.c
+0000a454 l     F .text.itcm	000000a0 tcp_oos_insert_segment
+0000a4f4 l     F .text.itcm	0000006c tcp_input_delayed_close
+0000a560 l     F .text.itcm	000000d8 tcp_free_acked_segments.constprop.0
+0000a638 l     F .text.itcm	00000870 tcp_receive
+0000aea8 l     F .text.itcm	00000168 tcp_parseopt
+20008434 l     O .bss	00000004 ackno
+200095c0 l     O .bss	00000001 flags
+20008b6c l     O .bss	00000010 inseg
+20009596 l     O .bss	00000002 recv_acked
+200090c4 l     O .bss	00000004 recv_data
+200095c6 l     O .bss	00000001 recv_flags
+20009478 l     O .bss	00000004 seqno
+2000959a l     O .bss	00000002 tcp_optidx
+200094d0 l     O .bss	00000004 tcphdr
+2000959c l     O .bss	00000002 tcphdr_opt1len
+200094d4 l     O .bss	00000004 tcphdr_opt2
+2000959e l     O .bss	00000002 tcphdr_optlen
+200095a0 l     O .bss	00000002 tcplen
+20001e9c l     O .data	0000000a __func__.0
+00000000 l    df *ABS*	00000000 tcp_out.c
+0000bbb0 l     F .text.itcm	00000094 tcp_pbuf_prealloc
+0000bc44 l     F .text.itcm	000000fc tcp_create_segment
+0000bd40 l     F .text.itcm	0000002c tcp_rexmit_rto_commit.part.0
+0000bd6c l     F .text.itcm	000000a0 tcp_output_alloc_header.constprop.0
+0000be0c l     F .text.itcm	00000034 tcp_output_fill_options.constprop.0
+0000be40 l     F .text.itcm	0000009c tcp_output_control_segment
+0000bedc l     F .text.itcm	000000ac tcp_rst_common.isra.0
+20001ea8 l     O .data	0000000b __func__.0
+20001f40 l     O .data	0000000a __func__.1
+00000000 l    df *ABS*	00000000 timeouts.c
+0000cfbc l     F .text.itcm	00000064 sys_timeout_abs
+0000d020 l     F .text.itcm	0000003c lwip_cyclic_timer
+0000d05c l     F .text.itcm	00000050 tcpip_tcp_timer
+200085d0 l     O .bss	00000004 current_timeout_due_time
+20008d40 l     O .bss	00000004 next_timeout
+200094d8 l     O .bss	00000004 tcpip_tcp_timer_active
+20001f4c l     O .data	00000013 __func__.1
+20001fec l     O .data	0000000e __func__.2
+20002044 l     O .data	0000000c __func__.3
+2000205c l     O .data	00000011 __func__.4
+00000000 l    df *ABS*	00000000 udp.c
+20006d46 l     O .data	00000002 udp_port
+20001eb4 l     O .data	00000010 __func__.0
+20001f60 l     O .data	00000008 __func__.1
+20001ffc l     O .data	0000000b __func__.2
+20002050 l     O .data	00000009 __func__.3
+200020a0 l     O .data	0000000c __func__.5
+200020fc l     O .data	00000009 __func__.7
+20002118 l     O .data	00000012 __func__.8
+2000214c l     O .data	0000000a __func__.9
+00000000 l    df *ABS*	00000000 ethernet.c
+20001ec4 l     O .data	00000010 __func__.0
+20001f68 l     O .data	0000000f __func__.1
+00000000 l    df *ABS*	00000000 qnethernet_hal.cpp
+00000000 l    df *ABS*	00000000 entropy.c
+20009454 l     O .bss	00000004 s_entropySizeBytes
+2020c700 l     O .bss.dma	00000040 s_entropy
+00000000 l    df *ABS*	00000000 ip_tools.cpp
+00000000 l    df *ABS*	00000000 analyze_tonedetect.cpp
+00000000 l    df *ABS*	00000000 control_sgtl5000.cpp
+000114b8 l     F .text.itcm	00000184 AudioControlSGTL5000::enable(unsigned int, unsigned long) [clone .part.0]
+00000000 l    df *ABS*	00000000 effect_delay_ext.cpp
+00000000 l    df *ABS*	00000000 memcpy_audio.S.o
+00011c08 l       .text.itcm	00000000 .loopLR
+00011c4c l       .text.itcm	00000000 .loopL
+00011c8c l       .text.itcm	00000000 .loopR
+00011cc8 l       .text.itcm	00000000 .loopQuad
+00000000 l    df *ABS*	00000000 mixer.cpp
+00000000 l    df *ABS*	00000000 play_sd_wav.cpp
+00000000 l    df *ABS*	00000000 synth_sine.cpp
+00000000 l    df *ABS*	00000000 SPI.cpp
+00012e34 l     F .text.itcm	00000060 SPIClass::transfer(void const*, void*, unsigned int) [clone .part.0]
+00000000 l    df *ABS*	00000000 ExFatFile.cpp
+00000000 l    df *ABS*	00000000 ExFatFileWrite.cpp
+00000000 l    df *ABS*	00000000 ExFatFormatter.cpp
+00014de8 l     F .text.itcm	00000020 Print::write(char const*) [clone .isra.0]
+00000000 l    df *ABS*	00000000 ExFatName.cpp
+00000000 l    df *ABS*	00000000 ExFatPartition.cpp
+00000000 l    df *ABS*	00000000 FatFile.cpp
+00015b40 l     F .text.itcm	000000b4 FatFile::sync() [clone .part.0]
+00000000 l    df *ABS*	00000000 FatFileLFN.cpp
+00000000 l    df *ABS*	00000000 FatFormatter.cpp
+00017428 l     F .text.itcm	00000030 initFatDirCallback(unsigned long, void*)
+00000000 l    df *ABS*	00000000 FatName.cpp
+00000000 l    df *ABS*	00000000 FatPartition.cpp
+00017c40 l     F .text.itcm	000000fa FatPartition::fatGet(unsigned long, unsigned long*) [clone .part.0]
+00017d3c l     F .text.itcm	0000010c FatPartition::fatPut(unsigned long, unsigned long) [clone .part.0]
+00000000 l    df *ABS*	00000000 FsFile.cpp
+00000000 l    df *ABS*	00000000 FsNew.cpp
+00000000 l    df *ABS*	00000000 FsVolume.cpp
+00000000 l    df *ABS*	00000000 SdSpiCard.cpp
+00000000 l    df *ABS*	00000000 SdioTeensy.cpp
+000192e8 l     F .text.itcm	00000030 sdIrs()
+00019318 l     F .text.itcm	00000014 isBusyDat()
+0001932c l     F .text.itcm	0000000c isBusyDMA()
+00019338 l     F .text.itcm	000000cc setSdclk(unsigned long)
+0001950c l     F .text.itcm	00000128 initSDHC()
+00019634 l     F .text.itcm	00000088 waitTransferComplete() [clone .part.0]
+00019770 l     F .text.itcm	00000098 cardCommand(unsigned long, unsigned long)
+00019808 l     F .text.itcm	00000060 readReg16(unsigned long, void*)
+00019904 l     F .text.itcm	0000002c isBusyCMD13()
+00019abc l     F .text.itcm	0000011c cardCMD6(unsigned long, unsigned char*)
+00019cd4 l     F .text.itcm	0000015c rdWrSectors(unsigned long, unsigned long, unsigned char*, unsigned int)
+200095a6 l     O .bss	00000001 m_initDone
+20007b2c l     O .bss	00000004 m_sdClkKhz
+200095a7 l     O .bss	00000001 m_version2
+20007b50 l     O .bss	00000004 m_errorLine
+200095a8 l     O .bss	00000001 m_highCapacity
+200095a9 l     O .bss	00000001 m_transferActive
+20007b60 l     O .bss	00000010 m_cid
+20007b70 l     O .bss	00000010 m_csd
+20007b80 l     O .bss	00000004 m_ocr
+20007b84 l     O .bss	00000004 m_rca
+20007b88 l     O .bss	00000004 m_busyFcn
+200095ac l     O .bss	00000001 m_dmaBusy
+20007b8c l     O .bss	00000004 m_irqstat
+20006d48 l     O .data	00000001 m_errorCode
+00000000 l    df *ABS*	00000000 SdSpiChipSelect.cpp
+00000000 l    df *ABS*	00000000 SdSpiTeensy3.cpp
+00000000 l    df *ABS*	00000000 FsCache.cpp
+00000000 l    df *ABS*	00000000 FsDateTime.cpp
+0001a89c l     F .text.itcm	00000014 dateTimeMs10(unsigned short*, unsigned short*, unsigned char*)
+00000000 l    df *ABS*	00000000 FsName.cpp
+00000000 l    df *ABS*	00000000 FsStructs.cpp
+00000000 l    df *ABS*	00000000 FsUtf.cpp
+00000000 l    df *ABS*	00000000 upcase.cpp
+20000c2c l     O .data	0000012c lookupTable
+200012a0 l     O .data	000000d4 mapTable
+00000000 l    df *ABS*	00000000 Adafruit_GFX.cpp
+20000da0 l     O .data	00000500 font
+00000000 l    df *ABS*	00000000 Adafruit_I2CDevice.cpp
+00000000 l    df *ABS*	00000000 PubSubClient.cpp
+0001cacc l     F .text.itcm	0000031c PubSubClient::connect(char const*, char const*, char const*, char const*, unsigned char, bool, char const*, bool) [clone .part.0]
+00000000 l    df *ABS*	00000000 DMAChannel.cpp
+00000000 l    df *ABS*	00000000 EventResponder.cpp
+00000000 l    df *ABS*	00000000 IPAddress.cpp
+00000000 l    df *ABS*	00000000 Print.cpp
+0001dab0 l     F .text.itcm	0000007e Print::printNumber(unsigned long, unsigned char, unsigned char) [clone .part.0]
+00000000 l    df *ABS*	00000000 Time.cpp
+20001374 l     O .data	0000000c monthDays
+00000000 l    df *ABS*	00000000 WMath.cpp
+20007b5c l     O .bss	00000004 seed
+00000000 l    df *ABS*	00000000 WString.cpp
+00000000 l    df *ABS*	00000000 clockspeed.c
+00000000 l    df *ABS*	00000000 delay.c
+00000000 l    df *ABS*	00000000 digital.c
+00000000 l    df *ABS*	00000000 main.cpp
+00000000 l    df *ABS*	00000000 memcpy-armv7m.S.o
+00000000 l    df *ABS*	00000000 new.cpp
+00000000 l    df *ABS*	00000000 nonstd.c
+00000000 l    df *ABS*	00000000 pwm.c
+00000000 l    df *ABS*	00000000 rtc.c
+00000000 l    df *ABS*	00000000 usb_inst.cpp
+00000000 l    df *ABS*	00000000 usb_serial.c
+0001fa68 l     F .text.itcm	00000060 rx_queue_transfer
+2020cbc0 l     O .bss.dma	00001000 rx_buffer
+0001fac8 l     F .text.itcm	000000b4 rx_event
+0001fb7c l     F .text.itcm	00000090 usb_serial_flush_callback
+2020dbc0 l     O .bss.dma	00002000 txbuffer
+0001fc0c l     F .text.itcm	000001b8 usb_serial_write.part.0
+200093d0 l     O .bss	00000004 rx_available
+200093d4 l     O .bss	00000010 rx_count
+200095c7 l     O .bss	00000001 rx_head
+200093e4 l     O .bss	00000010 rx_index
+200093f4 l     O .bss	00000009 rx_list
+20009598 l     O .bss	00000002 rx_packet_size
+200095c8 l     O .bss	00000001 rx_tail
+200074c0 l     O .bss	00000100 rx_transfer
+200095d2 l     O .bss	00000001 transmit_previous_timeout
+200095a2 l     O .bss	00000002 tx_available
+200095d3 l     O .bss	00000001 tx_head
+200095d4 l     O .bss	00000001 tx_noautoflush
+200095a4 l     O .bss	00000002 tx_packet_size
+200075c0 l     O .bss	00000080 tx_transfer
+00000000 l    df *ABS*	00000000 yield.cpp
+200095b7 l     O .bss	00000001 yield::running
+00000000 l    df *ABS*	00000000 sm_pool.c
+00000000 l    df *ABS*	00000000 libm_a-wf_sqrt.o
+00000000 l    df *ABS*	00000000 libm_a-s_cos.o
+00000000 l    df *ABS*	00000000 libm_a-ef_sqrt.o
+00000000 l    df *ABS*	00000000 libm_a-e_rem_pio2.o
+00000000 l    df *ABS*	00000000 libm_a-k_rem_pio2.o
+00000000 l    df *ABS*	00000000 libm_a-k_cos.o
+00000000 l    df *ABS*	00000000 libm_a-k_sin.o
+00000000 l    df *ABS*	00000000 libm_a-s_fabs.o
+00000000 l    df *ABS*	00000000 libm_a-s_scalbn.o
+00000000 l    df *ABS*	00000000 libm_a-s_floor.o
+00000000 l    df *ABS*	00000000 atexit_arm.o
+00000000 l    df *ABS*	00000000 functexcept.o
+00000000 l    df *ABS*	00000000 functional.o
+00000000 l    df *ABS*	00000000 shared_ptr.o
+00000000 l    df *ABS*	00000000 bad_alloc.o
+00000000 l    df *ABS*	00000000 class_type_info.o
+00000000 l    df *ABS*	00000000 eh_arm.o
+00000000 l    df *ABS*	00000000 eh_exception.o
+00000000 l    df *ABS*	00000000 eh_globals.o
+00000000 l    df *ABS*	00000000 eh_personality.o
+000216ac l     F .text.itcm	000000c0 read_encoded_value_with_base(unsigned char, unsigned int, unsigned char const*, unsigned int*)
+0002176c l     F .text.itcm	00000048 base_of_encoded_value(unsigned char, _Unwind_Context*)
+000217b4 l     F .text.itcm	00000090 parse_lsda_header(_Unwind_Context*, unsigned char const*, lsda_header_info*)
+00000000 l    df *ABS*	00000000 eh_terminate.o
+00000000 l    df *ABS*	00000000 eh_throw.o
+00021d38 l     F .text.itcm	0000004c __gxx_exception_cleanup(_Unwind_Reason_Code, _Unwind_Control_Block*)
+00000000 l    df *ABS*	00000000 si_class_type_info.o
+00000000 l    df *ABS*	00000000 tinfo.o
+00000000 l    df *ABS*	00000000 vterminate.o
+00000000 l    df *ABS*	00000000 stdexcept.o
+00000000 l    df *ABS*	00000000 cow-stdexcept.o
+00000000 l    df *ABS*	00000000 cow-string-inst.o
+00000000 l    df *ABS*	00000000 cp-demangle.o
+000222fc l     F .text.itcm	000000f0 d_make_comp
+000223ec l     F .text.itcm	00000074 d_number
+00022460 l     F .text.itcm	00000046 d_call_offset
+000224a8 l     F .text.itcm	00000036 d_ref_qualifier
+000224e0 l     F .text.itcm	000000d4 d_count_templates_scopes
+000225b4 l     F .text.itcm	0000001c d_pack_length
+000225d0 l     F .text.itcm	00000048 d_discriminator
+00022618 l     F .text.itcm	0000001c d_index_template_argument.part.0
+00022634 l     F .text.itcm	00000078 d_growable_string_callback_adapter
+000226ac l     F .text.itcm	00000030 next_is_type_qual.isra.0
+000226dc l     F .text.itcm	00000044 d_append_char
+00022720 l     F .text.itcm	00000036 d_lookup_template_argument
+00022758 l     F .text.itcm	00000094 d_find_pack
+000227ec l     F .text.itcm	00000066 d_append_string
+00022854 l     F .text.itcm	0000005e d_template_param
+000228b4 l     F .text.itcm	00000078 d_append_num
+0002292c l     F .text.itcm	000000e0 d_source_name
+00022a0c l     F .text.itcm	00000194 d_substitution
+00022ba0 l     F .text.itcm	0000086e d_type
+000241f4 l     F .text.itcm	00000152 d_cv_qualifiers
+000234d8 l     F .text.itcm	0000006a d_function_type
+000247bc l     F .text.itcm	0000029c d_name
+00023b04 l     F .text.itcm	00000064 d_template_args_1
+00023c94 l     F .text.itcm	000004ec d_expression_1
+00023410 l     F .text.itcm	00000080 d_parmlist
+00023490 l     F .text.itcm	00000048 d_bare_function_type
+00023544 l     F .text.itcm	00000108 d_operator_name
+0002364c l     F .text.itcm	00000340 d_unqualified_name
+0002398c l     F .text.itcm	00000120 d_expr_primary
+00024a58 l     F .text.itcm	000000f6 d_encoding.part.0
+00024348 l     F .text.itcm	00000474 d_special_name
+00023aac l     F .text.itcm	00000058 d_template_arg
+00023b68 l     F .text.itcm	0000012a d_prefix
+00024180 l     F .text.itcm	00000072 d_exprlist
+00024b50 l     F .text.itcm	000020f4 d_print_comp_inner
+00026c44 l     F .text.itcm	0000005a d_print_comp
+000272d8 l     F .text.itcm	000001d8 d_print_function_type
+00027d94 l     F .text.itcm	00000254 d_maybe_print_fold_expression
+00027fe8 l     F .text.itcm	000001e4 d_maybe_print_designated_init
+00027cb8 l     F .text.itcm	000000da d_print_subexpr
+000278c0 l     F .text.itcm	00000076 d_print_expr_op
+00026ca0 l     F .text.itcm	00000638 d_print_mod
+000276f8 l     F .text.itcm	000001c8 d_print_array_type
+000274b0 l     F .text.itcm	00000248 d_print_mod_list
+00027938 l     F .text.itcm	0000037e d_demangle_callback.constprop.0
+00000000 l    df *ABS*	00000000 eh_call.o
+00028290 l     F .text.itcm	0000003a __cxxabiv1::__is_gxx_exception_class(char*)
+00000000 l    df *ABS*	00000000 eh_catch.o
+00000000 l    df *ABS*	00000000 eh_type.o
+00000000 l    df *ABS*	00000000 unwind-arm.o
+000284f4 l     F .text.itcm	00000012 selfrel_offset31
+00028508 l     F .text.itcm	0000005c search_EIT_table
+00028564 l     F .text.itcm	00000028 __gnu_unwind_get_pr_addr
+0002858c l     F .text.itcm	00000098 get_eit_entry
+00028624 l     F .text.itcm	00000058 restore_non_core_regs
+0002867c l     F .text.itcm	0000000a _Unwind_decode_typeinfo_ptr.constprop.0
+00028688 l     F .text.itcm	00000002 _Unwind_DebugHook
+0002868c l     F .text.itcm	0000003a unwind_phase2
+000286c8 l     F .text.itcm	000000ca unwind_phase2_forced
+000288a4 l     F .text.itcm	0000001a _Unwind_GetGR
+000288f0 l     F .text.itcm	00000018 _Unwind_SetGR
+0002898c l     F .text.itcm	000002a8 __gnu_unwind_pr_common
+00000000 l    df *ABS*	00000000 libunwind.o
+00000000 l    df *ABS*	00000000 pr-support.o
+000290a8 l     F .text.itcm	00000038 next_unwind_byte
+000290e0 l     F .text.itcm	0000001a _Unwind_GetGR.constprop.0
+000290fc l     F .text.itcm	00000004 unwind_UCB_from_context
+00000000 l    df *ABS*	00000000 libc_a-calloc.o
+00000000 l    df *ABS*	00000000 libc_a-callocr.o
+00000000 l    df *ABS*	00000000 libc_a-tolower.o
+00000000 l    df *ABS*	00000000 libc_a-malloc.o
+00000000 l    df *ABS*	00000000 libc_a-mallocr.o
+00000000 l    df *ABS*	00000000 libc_a-printf.o
+00000000 l    df *ABS*	00000000 libc_a-vfprintf.o
+0002b604 l     F .text.itcm	00000080 __sbprintf
+00000000 l    df *ABS*	00000000 libc_a-vfiprintf.o
+0002b684 l     F .text.itcm	00000076 __sprint_r.part.0
+0002c6a0 l     F .text.itcm	00000080 __sbprintf
+00000000 l    df *ABS*	00000000 libc_a-mlock.o
+00000000 l    df *ABS*	00000000 libc_a-realloc.o
+00000000 l    df *ABS*	00000000 libc_a-reallocr.o
+00000000 l    df *ABS*	00000000 libc_a-snprintf.o
+00000000 l    df *ABS*	00000000 libc_a-utoa.o
+00000000 l    df *ABS*	00000000 libc_a-fflush.o
+00000000 l    df *ABS*	00000000 libc_a-sprintf.o
+00000000 l    df *ABS*	00000000 libc_a-findfp.o
+0002ce88 l     F .text.itcm	00000018 stdio_exit_handler
+0002cea0 l     F .text.itcm	00000040 cleanup_stdio
+0002cee0 l     F .text.itcm	000000d4 global_stdio_init.part.0
+00000000 l    df *ABS*	00000000 libc_a-fputc.o
+00000000 l    df *ABS*	00000000 libc_a-fputs.o
+00000000 l    df *ABS*	00000000 libc_a-vdprintf.o
+00000000 l    df *ABS*	00000000 libc_a-fvwrite.o
+00000000 l    df *ABS*	00000000 libc_a-fwalk.o
+00000000 l    df *ABS*	00000000 libc_a-fwrite.o
+00000000 l    df *ABS*	00000000 libc_a-wsetup.o
+00000000 l    df *ABS*	00000000 libc_a-memcmp.o
+00000000 l    df *ABS*	00000000 libc_a-fputwc.o
+00000000 l    df *ABS*	00000000 libc_a-memmove.o
+00000000 l    df *ABS*	00000000 libc_a-memset.o
+00000000 l    df *ABS*	00000000 libc_a-strchr.o
+00000000 l    df *ABS*	00000000 libc_a-strncmp.o
+00000000 l    df *ABS*	00000000 libc_a-strncpy.o
+00000000 l    df *ABS*	00000000 libc_a-strnlen.o
+00000000 l    df *ABS*	00000000 libc_a-vasnprintf.o
+00000000 l    df *ABS*	00000000 libc_a-strstr.o
+0002db9c l     F .text.itcm	000000c6 critical_factorization
+0002dc64 l     F .text.itcm	000001f8 two_way_long_needle
+00000000 l    df *ABS*	00000000 libc_a-stpcpy.o
+00000000 l    df *ABS*	00000000 libc_a-locale.o
+00000000 l    df *ABS*	00000000 libc_a-localeconv.o
+00000000 l    df *ABS*	00000000 libc_a-cxa_atexit.o
+00000000 l    df *ABS*	00000000 libc_a-sbrkr.o
+00000000 l    df *ABS*	00000000 libc_a-writer.o
+00000000 l    df *ABS*	00000000 libc_a-errno.o
+00000000 l    df *ABS*	00000000 libc_a-strcmp.o
+00000000 l    df *ABS*	00000000 libc_a-strcpy.o
+00000000 l    df *ABS*	00000000 libc_a-init.o
+00000000 l    df *ABS*	00000000 libc_a-lock.o
+00000000 l    df *ABS*	00000000 libc_a-memchr.o
+00000000 l    df *ABS*	00000000 libc_a-strlen.o
+00000000 l    df *ABS*	00000000 libc_a-wcrtomb.o
+00000000 l    df *ABS*	00000000 libc_a-wcsrtombs.o
+00000000 l    df *ABS*	00000000 libc_a-__atexit.o
+00000000 l    df *ABS*	00000000 libm_a-s_frexp.o
+00000000 l    df *ABS*	00000000 libc_a-dtoa.o
+0002e780 l     F .text.itcm	00000126 quorem
+00000000 l    df *ABS*	00000000 libc_a-freer.o
+00000000 l    df *ABS*	00000000 libc_a-mbtowc_r.o
+00000000 l    df *ABS*	00000000 libc_a-svfprintf.o
+00000000 l    df *ABS*	00000000 libc_a-makebuf.o
+00000000 l    df *ABS*	00000000 libc_a-putc.o
+00000000 l    df *ABS*	00000000 libc_a-mprec.o
+00000000 l    df *ABS*	00000000 libc_a-fclose.o
+00000000 l    df *ABS*	00000000 libc_a-stdio.o
+00000000 l    df *ABS*	00000000 libc_a-wctomb_r.o
+00000000 l    df *ABS*	00000000 libc_a-wbuf.o
+00000000 l    df *ABS*	00000000 libc_a-closer.o
+00000000 l    df *ABS*	00000000 libc_a-fstatr.o
+00000000 l    df *ABS*	00000000 libc_a-isattyr.o
+00000000 l    df *ABS*	00000000 libc_a-lseekr.o
+00000000 l    df *ABS*	00000000 libc_a-readr.o
+00000000 l    df *ABS*	00000000 libc_a-wcsnrtombs.o
+00000000 l    df *ABS*	00000000 libc_a-assert.o
+00000000 l    df *ABS*	00000000 libc_a-fiprintf.o
+00000000 l    df *ABS*	00000000 libc_a-svfiprintf.o
+00000000 l    df *ABS*	00000000 data_waveforms.c
+00000000 l    df *ABS*	00000000 libc_a-ctype_.o
+00000000 l    df *ABS*	00000000 libc_a-impure.o
+00000000 l    df *ABS*	00000000 eh_term_handler.o
+00000000 l    df *ABS*	00000000 eh_unex_handler.o
+00000000 l    df *ABS*	00000000 libc_a-__call_atexit.o
+00000000 l    df *ABS*	00000000 ip.c
+00000000 l    df *ABS*	00000000 spi_interrupt.cpp
+00000000 l    df *ABS*	00000000 ExFatVolume.cpp
+00000000 l    df *ABS*	00000000 FatVolume.cpp
+00000000 l    df *ABS*	00000000 HardwareSerial.cpp
+00032200 l     F .text.itcm	00000008 __driver_set_chip_select_pin_veneer
+00032208 l     F .text.itcm	00000008 ___Z14set_audioClockilmb_veneer
+00032210 l     F .text.itcm	00000008 ___ZN11AudioStream17initialize_memoryEP18audio_block_structj_veneer
+00032218 l     F .text.itcm	00000008 ___ZN9qindesign7network13EthernetClassC1Ev_veneer
+00032220 l     F .text.itcm	00000008 ___init_veneer
+00032228 l     F .text.itcm	00000008 ___ZN9qindesign7network9MDNSClassD1Ev_veneer
+00032230 l     F .text.itcm	00000008 ___ZN9qindesign7network9MDNSClassC1Ev_veneer
+00032238 l     F .text.itcm	00000008 ___reboot_Teensyduino__veneer
+00032240 l     F .text.itcm	00000008 ___ZN9qindesign7network13EthernetClassD1Ev_veneer
+00032248 l     F .text.itcm	00000008 ___ZN7TwoWire5beginEv_veneer
+00032250 l     F .text.itcm	00000008 __enet_init_veneer
+00032258 l     F .text.itcm	00000008 __enet_deinit_veneer
+00032260 l     F .text.itcm	00000008 __init_phy_veneer
+60002790 l     F .text.code	00000008 __netif_set_default_veneer
+60002798 l     F .text.code	00000008 ___ZZN6teensy23inplace_function_detail6vtableIvJEEC4IPFvvEEENS0_7wrapperIT_EEENUlPvS9_E0_4_FUNES9_S9__veneer
+600027a0 l     F .text.code	00000008 __lwip_init_veneer
+600027a8 l     F .text.code	00000008 __netif_remove_ext_callback_veneer
+600027b0 l     F .text.code	00000008 ___ZN13IntervalTimer11beginCyclesEN6teensy16inplace_functionIFvvELj16ELj8EEEm_veneer
+600027b8 l     F .text.code	00000008 __usb_init_serialnumber_veneer
+600027c0 l     F .text.code	00000008 __memset_veneer
+600027c8 l     F .text.code	00000008 __driver_set_mac_veneer
+600027d0 l     F .text.code	00000008 __pwm_init_veneer
+600027d8 l     F .text.code	00000008 __delay_veneer
+600027e0 l     F .text.code	00000008 __set_arm_clock_veneer
+600027e8 l     F .text.code	00000008 __netif_add_noaddr_veneer
+600027f0 l     F .text.code	00000008 ___ZN9qindesign7network13EthernetClass3endEv_veneer
+600027f8 l     F .text.code	00000008 __dhcp_set_struct_veneer
+60002800 l     F .text.code	00000008 __netif_add_ext_callback_veneer
+60002808 l     F .text.code	00000008 __mdns_resp_remove_netif_veneer
+60002810 l     F .text.code	00000008 __sm_set_pool_veneer
+60002818 l     F .text.code	00000008 __main_veneer
+60002820 l     F .text.code	00000008 __memcmp_veneer
+60002828 l     F .text.code	00000008 __driver_get_system_mac_veneer
+60002830 l     F .text.code	00000008 ____libc_init_array_veneer
+60002838 l     F .text.code	00000008 ____errno_veneer
+60002840 l     F .text.code	00000008 __driver_get_mac_veneer
+60002848 l     F .text.code	00000008 __netif_remove_veneer
+60002850 l     F .text.code	00000008 __err_to_errno_veneer
+60002858 l     F .text.code	00000008 __autoip_set_struct_veneer
+60002860 l     F .text.code	00000008 ___Znwj_veneer
+0001d194 g     F .text.itcm	00000004 PubSubClient::state()
+000211cc g     F .text.itcm	00000030 std::__throw_length_error(char const*)
+200016f4 g     O .data	00000020 typeinfo name for __cxxabiv1::__forced_unwind
+000220dc g     F .text.itcm	00000040 std::logic_error::~logic_error()
+00013588  w    F .text.itcm	0000003a SDClass::mkdir(char const*)
+00016ebc g     F .text.itcm	000000b4 FatFile::makeUniqueSfn(FatLfn_t*)
+0001e7ec g     F .text.itcm	00000010 main
+00006c9c g     F .text.itcm	00000008 icmp_dest_unreach
+20001be8 g     O .data	0000002c vtable for __cxxabiv1::__si_class_type_info
+0002119c g     F .text.itcm	00000030 std::__throw_logic_error(char const*)
+00011154  w    F .text.itcm	00000040 qnethernet_hal_check_core_locking
+00018564  w    F .text.itcm	00000004 DedicatedSpiCard::isDedicatedSpi()
+0001fdc4 g     F .text.itcm	00000002 usb_serial_reset
+0002226c g     F .text.itcm	00000014 std::length_error::length_error(char const*)
+00014680 g     F .text.itcm	000000ae ExFatFile::addDirCluster()
+0002e02c g     F .text.itcm	00000024 _sbrk_r
+00017e48 g     F .text.itcm	0000009a FatPartition::allocateCluster(unsigned long, unsigned long*)
+00032070 g     F .text.itcm	00000024 _wcsnrtombs_r
+0002e050 g     F .text.itcm	0000002c _write_r
+20001678 g     O .data	00000008 typeinfo for __cxxabiv1::__forced_unwind
+0000dcec g     F .text.itcm	000000b8 qindesign::network::DNSClient::getHostByName(char const*, IPAddress&, unsigned long)
+000065b8 g     F .text.itcm	00000178 etharp_input
+0001dfc0 g     F .text.itcm	00000038 String::String(String const&)
+0000f700 g     F .text.itcm	00000104 qindesign::network::EthernetUDP::write(unsigned char const*, unsigned int)
+0002d648 g     F .text.itcm	00000060 memcmp
+000078f8 g     F .text.itcm	00000030 ip_reass_tmr
+20007fdc g     O .bss	00000004 EventResponder::firstYield
+00005b98 g     F .text.itcm	000001b4 dhcp_renew
+20008e10 g     O .bss	00000014 patchCordR2
+00009514 g     F .text.itcm	0000001c tcp_seg_free
+20008dfc g     O .bss	00000014 patchCordR1
+00031f3c g     F .text.itcm	0000002c _read_r
+20007648 g     O .bss	000004d4 SD
+0002e07c g     F .text.itcm	0000000c __errno
+20008de8 g     O .bss	00000014 patchCordR0
+00031a54 g     F .text.itcm	00000154 __mdiff
+000154a0 g     F .text.itcm	0000004c ExFatFile::cmpName(DirName_t const*, ExName_t*)
+00012e94 g     F .text.itcm	000000dc _spi_dma_rxISR0()
+0001e174 g     F .text.itcm	0000001c String::append(char const*)
+200095b1 g     O .bss	00000001 HardwareSerialIMXRT::s_count_serials_with_serial_events
+200016b8 g     O .data	0000000c typeinfo for std::bad_exception
+0002e8a8 g     F .text.itcm	00000cec _dtoa_r
+20008dd4 g     O .bss	00000014 patchCordMOR
+20001d48 g     O .data	00000014 vtable for std::length_error
+000293d8 g     F .text.itcm	00000006 .hidden _Unwind_GetDataRelBase
+00015a48 g     F .text.itcm	000000e0 ExFatPartition::init(FsBlockDeviceInterface*, unsigned char)
+00019a04 g     F .text.itcm	000000b8 SdioCard::writeStop()
+0001826c g     F .text.itcm	00000084 FsBaseFile::FsBaseFile(FsBaseFile const&)
+0000752c g     F .text.itcm	0000002c ip4_output_if
+0001f094  w    F .text.itcm	00000004 abort
+00009584 g     F .text.itcm	00000020 tcp_arg
+20008b28 g     O .bss	00000004 errno
+0001d4ac g     F .text.itcm	00000020 AudioConnection::connect(AudioStream&, unsigned char, AudioStream&, unsigned char)
+00008504 g     F .text.itcm	00000054 netif_set_down
+20001dc4  w    O .data	00000010 SPIClass::beginTransaction(SPISettings)::clk_sel
+0001e228 g     F .text.itcm	00000022 String::indexOf(char, unsigned int) const
+0000dc98 g     F .text.itcm	00000020 qindesign::network::DNSClient::setServer(int, IPAddress const&)
+20001a48  w    O .data	00000024 vtable for FsFile
+00031a10 g     F .text.itcm	00000042 __mcmp
+0001c610 g     F .text.itcm	000001c0 Adafruit_SSD1306::display()
+0002f870 g     F .text.itcm	00001b44 _svfprintf_r
+00013d64 g     F .text.itcm	0000002c ExFatFile::peek()
+0002c738 g     F .text.itcm	00000018 realloc
+00015cc0 g     F .text.itcm	0000001e FatFile::close()
+20001bbc g     O .data	0000002c vtable for __cxxabiv1::__class_type_info
+0002169c g     F .text.itcm	00000008 __cxa_get_globals_fast
+60002900 g       .text.code	00000000 __init_array_end
+0001d980 g     F .text.itcm	00000104 IntervalTimer::beginCycles(teensy::inplace_function<void (), 16u, 8u>, unsigned long)
+00031ec0 g     F .text.itcm	0000002c _fstat_r
+0000e400  w    F .text.itcm	00000006 std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)0>::_M_destroy()
+000031c4 g     F .text.itcm	000000ac mdns_build_request_domain
+000157dc g     F .text.itcm	00000036 ExFatPartition::dirCache(DirPos_t*, unsigned char)
+00008f18 g     F .text.itcm	0000006e pbuf_take_at
+00017a80 g     F .text.itcm	00000110 FatFile::getName8(char*, unsigned int)
+000187f0 g     F .text.itcm	0000006e SharedSpiCard::readStop()
+00013ab8 g     F .text.itcm	00000022 ExFatFile::getCreateDateTime(unsigned short*, unsigned short*)
+000110d8 g     F .text.itcm	00000008 enet_netif
+0000f874 g     F .text.itcm	00000038 non-virtual thunk to qindesign::network::EthernetUDP::setOutgoingDiffServ(unsigned char)
+0000e448 g     F .text.itcm	00000068 non-virtual thunk to qindesign::network::EthernetClient::~EthernetClient()
+0001a6d4 g     F .text.itcm	00000028 SdSpiArduinoDriver::begin(SdSpiConfig)
+0001111c g     F .text.itcm	00000014 enet_poll
+00002f1c g     F .text.itcm	000000d0 mdns_build_reverse_v4_domain
+0001591c g     F .text.itcm	000000be ExFatPartition::freeChain(unsigned long)
+0002160c g     F .text.itcm	00000070 __gnu_end_cleanup
+20001460 g     O .data	00000070 SPIClass::spiclass_lpspi4_hardware
+20007b90 g     O .bss	00000004 FsDateTime::callback
+00000b3c g     F .text.itcm	00000128 mqttSubCallback(char*, unsigned char*, unsigned int)
+00001048 g     F .text.itcm	0000014c printState(ContactState const&)
+0001dc60 g     F .text.itcm	00000164 Print::printFloat(double, unsigned char)
+0000d70c g     F .text.itcm	00000058 udp_sendto_if
+20006680 g     O .data	00000004 IntervalTimer::nvic_priorites
+0001e190 g     F .text.itcm	0000001e String::append(char)
+00021ddc g     F .text.itcm	00000038 __cxa_throw
+0002e61c g     F .text.itcm	0000004c _wcrtomb_r
+0001e77c g     F .text.itcm	00000070 pinMode
+0001d21c  w    F .text.itcm	00000002 teensy::inplace_function_detail::vtable<void>::vtable<void (*)()>(teensy::inplace_function_detail::wrapper<void (*)()>)::{lambda(void*)#4}::_FUN(void*)
+20001aec g     O .data	00000030 vtable for SDClass
+20009600 g       .bss	00000000 _ebss
+0001a9b4 g     F .text.itcm	000000a4 FsUtf::cpToMb(unsigned long, char*, char*)
+0002e48c g     F .text.itcm	00000002 __retarget_lock_release_recursive
+00028f88 g     F .text.itcm	00000000 .hidden __gnu_Unwind_Save_WMMXD
+20008dc0 g     O .bss	00000014 patchCordMOL
+000092d8 g     F .text.itcm	00000084 tcp_recved
+60001fc0 g     F .text.code	00000002 startup_default_early_hook
+000113ac  w    F .text.itcm	0000000c DMAChannel::~DMAChannel()
+00009bac g     F .text.itcm	000000d4 tcp_pcb_remove
+00009530 g     F .text.itcm	00000054 tcp_seg_copy
+000155b8 g     F .text.itcm	0000006a ExFatFile::hashName(ExName_t*)
+0000bba0 g     F .text.itcm	00000010 tcp_trigger_input_pcb_close
+000288c0 g     F .text.itcm	0000002e .hidden _Unwind_VRS_Set
+20007fb4 g     O .bss	00000008 AudioOutputI2S::dma
+200016d0  w    O .data	00000008 typeinfo for std::_Sp_make_shared_tag
+0000811c g     F .text.itcm	00000024 netif_set_default
+0000e720 g     F .text.itcm	0000008c qindesign::network::EthernetClient::operator bool()
+00008ca0 g     F .text.itcm	00000154 pbuf_copy_partial_pbuf
+00014b68 g     F .text.itcm	00000280 ExFatFile::write(void const*, unsigned int)
+20001db4  w    O .data	00000010 teensy::inplace_function<void (), 16u, 8u>::inplace_function<void (&)(), void (*)(), void>(void (&)())::vt
+0002e018 g     F .text.itcm	00000008 _localeconv_r
+0001ec8c g     F .text.itcm	00000070 analogWriteFrequency
+00000a8c  w    F .text.itcm	000000b0 AudioPlaySdWav::~AudioPlaySdWav()
+000172dc g     F .text.itcm	00000110 FatFile::remove()
+0002e708 g     F .text.itcm	00000078 frexp
+000039e0 g     F .text.itcm	00000090 mdns_send_outpacket
+0000d0ac g     F .text.itcm	00000060 tcp_timer_needed
+0000fea4 g     F .text.itcm	0000002c driver_has_hardware
+60001d4c g     F .text.code	00000034 TwoWire::configSDApin(unsigned char)
+200019e8 g     O .data	0000001c vtable for AudioControlSGTL5000
+00010534  w    F .text.itcm	0000005a std::_Sp_counted_ptr_inplace<qindesign::network::internal::ConnectionHolder, std::allocator<qindesign::network::internal::ConnectionHolder>, (__gnu_cxx::_Lock_policy)0>::_M_dispose()
+00021eb4 g     F .text.itcm	0000003a __cxxabiv1::__si_class_type_info::__do_find_public_src(int, void const*, __cxxabiv1::__class_type_info const*, void const*) const
+0001d150 g     F .text.itcm	0000002a PubSubClient::connect(char const*)
+0000eeec g     F .text.itcm	00000016 qindesign::network::EthernetClient::connect(IPAddress, unsigned short)
+00001638 g     F .text.itcm	00000140 updateFadedVolume(bool)
+0001e2a4 g     F .text.itcm	00000054 String::substring(unsigned int, unsigned int) const
+2000168c g     O .data	00000008 typeinfo for __cxxabiv1::__foreign_exception
+0000a338 g     F .text.itcm	00000022 tcp_eff_send_mss_netif
+200085c4 g     O .bss	00000004 contactCount
+0000a430 g     F .text.itcm	00000024 tcp_free_ooseq
+20007f54 g     O .bss	00000004 AudioStream::unused
+00006f30 g     F .text.itcm	00000014 igmp_lookfor_group
+00011de8 g     F .text.itcm	00000144 AudioOutputI2S::isr()
+200018c8 g     O .data	0000000c vtable for AudioInputI2S
+0001d744 g     F .text.itcm	00000044 EventResponder::runFromInterrupt()
+200094dc g     O .bss	00000084 udp
+00008888 g     F .text.itcm	00000078 pbuf_header_force
+00028850 g     F .text.itcm	00000012 .hidden __gnu_Unwind_Resume_or_Rethrow
+20008574 g     O .bss	00000040 client
+200016ac g     O .data	0000000c typeinfo for std::length_error
+200095ad g     O .bss	00000001 AudioStream::update_scheduled
+20009580 g     O .bss	00000002 AudioStream::memory_used_max
+20006128 g     O .data	00000001 String::zerotermination
+200090d0 g     O .bss	00000200 responseBuffer
+000212d8 g     F .text.itcm	00000014 __cxxabiv1::__class_type_info::~__class_type_info()
+200016e4 g     O .data	00000008 typeinfo for std::exception
+0003d800 g       *ABS*	00000000 _flashimagelen
+0001a754 g     F .text.itcm	00000016 SdSpiArduinoDriver::receive()
+0000fc74 g     F .text.itcm	00000050 qindesign::network::EthernetUDP::write(unsigned char)
+00007508 g     F .text.itcm	00000022 ip4_output_if_src
+000108dc g     F .text.itcm	0000019a qindesign::network::internal::ConnectionManager::recvFunc(void*, tcp_pcb*, pbuf*, signed char)
+00001548 g     F .text.itcm	0000005c queueNextIdleSong()
+200016a0 g     O .data	0000000c typeinfo for std::logic_error
+20208410 g     O .bss.dma	00000100 memp_memory_TCP_SEG_base
+0001df1c g     F .text.itcm	00000068 random(long, long)
+0001bb70 g     F .text.itcm	0000000c lpi2c4_isr()
+0002844c g     F .text.itcm	0000008a __cxa_end_catch
+0000f30c g     F .text.itcm	00000018 non-virtual thunk to qindesign::network::EthernetUDP::~EthernetUDP()
+00008558 g     F .text.itcm	00000094 netif_remove
+200095ae g     O .bss	00000001 AudioInputI2S::update_responsibility
+0002cb28 g     F .text.itcm	00000088 snprintf
+00032270 g     F .fini	00000000 _fini
+0002117c g     F .text.itcm	00000020 std::__throw_bad_alloc()
+0001b6c8 g     F .text.itcm	0000003c TwoWire::write(unsigned char const*, unsigned int)
+0001db80 g     F .text.itcm	0000004c Print::print(String const&)
+00008140 g     F .text.itcm	00000038 netif_get_by_index
+0002167c g     F .text.itcm	00000002 std::exception::~exception()
+00021308 g     F .text.itcm	00000042 __cxxabiv1::__class_type_info::__do_dyncast(int, __cxxabiv1::__class_type_info::__sub_kind, __cxxabiv1::__class_type_info const*, void const*, __cxxabiv1::__class_type_info const*, void const*, __cxxabiv1::__class_type_info::__dyncast_result&) const
+000046b0 g     F .text.itcm	000000f4 acd_tmr
+00006a80 g     F .text.itcm	0000002c etharp_acd_announce
+0001f9d0 g     F .text.itcm	0000001c usb_receive
+00016868 g     F .text.itcm	0000000c FatFile::sync()
+0002903c g     F .text.itcm	00000022 .hidden ___Unwind_Resume_or_Rethrow
+0001332c  w    F .text.itcm	00000002 SDClass::~SDClass()
+0001903c  w    F .text.itcm	00000076 SharedSpiCard::readCSD(csd_t*)
+00013914 g     F .text.itcm	000000d4 SDClass::begin(unsigned char)
+20007ff4 g     O .bss	00000008 AudioOutputTDM2::dma
+20001d70 g     O .data	00000014 vtable for std::bad_function_call
+20001714 g     O .data	00000022 typeinfo name for __cxxabiv1::__class_type_info
+00008704 g     F .text.itcm	00000028 pbuf_free_ooseq
+0000fe68 g     F .text.itcm	0000003c driver_set_mac
+000188b8 g     F .text.itcm	000000e8 SharedSpiCard::cardCommand(unsigned char, unsigned long)
+0000f074 g     F .text.itcm	0000001e qindesign::network::EthernetUDP::read()
+00028f1c g     F .text.itcm	00000000 .hidden __gnu_Unwind_Save_VFP
+200003b8 g     O .data	00000202 AudioWaveformSine
+000144e8 g     F .text.itcm	00000138 ExFatFile::syncDir()
+00019f40 g     F .text.itcm	000002d8 SdioCard::begin(SdioConfig)
+20007cfc g     O .bss	00000004 StaticInit<qindesign::network::MDNSClass>::pT
+60001fc0  w    F .text.code	00000002 startup_early_hook
+20001b40 g     O .data	00000070 vtable for SdioCard
+000203a8 g     F .text.itcm	00000080 cos
+0002e0a8 g     F .text.itcm	000002dc strcmp
+600029a0  w    O .text.progmem	00000050 TwoWire::i2c1_hardware
+20006c2c g     O .data	00000004 __malloc_trim_threshold
+00017ee4 g     F .text.itcm	00000024 FatPartition::fatGet(unsigned long, unsigned long*)
+0000f054 g     F .text.itcm	00000008 qindesign::network::EthernetUDP::outgoingTTL() const
+0001d68c g     F .text.itcm	00000034 DMAChannel::release()
+2000181c  w    O .data	00000024 vtable for StreamFile<FsBaseFile, unsigned long long>
+0001f09c g     F .text.itcm	00000060 tempmonGetTemp
+00018860 g     F .text.itcm	00000018 SharedSpiCard::syncDevice()
+00031dec g     F .text.itcm	000000b0 __swbuf_r
+20006c3c g     O .data	00000004 _impure_ptr
+00000830  w    F .text.itcm	000000b0 File::~File()
+00008fe8 g     F .text.itcm	0000001c pbuf_put_at
+00007d1c g     F .text.itcm	000001d4 ip4_frag
+0001b84c g     F .text.itcm	00000100 TwoWire::endTransmission(unsigned char)
+0000a1ac g     F .text.itcm	00000058 tcp_recv_null
+0000a270 g     F .text.itcm	00000084 tcp_fasttmr
+00032274 g       .ARM.exidx	00000000 __exidx_start
+0002d754 g     F .text.itcm	00000066 _fputwc_r
+20008530 g     O .bss	00000018 audioIn
+0001a5c0 g     F .text.itcm	000000f4 SdioCard::writeSector(unsigned long, unsigned char const*)
+000082b8 g     F .text.itcm	000000e8 netif_set_addr
+0000e3d0 g     F .text.itcm	0000000e qindesign::network::EthernetClient::outgoingDiffServ() const
+20008014 g     O .bss	00000008 AudioInputSPDIF3::dma
+000179ec g     F .text.itcm	00000094 FatFile::getSFN(char*, unsigned int)
+0001d220 g     F .text.itcm	000000ac AudioStream::allocate()
+0001d198  w    F .text.itcm	0000000c AudioStream::update_all()
+00000000 g       .text.itcm	00000000 _stext
+2000175c g     O .data	00000025 typeinfo name for __cxxabiv1::__si_class_type_info
+0001fa58  w    F .text.itcm	00000004 usb_serial_class::flush()
+0002d8b4 g     F .text.itcm	000000a4 memset
+000037b0 g     F .text.itcm	00000230 mdns_create_outpacket
+00008784 g     F .text.itcm	00000036 pbuf_alloced_custom
+0000ef04 g     F .text.itcm	00000038 qindesign::network::EthernetClient::connect(char const*, unsigned short)
+20009582 g     O .bss	00000002 AudioStream::cpu_cycles_total
+0002dfc4 g     F .text.itcm	00000046 stpcpy
+60001000 g     O .text.headers	00000020 ImageVectorTable
+0001e2f8 g     F .text.itcm	0000001e String::toLowerCase()
+20280000 g       .text.csf	00000000 _heap_end
+0001d2cc g     F .text.itcm	00000050 AudioStream::release(audio_block_struct*)
+20208078 g     O .bss.dma	00000100 memp_memory_SYS_TIMEOUT_base
+00021684 g     F .text.itcm	00000008 std::bad_exception::what() const
+0000061c  w    F .text.itcm	00000014 SDFile::write(void const*, unsigned int)
+00014ec4 g     F .text.itcm	000000b0 ExFatFormatter::writeUpcase(unsigned long)
+70000000 g       .bss.extram	00000000 _extram_end
+0000f8e4 g     F .text.itcm	00000042 qindesign::network::EthernetUDP::read(char*, unsigned int)
+200017a8 g     O .data	00000012 typeinfo name for std::bad_exception
+0001f914 g     F .text.itcm	00000064 usb_config_tx
+00012f70 g     F .text.itcm	00000234 SPIClass::begin()
+00021e84 g     F .text.itcm	00000014 __cxxabiv1::__si_class_type_info::~__si_class_type_info()
+0001e318 g     F .text.itcm	000002f0 set_arm_clock
+0000872c g     F .text.itcm	00000058 pbuf_alloc_reference
+0001aba8 g     F .text.itcm	00000002 Adafruit_GFX::startWrite()
+200066ac g     O .data	00000004 __brkval
+000206c8 g     F .text.itcm	00000690 __kernel_rem_pio2
+200095d7 g     O .bss	00000001 usb_high_speed
+00004670 g     F .text.itcm	00000030 acd_start
+00010a78  w    F .text.itcm	00000128 void std::vector<std::shared_ptr<qindesign::network::internal::ConnectionHolder>, std::allocator<std::shared_ptr<qindesign::network::internal::ConnectionHolder> > >::_M_realloc_insert<std::shared_ptr<qindesign::network::internal::ConnectionHolder> const&>(__gnu_cxx::__normal_iterator<std::shared_ptr<qindesign::network::internal::ConnectionHolder>*, std::vector<std::shared_ptr<qindesign::network::internal::ConnectionHolder>, std::allocator<std::shared_ptr<qindesign::network::internal::ConnectionHolder> > > >, std::shared_ptr<qindesign::network::internal::ConnectionHolder> const&)
+00021684 g     F .text.itcm	00000008 transaction clone for std::bad_exception::what() const
+60001fcc g     F .text.code	00000004 startup_debug_reset
+00018d1c g     F .text.itcm	00000068 SharedSpiCard::readStart(unsigned long)
+0001f084  w    F .text.itcm	00000004 _isatty
+000005a4  w    F .text.itcm	00000018 SDFile::read(void*, unsigned int)
+00009644 g     F .text.itcm	0000008a tcp_pcb_purge
+0001f9ec g     F .text.itcm	00000004 usb_transfer_status
+0002f594 g     F .text.itcm	000000a0 _malloc_trim_r
+0000935c g     F .text.itcm	00000194 tcp_connect
+00015ce0 g     F .text.itcm	00000052 FatFile::dirEntry(DirFat_t*)
+0001fa48  w    F .text.itcm	00000004 usb_serial_class::clear()
+00010798  w    F .text.itcm	0000006c std::vector<unsigned char, std::allocator<unsigned char> >::reserve(unsigned int)
+00029488 g     F .text.itcm	00000010 malloc
+00002ed4 g     F .text.itcm	00000046 mdns_domain_add_domain
+00031920 g     F .text.itcm	000000f0 __lshift
+00015ee0 g     F .text.itcm	000000ea FatFile::mkdir(FatFile*, char const*, bool)
+20006c84 g     O .data	00000008 idleSongs
+00028f24 g     F .text.itcm	00000000 .hidden __gnu_Unwind_Restore_VFP_D
+20006130 g     O .data	00000120 _impure_data
+000293c4 g     F .text.itcm	00000012 .hidden _Unwind_GetLanguageSpecificData
+000095f4 g     F .text.itcm	00000050 tcp_err
+00000cbc  w    F .text.itcm	00000060 AudioMixer4::AudioMixer4()
+20006d2c  w    O .data	00000016 usb_string_serial_number
+00004558 g     F .text.itcm	00000010 dns_gethostbyname
+60001fd0 g     F .text.code	00000110 configure_cache
+000048e4 g     F .text.itcm	00000070 autoip_set_struct
+0001854c  w    F .text.itcm	00000006 SdCardInterface::status()
+000132dc g     F .text.itcm	00000008 SPIClass::transfer(void const*, void*, unsigned int)
+20001b1c g     O .data	00000024 vtable for TwoWire
+0001ce24 g     F .text.itcm	00000198 PubSubClient::loop()
+000112a8 g     F .text.itcm	00000004 qindesign::network::ip_addr_get_ip4_uint32(ip4_addr const*)
+0000f0b0 g     F .text.itcm	00000002 qindesign::network::EthernetUDP::flush()
+000284d8 g     F .text.itcm	0000001a __cxa_current_exception_type
+0000d2b8 g     F .text.itcm	00000018 udp_init
+0001ddc4 g     F .text.itcm	00000158 breakTime(unsigned long, DateTimeFields&)
+200018f8 g     O .data	00000058 vtable for Adafruit_SSD1306
+000118e4 g     F .text.itcm	000000c4 AudioInputI2S::isr()
+000214f8 g     F .text.itcm	000000b0 __cxa_type_match
+0002e668 g     F .text.itcm	00000016 _wcsrtombs_r
+0001c014 g     F .text.itcm	00000010 Adafruit_SSD1306::~Adafruit_SSD1306()
+0002d7bc g     F .text.itcm	000000f8 memmove
+00021f9c g     F .text.itcm	00000004 std::type_info::__is_function_p() const
+00015898 g     F .text.itcm	00000042 ExFatPartition::fatGet(unsigned long, unsigned long*)
+00008f88 g     F .text.itcm	00000024 pbuf_clone
+00002674 g     F .text.itcm	000001b4 initEthernet()
+0000ca5c g     F .text.itcm	00000070 tcp_send_empty_ack
+2000957e g     O .bss	00000002 AudioStream::memory_used
+0000e060 g     F .text.itcm	00000022 qindesign::network::EthernetClass::loop()
+00012da4 g     F .text.itcm	0000000e AudioPlaySdWav::isPlaying()
+0001d8d4  w    F .text.itcm	00000002 teensy::inplace_function_detail::vtable<void>::vtable()::{lambda(void*, void*)#3}::_FUN(void*, void*)
+0001bed0 g     F .text.itcm	00000076 Adafruit_SSD1306::drawFastHLine(short, short, short, unsigned short)
+0000d914 g     F .text.itcm	00000044 udp_new_ip_type
+00021204 g     F .text.itcm	00000014 std::bad_function_call::~bad_function_call()
+0001e930 g     F .text.itcm	00000004 operator new(unsigned int)
+000045dc g     F .text.itcm	0000000c inet_chksum
+200094cc g     O .bss	00000004 tcp_tw_pcbs
+0001d6c0 g     F .text.itcm	00000084 EventResponder::triggerEventNotImmediate()
+00008484 g     F .text.itcm	0000001a netif_add_noaddr
+000005bc  w    F .text.itcm	00000038 StreamFile<FsBaseFile, unsigned long long>::read()
+0002cdd4 g     F .text.itcm	00000074 fflush
+70000000 g       .bss.extram	00000000 _extram_start
+6003d800 g       .text.csf	00000000 __text_csf_end
+00005f10 g     F .text.itcm	00000230 dhcp_coarse_tmr
+20008090 g     O .bss	00000004 FatVolume::m_cwv
+0002da24 g     F .text.itcm	0000008a strncmp
+200082bc g     O .bss	00000001 __lock___malloc_recursive_mutex
+0001d4cc g     F .text.itcm	00000094 AudioConnection::disconnect()
+0001aaf0 g     F .text.itcm	000000b8 toUpcase(unsigned short)
+00028794 g     F .text.itcm	00000066 .hidden __gnu_Unwind_RaiseException
+0001c848 g     F .text.itcm	0000000e PubSubClient::~PubSubClient()
+200094c8 g     O .bss	00000004 tcp_ticks
+00010158 g     F .text.itcm	00000088 driver_output
+00014730 g     F .text.itcm	000000a2 ExFatFile::rename(ExFatFile*, char const*)
+0000f044  w    F .text.itcm	00000008 qindesign::network::EthernetUDP::remotePort()
+0000f294 g     F .text.itcm	0000005c qindesign::network::EthernetUDP::~EthernetUDP()
+00000068  w    F .text.itcm	00000004 Print::availableForWrite()
+20007ee0 g     O .bss	00000004 AudioStream::first_update
+00012a94 g     F .text.itcm	0000030e AudioPlaySdWav::update()
+00020094 g     F .text.itcm	0000002c usb_serial_putchar
+000119a8 g     F .text.itcm	0000009c AudioInputI2S::update()
+0001bbf4 g     F .text.itcm	000000f2 Adafruit_SSD1306::drawPixel(short, short, unsigned short)
+00028f2c g     F .text.itcm	00000000 .hidden __gnu_Unwind_Save_VFP_D
+00028864 g     F .text.itcm	00000002 .hidden _Unwind_Complete
+00007f34 g     F .text.itcm	0000004c mem_free
+60002868 g       .text.code	00000000 __preinit_array_end
+0001a7f4 g     F .text.itcm	00000056 FsCache::sync()
+00010690  w    F .text.itcm	00000054 qindesign::network::internal::ConnectionManager::~ConnectionManager()
+200092d0 g     O .bss	00000010 rightDetectors
+000005f4  w    F .text.itcm	00000014 StreamFile<FsBaseFile, unsigned long long>::flush()
+0001bb7c g     F .text.itcm	00000078 TwoWire::setClock(unsigned long)
+200095b8  w    O .bss	00000001 SDFile::name()::zeroterm
+0002e37c g     F .text.itcm	000000ba strcpy
+0001e704 g     F .text.itcm	00000054 digitalWrite
+00028868 g     F .text.itcm	0000000c .hidden _Unwind_DeleteException
+00019868 g     F .text.itcm	0000007c SdioCard::isBusy()
+0002db38 g     F .text.itcm	00000062 _vasnprintf_r
+00015d54 g     F .text.itcm	00000020 FatFile::getModifyDateTime(unsigned short*, unsigned short*)
+0001127c g     F .text.itcm	0000002a entropy_random
+200019c0  w    O .data	00000028 vtable for usb_serial_class
+0000de44  w    F .text.itcm	00000020 EventResponder::~EventResponder()
+0001c800  w    F .text.itcm	00000006 usb_serial_class::write(unsigned char)
+20001680 g     O .data	0000000c typeinfo for __cxxabiv1::__class_type_info
+20007fb0 g     O .bss	00000004 AudioOutputI2S::block_right_2nd
+0001d3c4 g     F .text.itcm	00000018 AudioConnection::AudioConnection()
+0001bfbc g     F .text.itcm	00000058 Adafruit_SSD1306::Adafruit_SSD1306(unsigned char, unsigned char, TwoWire*, signed char, unsigned long, unsigned long)
+00007fdc g     F .text.itcm	0000005c memp_init
+00002a84 g     F .text.itcm	0000000c get_mdns_pcb
+0001347c  w    F .text.itcm	00000052 SDClass::rmdir(char const*)
+00019194 g     F .text.itcm	00000068 SharedSpiCard::writeData(unsigned char const*)
+000212cc g     F .text.itcm	0000000c __cxxabiv1::__class_type_info::__do_find_public_src(int, void const*, __cxxabiv1::__class_type_info const*, void const*) const
+20007cf8 g     O .bss	00000004 StaticInit<qindesign::network::MDNSClass>::nifty_counter
+20009358 g     O .bss	0000003c right_det_2
+00018558  w    F .text.itcm	00000004 SharedSpiCard::errorData() const
+200094b4 g     O .bss	00000004 systick_safe_read
+0001c8a8 g     F .text.itcm	00000168 PubSubClient::readPacket(unsigned char*)
+20001a10 g     O .data	0000000c vtable for AudioSynthWaveformSine
+00017b94  w    F .text.itcm	00000044 FsBlockDeviceInterface::readSectorsCallback(unsigned long, unsigned char*, unsigned int, void (*)(unsigned long, unsigned char*, void*), void*)
+2000667c g     O .data	00000004 __cxxabiv1::__unexpected_handler
+000019b8 g     F .text.itcm	0000010a buildDnsPtrQuery(unsigned char*, int, String const&)
+00013210 g     F .text.itcm	0000006c SPIClass::setSCK(unsigned char)
+000185dc  w    F .text.itcm	00000006 SharedSpiCard::end()
+00018c80 g     F .text.itcm	0000009c SharedSpiCard::sectorCount()
+0002e020 g     F .text.itcm	0000000c __cxa_atexit
+20009394 g     O .bss	0000003c right_det_3
+0000e3f0 g     F .text.itcm	0000000e qindesign::network::EthernetClient::outgoingTTL() const
+20001d84  w    O .data	0000001c vtable for std::_Sp_counted_ptr_inplace<qindesign::network::internal::ConnectionHolder, std::allocator<qindesign::network::internal::ConnectionHolder>, (__gnu_cxx::_Lock_policy)0>
+000096d0 g     F .text.itcm	000004dc tcp_slowtmr
+00013adc g     F .text.itcm	00000022 ExFatFile::getModifyDateTime(unsigned short*, unsigned short*)
+0001f06c  w    F .text.itcm	00000004 _read
+0001d560 g     F .text.itcm	00000034 AudioConnection::~AudioConnection()
+0001e0c8 g     F .text.itcm	0000002a String::operator=(String&&)
+00019464 g     F .text.itcm	00000010 SdioCard::readOCR(unsigned long*)
+0000e578 g     F .text.itcm	00000060 qindesign::network::EthernetClient::~EthernetClient()
+60002900  w    O .text.progmem	00000050 TwoWire::i2c4_hardware
+20009560 g     O .bss	00000004 udp_pcbs
+0001f9f0 g     F .text.itcm	00000058 usb_init_serialnumber
+00000025 g       *ABS*	00000000 _teensy_model_identifier
+0000f150 g     F .text.itcm	0000001c qindesign::network::EthernetUDP::remoteIP()
+000313b4 g     F .text.itcm	000000d8 __smakebuf_r
+000282ec g     F .text.itcm	000000e4 __cxa_call_unexpected
+0001247c g     F .text.itcm	00000210 AudioPlaySdWav::play(char const*)
+0000c94c g     F .text.itcm	00000080 tcp_rexmit_fast
+20001694 g     O .data	0000000c typeinfo for __cxxabiv1::__si_class_type_info
+000192e4  w    F .text.itcm	00000002 SdioCard::end()
+00018de0 g     F .text.itcm	00000074 DedicatedSpiCard::readSectorsCallback(unsigned long, unsigned char*, unsigned int, void (*)(unsigned long, unsigned char*, void*), void*)
+0000a400 g     F .text.itcm	0000002e tcp_tcp_get_tcp_addrinfo
+00031550 g     F .text.itcm	00000012 _Bfree
+0000882c g     F .text.itcm	0000005c pbuf_remove_header
+00018318 g     F .text.itcm	000000ae FsBaseFile::open(FsVolume*, char const*, int)
+0002e484 g     F .text.itcm	00000002 __retarget_lock_close_recursive
+0001d3dc g     F .text.itcm	000000d0 AudioConnection::connect()
+000294a8 g     F .text.itcm	00000560 _malloc_r
+60001990 g     F .text.code	000001c8 driver_init
+20008548 g     O .bss	00000020 audioOut
+0001f254 g     F .text.itcm	0000002c usb_stop_sof_interrupts
+000156e4 g     F .text.itcm	000000aa ExFatPartition::bitmapModify(unsigned long, unsigned long, bool)
+0001dff8 g     F .text.itcm	00000028 String::String(String&&)
+0000e3c0 g     F .text.itcm	00000010 qindesign::network::EthernetClient::setOutgoingDiffServ(unsigned char)
+2000931c g     O .bss	0000003c right_det_1
+0002db14 g     F .text.itcm	00000024 strnlen
+0001e6b0 g     F .text.itcm	00000054 micros
+0001f078  w    F .text.itcm	0000000a _fstat
+20001a1c  w    O .data	0000002c vtable for File
+2000180c g     O .data	0000000d typeinfo name for std::type_info
+00008060 g     F .text.itcm	00000028 memp_free
+00003340 g     F .text.itcm	0000000e mdns_multicast_timeout_reset_ipv4
+00020428 g     F .text.itcm	00000006 __ieee754_sqrtf
+20001d34 g     O .data	00000014 vtable for std::logic_error
+0000e2d0 g     F .text.itcm	00000032 qindesign::network::EthernetClass::leaveGroup(IPAddress const&) const
+200002c0 g     O .data	00000028 __mprec_bigtens
+0002c750 g     F .text.itcm	000003d8 _realloc_r
+200095bf g     O .bss	00000001 external_psram_size
+00014488 g     F .text.itcm	0000005e ExFatFile::rmdir()
+0002cc4c g     F .text.itcm	00000004 utoa
+20008054 g     O .bss	00000008 AudioOutputI2SQuad::dma
+0000bf88 g     F .text.itcm	00000594 tcp_write
+00019930 g     F .text.itcm	000000d4 SdioCard::writeStart(unsigned long)
+200082b8 g     O .bss	00000001 __lock___atexit_recursive_mutex
+0002f840 g     F .text.itcm	0000002a __ascii_mbtowc
+00028c3c  w    F .text.itcm	00000006 .hidden __aeabi_unwind_cpp_pr1
+200094c4 g     O .bss	00000004 tcp_listen_pcbs
+00028c44  w    F .text.itcm	00000006 .hidden __aeabi_unwind_cpp_pr2
+00021268 g     F .text.itcm	00000014 std::bad_alloc::~bad_alloc()
+60002780 g     F .text.code	00000000 _init
+000083a0 g     F .text.itcm	000000e4 netif_add
+00019474  w    F .text.itcm	00000002 SdioCard::~SdioCard()
+0001c808 g     F .text.itcm	00000040 PubSubClient::PubSubClient(Client&)
+00019bd8 g     F .text.itcm	000000fc SdioCard::erase(unsigned long, unsigned long)
+0000d2d0 g     F .text.itcm	000001d8 udp_input
+0001ebc0 g     F .text.itcm	000000cc analogWrite
+20008b94 g     O .bss	00000010 leftDetectors
+00006ca4 g     F .text.itcm	00000008 icmp_time_exceeded
+0001b13c g     F .text.itcm	000003d4 Adafruit_GFX::drawChar(short, short, unsigned char, unsigned short, unsigned short, unsigned char, unsigned char)
+20008004 g     O .bss	00000008 AudioInputI2SHex::dma
+60001d80 g     F .text.code	00000054 TwoWire::setSDA(unsigned char)
+00004ad0 g     F .text.itcm	0000001e autoip_accept_packet
+20009588 g     O .bss	00000002 AudioInputI2S::block_offset
+0000719c g     F .text.itcm	000001cc ip4_input
+00028c34 g     F .text.itcm	00000006 .hidden __aeabi_unwind_cpp_pr0
+0001fa50  w    F .text.itcm	00000004 usb_serial_class::read()
+00002188 g     F .text.itcm	000000d8 displayState(ContactState)
+20006d2c g     O .data	00000016 usb_string_serial_number_default
+000111c4 g     F .text.itcm	000000b8 trng_data
+0002e00c g     F .text.itcm	0000000c __locale_mb_cur_max
+0000ce4c g     F .text.itcm	00000050 tcp_rexmit_rto
+00007928 g     F .text.itcm	000003f4 ip4_reass
+00013bc4 g     F .text.itcm	0000019e ExFatFile::read(void*, unsigned int)
+0000e28c g     F .text.itcm	00000042 qindesign::network::EthernetClass::joinGroup(IPAddress const&) const
+0001c7e4 g     F .text.itcm	0000001c PubSubClient::write(unsigned char const*, unsigned int)
+00020e88 g     F .text.itcm	000000b0 __kernel_sin
+2000805c g     O .bss	00000008 AudioOutputPT8211_2::dma
+000094f0 g     F .text.itcm	00000022 tcp_segs_free
+20007b9c g     O .bss	00000004 StaticInit<qindesign::network::EthernetClass>::pT
+00020430 g     F .text.itcm	00000294 __ieee754_rem_pio2
+20008e4c g     O .bss	00000274 playSdWav1
+00016348 g     F .text.itcm	00000044 FatFile::readDirCache(bool)
+000001fc  w    F .text.itcm	0000003c SDFile::truncate(unsigned long long)
+00018c0c g     F .text.itcm	00000074 SharedSpiCard::readRegister(unsigned char, void*)
+00021e98 g     F .text.itcm	0000001c __cxxabiv1::__si_class_type_info::~__si_class_type_info()
+000007a8  w    F .text.itcm	00000040 SDFile::~SDFile()
+00011194  w    F .text.itcm	00000004 qnethernet_hal_entropy
+00015b28 g     F .text.itcm	00000018 ExFatPartition::rootLength()
+000015a4 g     F .text.itcm	00000094 getMusicState(ContactState)
+000136ec  w    F .text.itcm	0000003c SDClass::totalSize()
+20008d3c g     O .bss	00000004 netif_default
+2020cb40 g     O .bss.dma	00000062 usb_descriptor_buffer
+00014620 g     F .text.itcm	0000005e ExFatFile::sync()
+0001327c g     F .text.itcm	00000026 SPIClass::usingInterrupt(IRQ_NUMBER_t)
+0001d37c g     F .text.itcm	00000046 AudioStream::receiveWritable(unsigned int)
+200094b8 g     O .bss	00000004 tcp_active_pcbs
+00007f80 g     F .text.itcm	00000004 mem_calloc
+200092e0 g     O .bss	0000003c right_det_0
+00006fe0 g     F .text.itcm	0000009c igmp_joingroup_netif
+0002d57c g     F .text.itcm	000000cc __swsetup_r
+200095b0 g     O .bss	00000001 EventResponder::runningFromYield
+60001674 g     F .text.code	0000007c qindesign::network::EthernetClass::EthernetClass()
+20003f40 g     O .data	0000000c memp_TCP_SEG
+00015d74 g     F .text.itcm	0000016a FatFile::mkdir(FatFile*, FatLfn_t*)
+00003108 g     F .text.itcm	000000bc mdns_build_service_domain
+00019488 g     F .text.itcm	0000001c SdioCard::type() const
+2000957c g     O .bss	00000002 AudioUsingSPICount
+0001a480 g     F .text.itcm	00000030 SdioCard::syncDevice()
+00000d20 g     F .text.itcm	000001f0 audioSenseSetup()
+0002de5c g     F .text.itcm	00000168 strstr
+0000e3ac  w    F .text.itcm	00000002 std::_Sp_counted_ptr<decltype(nullptr), (__gnu_cxx::_Lock_policy)0>::_M_dispose()
+0000a2f4 g     F .text.itcm	00000024 tcp_tmr
+20007fa4 g     O .bss	00000004 AudioOutputI2S::block_left_1st
+0001f088  w    F .text.itcm	00000006 _lseek
+0002d4b0 g     F .text.itcm	000000aa _fwrite_r
+0000fd4c g     F .text.itcm	00000030 qindesign::network::MDNSClass::end()
+00015814 g     F .text.itcm	00000082 ExFatPartition::dirSeek(DirPos_t*, unsigned long)
+00002928 g     F .text.itcm	000000c0 setup
+200017ec g     O .data	0000000d typeinfo name for std::bad_alloc
+00007168 g     F .text.itcm	00000034 ip4_route
+000169c0 g     F .text.itcm	000001b4 FatFile::write(void const*, unsigned int)
+00016874 g     F .text.itcm	000000d8 FatFile::timestamp(unsigned char, unsigned short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char)
+60001020 g     O .text.headers	0000000c BootData
+200095c1 g     O .bss	00000001 isFading
+00021cfc g     F .text.itcm	00000008 __cxxabiv1::__unexpected(void (*)())
+200094ac g     O .bss	00000004 systick_cycle_count
+000047a4 g     F .text.itcm	000000d0 acd_arp_reply
+00031564 g     F .text.itcm	000000a4 __multadd
+0001f978 g     F .text.itcm	00000030 usb_prepare_transfer
+0002938c g     F .text.itcm	0000002a .hidden __gnu_unwind_frame
+000166b8 g     F .text.itcm	000000e2 FatFile::openCachedEntry(FatFile*, unsigned short, int, unsigned char)
+0000e918 g     F .text.itcm	0000004c qindesign::network::EthernetClient::remoteIP()
+00032564 g       .text.itcm	00000000 _etext
+00031e9c g     F .text.itcm	00000024 _close_r
+0001e098 g     F .text.itcm	0000002e String::String(unsigned char)
+20004300 g     O .data	000000dc pwm_pin_info
+0001cfbc g     F .text.itcm	000000b8 PubSubClient::publish(char const*, unsigned char const*, unsigned int, bool)
+0000b010 g     F .text.itcm	00000b90 tcp_input
+20001450  w    O .data	00000010 teensy::inplace_function_detail::empty_vtable<void>
+0001d214  w    F .text.itcm	00000006 teensy::inplace_function_detail::vtable<void>::vtable<void (*)()>(teensy::inplace_function_detail::wrapper<void (*)()>)::{lambda(void*, void*)#3}::_FUN(void*, void*)
+20003f58 g     O .data	00000028 memp_pools
+00013804 g     F .text.itcm	00000110 SDClass::mediaPresent()
+0001dc1c g     F .text.itcm	0000001c Print::printf(char const*, ...)
+20003eec g     O .data	0000000c memp_IGMP_GROUP
+0001eb34 g     F .text.itcm	0000008c quadtimerFrequency
+0000c8c0 g     F .text.itcm	0000008c tcp_rexmit
+00018440 g     F .text.itcm	000000e4 FsVolume::begin(FsBlockDeviceInterface*, bool, unsigned char)
+00032094 g     F .text.itcm	00000040 __assert_func
+200018ec  w    O .data	0000000c vtable for EventResponder
+60001dd4 g     F .text.code	00000034 TwoWire::configSCLpin(unsigned char)
+0001e940 g     F .text.itcm	00000062 ultoa
+0001790c g     F .text.itcm	000000b4 FatFormatter::format(FsBlockDeviceInterface*, unsigned char*, Print*)
+00000184  w    F .text.itcm	00000028 StaticInit<qindesign::network::MDNSClass>::~StaticInit()
+0000d958 g     F .text.itcm	00000038 udp_netif_ip_addr_changed
+000074d4 g     F .text.itcm	00000032 ip4_output_if_opt
+0000f2f8 g     F .text.itcm	00000014 qindesign::network::EthernetUDP::~EthernetUDP()
+20007f9c g     O .bss	00000008 AudioInputTDM2::dma
+00018878 g     F .text.itcm	00000040 DedicatedSpiCard::setDedicatedSpi(bool)
+20008064 g     O .bss	00000020 HardwareSerialIMXRT::s_serials_with_serial_events
+0001b674  w    F .text.itcm	0000000c TwoWire::available()
+00004298 g     F .text.itcm	000002c0 dns_gethostbyname_addrtype
+0001d864 g     F .text.itcm	00000020 systick_isr
+20007ba0 g     O .bss	00000158 StaticInit<qindesign::network::EthernetClass>::buf
+0000f0f8 g     F .text.itcm	00000058 qindesign::network::EthernetUDP::stop()
+000215a8 g     F .text.itcm	00000064 __cxa_begin_cleanup
+00011320 g     F .text.itcm	00000020 AudioAnalyzeToneDetect::set_params(long, unsigned short, unsigned short)
+600025f0 g     F .text.code	000000e8 usb_init
+0001268c g     F .text.itcm	0000007c AudioPlaySdWav::parse_format()
+0000f0b4 g     F .text.itcm	00000042 qindesign::network::EthernetUDP::read(unsigned char*, unsigned int)
+20001dd4  w    O .data	00000008 std::_Sp_make_shared_tag::_S_ti()::__tag
+60002f18 g     O .text.progmem	00000062 usb_config_descriptor_12
+00014e08 g     F .text.itcm	0000002e ExFatFormatter::syncUpcase()
+0000d188 g     F .text.itcm	0000005c sys_timeout
+0001abac g     F .text.itcm	0000000e Adafruit_GFX::writePixel(short, short, unsigned short)
+00009fac g     F .text.itcm	00000006 tcp_new_ip_type
+20000000 g       .data	00000000 _sdata
+0002d958 g     F .text.itcm	000000cc strchr
+20008cc4 g     O .bss	00000038 mixerMusicOutput
+0000e3e0 g     F .text.itcm	00000010 qindesign::network::EthernetClient::setOutgoingTTL(unsigned char)
+0001a314 g     F .text.itcm	000000d4 SdioCard::readStart(unsigned long)
+0000f9e8 g     F .text.itcm	000000dc qindesign::network::EthernetUDP::EthernetUDP(unsigned int)
+0000fac4 g     F .text.itcm	0000000e qindesign::network::EthernetUDP::EthernetUDP()
+00018d84 g     F .text.itcm	0000005c DedicatedSpiCard::readSectors(unsigned long, unsigned char*, unsigned int)
+20006678 g     O .data	00000004 __cxxabiv1::__terminate_handler
+200094b0 g     O .bss	00000004 systick_millis_count
+00029084 g     F .text.itcm	00000022 .hidden ___Unwind_Backtrace
+000192d8  w    F .text.itcm	00000004 SdCardInterface::hasDedicatedSpi()
+00012708 g     F .text.itcm	0000038c AudioPlaySdWav::consume(unsigned long)
+aaaabfff g       *ABS*	00000000 _flexram_bank_config
+0001e608 g     F .text.itcm	000000a8 delay
+20006c40 g     O .data	00000030 contactSongs
+200066a8 g     O .data	00000004 __atexit_recursive_mutex
+0002e680 g     F .text.itcm	00000088 __register_exitproc
+0002f634 g     F .text.itcm	0000020c _free_r
+20007000 g     O .data	000002c0 _VectorsRam
+00021cd8 g     F .text.itcm	00000010 __cxxabiv1::__terminate(void (*)())
+0000d764 g     F .text.itcm	0000008c udp_sendto
+000132e4 g     F .text.itcm	00000048 SPIClass::end()
+0001d074 g     F .text.itcm	0000002c PubSubClient::publish(char const*, char const*)
+0001b69c g     F .text.itcm	0000002a TwoWire::write(unsigned char)
+00011130  w    F .text.itcm	0000000c qnethernet_hal_millis
+000192e0  w    F .text.itcm	00000004 SdCardInterface::setDedicatedSpi(bool)
+00003a70 g     F .text.itcm	000000bc mdns_start_multicast_timeouts_ipv4
+000113d0  w    F .text.itcm	00000004 AudioControlSGTL5000::disable()
+00018e54 g     F .text.itcm	00000068 DedicatedSpiCard::readSector(unsigned long, unsigned char*)
+00008be4 g     F .text.itcm	00000016 pbuf_ref
+0001acf4 g     F .text.itcm	000000a4 Adafruit_GFX::drawLine(short, short, short, short, unsigned short)
+200094bc g     O .bss	00000004 tcp_bound_pcbs
+20006d4b g     O .data	00000001 analog_write_res
+20006070 g     O .data	00000084 usb_descriptor_list
+000191fc g     F .text.itcm	00000098 SharedSpiCard::writeSector(unsigned long, unsigned char const*)
+00012300 g     F .text.itcm	0000002a AudioPlaySdWav::begin()
+00021260 g     F .text.itcm	00000008 std::bad_alloc::what() const
+20000000 g     O .data	00000280 endpoint_queue_head
+0001d17c g     F .text.itcm	00000012 PubSubClient::setServer(IPAddress, unsigned short)
+0001b704 g     F .text.itcm	00000108 TwoWire::force_clock()
+0000f2f0 g     F .text.itcm	00000008 non-virtual thunk to qindesign::network::EthernetUDP::~EthernetUDP()
+00021368 g     F .text.itcm	0000002a __cxxabiv1::__class_type_info::__do_catch(std::type_info const*, void**, unsigned int) const
+0001d1a4 g     F .text.itcm	00000064 software_isr()
+20008044 g     O .bss	00000008 AudioOutputSPDIF2::dma
+000095a4 g     F .text.itcm	00000050 tcp_recv
+00020f38 g     F .text.itcm	00000012 fabs
+2000804c g     O .bss	00000008 AudioOutputSPDIF3::dma
+00020f50 g     F .text.itcm	0000010c scalbn
+00001b80 g     F .text.itcm	000000a8 getLocalIp()
+20003ef8 g     O .data	0000000c memp_PBUF
+000200d8 g     F .text.itcm	00000050 usb_serial_write_buffer_free
+0001c848 g     F .text.itcm	0000000e PubSubClient::~PubSubClient()
+0001fec8 g     F .text.itcm	000000e0 usb_serial_read
+000212ec g     F .text.itcm	0000001c __cxxabiv1::__class_type_info::~__class_type_info()
+00019404 g     F .text.itcm	0000000c SdioCard::errorCode() const
+00004568 g     F .text.itcm	00000074 lwip_standard_chksum
+0001613c g     F .text.itcm	0000003a FatFile::openRoot(FatVolume*)
+200082f0 g     O .bss	00000004 __malloc_max_total_mem
+20007ffc g     O .bss	00000008 AudioInputAnalog::dma
+20201e78 g     O .bss.dma	00000140 memp_memory_UDP_PCB_base
+00004a8c g     F .text.itcm	00000044 autoip_network_changed_link_down
+0001b018 g     F .text.itcm	00000030 Adafruit_GFX::Adafruit_GFX(short, short)
+20007f94 g     O .bss	00000008 AudioInputPDM2::dma
+20006c30 g     O .data	0000000c __sglue
+0001e020 g     F .text.itcm	0000000e String::~String()
+000220dc g     F .text.itcm	00000040 std::logic_error::~logic_error()
+000110e0 g     F .text.itcm	00000008 enet_get_system_mac
+0000015c  w    F .text.itcm	00000028 StaticInit<qindesign::network::EthernetClass>::~StaticInit()
+0001d78c g     F .text.itcm	00000074 EventResponder::clearEvent()
+200021e4 g     O .data	00000101 _ctype_
+0002cc50 g     F .text.itcm	00000130 __sflush_r
+00017208 g     F .text.itcm	000000d4 FatFile::parsePathName(char const*, FatLfn_t*, char const**)
+00029a08 g     F .text.itcm	00000028 printf
+20001794 g     O .data	00000011 typeinfo name for std::length_error
+000198e4 g     F .text.itcm	00000020 SdioCard::status()
+00016608 g     F .text.itcm	000000ae FatFile::seekSet(unsigned long)
+00019478  w    F .text.itcm	0000000e SdioCard::~SdioCard()
+60000000 g     O .text.headers	00000200 FlexSPI_NOR_Config
+00000c64  w    F .text.itcm	00000058 AudioAnalyzeToneDetect::AudioAnalyzeToneDetect()
+60001fc4  w    F .text.code	00000002 startup_middle_hook
+0001ca94 g     F .text.itcm	00000038 PubSubClient::write(unsigned char, unsigned char*, unsigned short)
+20001c9c g     O .data	00000098 vtable for qindesign::network::EthernetClient
+0001762c g     F .text.itcm	0000011c FatFormatter::makeFat16()
+20007fe0 g     O .bss	00000004 EventResponder::lastInterrupt
+0000e8f0 g     F .text.itcm	00000028 qindesign::network::EthernetClient::remotePort()
+200074a0 g     O .bss	00000020 endpoint0_transfer_data
+0002cffc g     F .text.itcm	0000000c __sfp_lock_release
+0002211c g     F .text.itcm	00000040 std::length_error::~length_error()
+0001e24c g     F .text.itcm	00000056 String::substring(unsigned int) const
+0000e408 g     F .text.itcm	00000010 non-virtual thunk to qindesign::network::EthernetClient::setOutgoingDiffServ(unsigned char)
+200095da g     O .bss	00000001 yield_active_check_flags
+00021680 g     F .text.itcm	00000002 std::bad_exception::~bad_exception()
+00021ef0 g     F .text.itcm	0000007a __cxxabiv1::__si_class_type_info::__do_dyncast(int, __cxxabiv1::__class_type_info::__sub_kind, __cxxabiv1::__class_type_info const*, void const*, __cxxabiv1::__class_type_info const*, void const*, __cxxabiv1::__class_type_info::__dyncast_result&) const
+0002d55c g     F .text.itcm	00000020 fwrite
+00002e7c g     F .text.itcm	00000058 mdns_domain_add_label
+60002464 g     F .text.code	0000005c usb_pll_start
+20008b68 g     O .bss	00000004 hostname
+00021844 g     F .text.itcm	00000494 __gxx_personality_v0
+00000488  w    F .text.itcm	00000060 File::available()
+0000e674 g     F .text.itcm	00000026 qindesign::network::EthernetClient::connecting()
+20208208 g     O .bss.dma	00000168 memp_memory_FRAG_PBUF_base
+000133b4  w    F .text.itcm	000000c8 SDClass::open(char const*, unsigned char)
+0001638c g     F .text.itcm	000001ea FatFile::rename(FatFile*, char const*)
+00006e7c g     F .text.itcm	00000034 igmp_start
+0001bf48 g     F .text.itcm	00000074 Adafruit_SSD1306::drawFastVLine(short, short, short, unsigned short)
+0002cfb4 g     F .text.itcm	0000003c __sinit
+0000f8ac g     F .text.itcm	00000038 non-virtual thunk to qindesign::network::EthernetUDP::setOutgoingTTL(unsigned char)
+0001ad98 g     F .text.itcm	00000094 Adafruit_GFX::fillRect(short, short, short, short, unsigned short)
+00013d90 g     F .text.itcm	000000ea ExFatFile::seekSet(unsigned long long)
+00009c80 g     F .text.itcm	00000178 tcp_abandon
+200002e8 g     O .data	000000c8 __mprec_tens
+0001431c g     F .text.itcm	00000024 ExFatFile::openNext(ExFatFile*, int)
+0002903c g     F .text.itcm	00000022 .hidden _Unwind_Resume_or_Rethrow
+0002d10c g     F .text.itcm	0000004a _vdprintf_r
+0001bfbc g     F .text.itcm	00000058 Adafruit_SSD1306::Adafruit_SSD1306(unsigned char, unsigned char, TwoWire*, signed char, unsigned long, unsigned long)
+0000e3b4  w    F .text.itcm	00000004 qindesign::network::EthernetClient::connectionTimeout() const
+00029a30 g     F .text.itcm	00001bd4 _vfprintf_r
+20003c50 g     O .data	00000004 ip_addr_broadcast
+0001b80c g     F .text.itcm	00000040 TwoWire::wait_idle()
+000117bc  w    F .text.itcm	00000110 SPIClass::beginTransaction(SPISettings)
+20006820 g     O .data	00000408 __malloc_av_
+60001cb4 g     F .text.code	00000044 enet_deinit
+0001ecfc g     F .text.itcm	0000007a flexpwm_init
+60002f14 g     O .text.progmem	00000004 string0
+00007558 g     F .text.itcm	0000003c ip4_addr_isbroadcast_u32
+0000e8a0 g     F .text.itcm	00000028 qindesign::network::EthernetClient::flush()
+60001bbc g     F .text.code	000000f8 enet_init
+00019a04 g     F .text.itcm	000000b8 SdioCard::readStop()
+600016f0 g     F .text.code	0000003c qindesign::network::EthernetClass::~EthernetClass()
+00021f98 g     F .text.itcm	00000002 std::type_info::~type_info()
+0001abd0 g     F .text.itcm	00000012 Adafruit_GFX::writeFastHLine(short, short, short, unsigned short)
+20008d70 g     O .bss	00000014 patchCordL0
+0002d6a8 g     F .text.itcm	000000aa __fputwc
+00009e00 g     F .text.itcm	000001ac tcp_alloc
+00000530  w    F .text.itcm	0000001a SDFile::size()
+00006b60 g     F .text.itcm	0000013c icmp_input
+200017fc g     O .data	0000000d typeinfo name for std::exception
+20003f04 g     O .data	0000000c memp_PBUF_POOL
+0001abbc g     F .text.itcm	00000012 Adafruit_GFX::writeFastVLine(short, short, short, unsigned short)
+20007f7c g     O .bss	00000008 AudioInputPDM::dma
+0000c6a0 g     F .text.itcm	0000012c tcp_enqueue_flags
+000084a0 g     F .text.itcm	00000064 netif_set_up
+000116c8 g     F .text.itcm	0000006c AudioControlSGTL5000::volumeInteger(unsigned int)
+200018d4 g     O .data	0000000c vtable for AudioOutputI2S
+600020e0 g     F .text.code	00000384 configure_external_ram
+200082f4 g     O .bss	00000004 __malloc_top_pad
+00028c4c g     F .text.itcm	000002ae .hidden _Unwind_VRS_Pop
+0002dab0 g     F .text.itcm	00000064 strncpy
+0000ce2c g     F .text.itcm	0000001e tcp_rexmit_rto_commit
+0000e4b0 g     F .text.itcm	00000070 non-virtual thunk to qindesign::network::EthernetClient::~EthernetClient()
+20007f8c g     O .bss	00000008 AudioInputI2S2::dma
+00021204 g     F .text.itcm	00000014 std::bad_function_call::~bad_function_call()
+60001768 g     F .text.code	00000034 qindesign::network::MDNSClass::~MDNSClass()
+0000918c g     F .text.itcm	000000d0 tcp_bind
+000101e0 g     F .text.itcm	000000c8 driver_set_incoming_mac_address_allowed
+0000a318 g     F .text.itcm	00000020 tcp_next_iss
+20008e38 g     O .bss	00000014 patchCordToneOut
+20008430 g     O .bss	00000004 __stdio_exit_handler
+20007480 g     O .bss	00000020 endpoint0_transfer_ack
+0001679c g     F .text.itcm	000000ca FatFile::openNext(FatFile*, int)
+0000d8e0 g     F .text.itcm	00000034 udp_new
+0001abfc g     F .text.itcm	0000001e Adafruit_GFX::fillScreen(unsigned short)
+00028f3c g     F .text.itcm	00000000 .hidden __gnu_Unwind_Save_VFP_D_16_to_31
+0001b048 g     F .text.itcm	000000f4 Adafruit_GFX::drawBitmap(short, short, unsigned char const*, short, short, unsigned short)
+0000865c g     F .text.itcm	00000050 netif_set_link_down
+00015ca0 g     F .text.itcm	0000001e FatFile::cacheDirEntry(unsigned char)
+0001fa60  w    F .text.itcm	00000008 usb_serial_class::write(unsigned char const*, unsigned int)
+0000e3bc  w    F .text.itcm	00000004 qindesign::network::EthernetClient::isConnectionTimeoutEnabled() const
+20009586 g     O .bss	00000002 AudioStream::memory_pool_first_mask
+000173ec  w    F .text.itcm	0000003a FsBlockDeviceInterface::writeSectorsCallback(unsigned long, unsigned int, unsigned char const* (*)(unsigned long, void*), void*)
+200095d5 g     O .bss	00000001 usb_cdc_line_rtsdtr
+000221ec g     F .text.itcm	00000080 std::logic_error::logic_error(char const*)
+0002e480 g     F .text.itcm	00000002 __retarget_lock_init_recursive
+0001df84 g     F .text.itcm	0000003a String::String(char const*)
+20008cfc g     O .bss	00000038 mixerSensingOutput
+0001e1dc g     F .text.itcm	00000012 String::charAt(unsigned int) const
+0000c834 g     F .text.itcm	0000008c tcp_rexmit_rto_prepare
+000004e8  w    F .text.itcm	0000002c File::peek()
+0000cacc g     F .text.itcm	00000360 tcp_output
+0001d0a0 g     F .text.itcm	000000a6 PubSubClient::subscribe(char const*, unsigned char)
+00011c00 g     F .text.itcm	00000000 memcpy_tointerleaveLR
+600024c0 g     F .text.code	00000130 tempmon_init
+20001d5c g     O .data	00000014 vtable for std::bad_exception
+0000de2c  w    F .text.itcm	00000016 EventResponder::triggerEvent(int, void*)
+20003f28 g     O .data	0000000c memp_TCP_PCB
+20008dac g     O .bss	00000014 patchCordL3
+0001eeac g     F .text.itcm	0000018c unused_interrupt_vector
+000135fc  w    F .text.itcm	000000f0 SDClass::usedSize()
+0001ee88 g     F .text.itcm	00000024 rtc_get
+200082c4 g     O .bss	00000028 __malloc_current_mallinfo
+0000915c g     F .text.itcm	00000018 tcp_init
+00000070  w    F .text.itcm	00000012 SDFile::isOpen()
+000189a0 g     F .text.itcm	000001f4 SharedSpiCard::begin(SdSpiConfig)
+200082f8 g     O .bss	00000138 __sf
+20008d5c g     O .bss	00000014 patchCord11
+0001dc38 g     F .text.itcm	00000028 Print::printNumber(unsigned long, unsigned char, unsigned char)
+00007368 g     F .text.itcm	0000016c ip4_output_if_opt_src
+000102a8  w    F .text.itcm	00000002 std::_Sp_counted_ptr_inplace<qindesign::network::internal::ConnectionHolder, std::allocator<qindesign::network::internal::ConnectionHolder>, (__gnu_cxx::_Lock_policy)0>::~_Sp_counted_ptr_inplace()
+000081f0 g     F .text.itcm	00000074 netif_remove_ext_callback
+00016d54 g     F .text.itcm	00000168 FatFile::makeSFN(FatLfn_t*)
+00006140 g     F .text.itcm	00000064 dhcp_fine_tmr
+00011f2c g     F .text.itcm	00000098 AudioOutputI2S::update()
+20001a04 g     O .data	0000000c vtable for AudioAnalyzeToneDetect
+20008b64 g     O .bss	00000004 fadeStartTime
+0000f05c g     F .text.itcm	00000018 qindesign::network::EthernetUDP::available()
+000160e0 g     F .text.itcm	0000005a FatFile::openCluster(FatFile*)
+0000e9b0 g     F .text.itcm	000000a0 qindesign::network::EthernetClient::available()
+0001af00 g     F .text.itcm	00000118 Adafruit_GFX::writeLine(short, short, short, short, unsigned short)
+00004874 g     F .text.itcm	0000006e acd_netif_ip_addr_changed
+20008094 g     O .bss	00000004 qindesign::network::MDNS
+20007f84 g     O .bss	00000008 AudioInputTDM::dma
+000006cc  w    F .text.itcm	0000004c StreamFile<FsBaseFile, unsigned long long>::available()
+20008128 g     O .bss	00000190 __atexit0
+000028d8 g     F .text.itcm	00000050 displaySetup()
+0001ffec g     F .text.itcm	00000018 usb_serial_available
+20008d98 g     O .bss	00000014 patchCordL2
+00000a8c  w    F .text.itcm	000000b0 AudioPlaySdWav::~AudioPlaySdWav()
+0000e0cc g     F .text.itcm	0000006a qindesign::network::EthernetClass::begin(IPAddress const&, IPAddress const&, IPAddress const&, IPAddress const*)
+20008d84 g     O .bss	00000014 patchCordL1
+000089d4 g     F .text.itcm	0000011c pbuf_alloc
+00028f34 g     F .text.itcm	00000000 .hidden __gnu_Unwind_Restore_VFP_D_16_to_31
+00032568 g       .ARM.exidx	00000000 __exidx_end
+20009570 g     O .bss	00000004 usb_timer0_callback
+60001978 g     F .text.code	00000014 driver_get_capabilities
+0001d8d8  w    F .text.itcm	00000002 teensy::inplace_function_detail::vtable<void>::vtable()::{lambda(void*)#4}::_FUN(void*)
+20001840 g     O .data	0000000c vtable for AudioMixer4
+0001d31c g     F .text.itcm	00000046 AudioStream::transmit(audio_block_struct*, unsigned char)
+000020b4 g     F .text.itcm	000000d4 displayTimeCount()
+00010624 g     F .text.itcm	0000006c qindesign::network::internal::ConnectionManager::errFunc(void*, signed char)
+0001e1f0 g     F .text.itcm	00000036 String::getBytes(unsigned char*, unsigned int, unsigned int) const
+00008038 g     F .text.itcm	00000028 memp_malloc
+00008900 g     F .text.itcm	000000d4 pbuf_free
+00021170 g     F .text.itcm	0000000a __aeabi_atexit
+0000028c  w    F .text.itcm	00000046 SDFile::rewindDirectory()
+000192dc  w    F .text.itcm	00000004 SdCardInterface::isDedicatedSpi()
+200016d8 g     O .data	0000000c typeinfo for std::bad_alloc
+0002211c g     F .text.itcm	00000040 std::length_error::~length_error()
+00016320 g     F .text.itcm	00000028 FatFile::peek()
+0001e098 g     F .text.itcm	0000002e String::String(unsigned char)
+2000958e g     O .bss	00000002 dma_channel_allocated_mask
+200038f4 g     O .data	00000006 ethzero
+200017bc g     O .data	00000016 typeinfo name for std::bad_function_call
+000147d4 g     F .text.itcm	0000005e ExFatFile::mkdir(ExFatFile*, ExName_t*)
+20007f70 g     O .bss	00000004 AudioInputI2S::block_right
+0002b6fc g     F .text.itcm	00000018 __sprint_r
+2000947c g     O .bss	00000008 server
+0000e3b0  w    F .text.itcm	00000004 qindesign::network::EthernetClient::setConnectionTimeout(unsigned long)
+000007a8  w    F .text.itcm	00000040 SDFile::~SDFile()
+2020fbc0 g       .bss.dma	00000000 _heap_start
+0001ac9c g     F .text.itcm	00000058 Adafruit_GFX::drawFastHLine(short, short, short, unsigned short)
+0002d468 g     F .text.itcm	00000046 _fwalk_sglue
+000175d0 g     F .text.itcm	0000005c FatFormatter::writeMbr()
+000160d0 g     F .text.itcm	0000000e FatFile::open(FatVolume*, char const*, int)
+60002ee4  w    O .text.progmem	00000016 usb_string_product_name
+2000801c g     O .bss	00000008 AudioOutputSPDIF::dma
+000185d8  w    F .text.itcm	00000002 DedicatedSpiCard::~DedicatedSpiCard()
+0001fa54  w    F .text.itcm	00000004 usb_serial_class::available()
+0002d06c g     F .text.itcm	00000086 _fputs_r
+00021060 g     F .text.itcm	00000110 floor
+00008178 g     F .text.itcm	00000078 netif_add_ext_callback
+00031ba8 g     F .text.itcm	000000d4 __d2b
+00004234 g     F .text.itcm	00000002 dns_init
+0000e5d8 g     F .text.itcm	00000030 qindesign::network::EthernetClient::EthernetClient()
+00000514  w    F .text.itcm	0000001a SDFile::position()
+0000d860 g     F .text.itcm	00000028 udp_recv
+0001a6b4 g     F .text.itcm	00000006 sdCsInit(unsigned char)
+00016b74 g     F .text.itcm	000000bc FatFile::cmpName(unsigned short, FatLfn_t*, unsigned char)
+2000956c g     O .bss	00000004 usb_cdc_line_rtsdtr_millis
+000102c4  w    F .text.itcm	00000020 std::_Sp_counted_ptr_inplace<qindesign::network::internal::ConnectionHolder, std::allocator<qindesign::network::internal::ConnectionHolder>, (__gnu_cxx::_Lock_policy)0>::_M_get_deleter(std::type_info const&)
+0001d208  w    F .text.itcm	00000004 teensy::inplace_function_detail::vtable<void>::vtable<void (*)()>(teensy::inplace_function_detail::wrapper<void (*)()>)::{lambda(void*)#1}::_FUN(void*)
+00014e38 g     F .text.itcm	00000040 ExFatFormatter::writeUpcaseByte(unsigned char)
+2000860c g     O .bss	0000006c display
+00019410 g     F .text.itcm	0000000c SdioCard::errorData() const
+000009e4  w    F .text.itcm	000000a8 File::~File()
+00006730 g     F .text.itcm	00000194 etharp_query
+00029060 g     F .text.itcm	00000022 .hidden _Unwind_ForcedUnwind
+20006254 g     O .data	00000004 F_CPU_ACTUAL
+0000a35c g     F .text.itcm	000000a4 tcp_netif_ip_addr_changed
+00000630  w    F .text.itcm	00000014 StreamFile<FsBaseFile, unsigned long long>::write(unsigned char const*, unsigned int)
+000029e8 g     F .text.itcm	00000004 sys_now
+60002efc g     O .text.progmem	00000018 usb_string_manufacturer_name_default
+200066b0 g     O .data	00000000 .hidden __dso_handle
+000316a8 g     F .text.itcm	0000005c __i2b
+0001f070  w    F .text.itcm	00000006 _close
+0002cff0 g     F .text.itcm	0000000c __sfp_lock_acquire
+00011fc4 g     F .text.itcm	000000dc AudioOutputI2S::config_i2s(bool)
+00004238 g     F .text.itcm	00000028 dns_setserver
+00004260 g     F .text.itcm	00000018 dns_getserver
+0000f83c g     F .text.itcm	00000038 qindesign::network::EthernetUDP::setOutgoingTTL(unsigned char)
+0001c0b8 g     F .text.itcm	000000a2 Adafruit_SSD1306::invertDisplay(bool)
+00017b90 g     F .text.itcm	00000004 FatFile::getName(char*, unsigned int)
+202085f0 g     O .bss.dma	000004e0 memp_memory_TCP_PCB_base
+00006eb0 g     F .text.itcm	0000002c igmp_stop
+000003b4  w    F .text.itcm	00000028 File::flush()
+0001ed78 g     F .text.itcm	000000f4 pwm_init
+0002cbb0 g     F .text.itcm	0000009c __utoa
+000216a4 g     F .text.itcm	00000008 __cxa_get_globals
+00004954 g     F .text.itcm	000000b8 autoip_start
+20006c28 g     O .data	00000004 __malloc_sbrk_base
+20008ba4 g     O .bss	0000003c left_det_0
+00031d68 g     F .text.itcm	0000003e __swrite
+00008264 g     F .text.itcm	00000054 netif_invoke_ext_callback
+600026d8 g     F .text.code	00000054 _reboot_Teensyduino_
+00012db4 g     F .text.itcm	00000080 AudioSynthWaveformSine::update()
+0000e520 g     F .text.itcm	00000058 qindesign::network::EthernetClient::~EthernetClient()
+00031c7c g     F .text.itcm	000000c6 _fclose_r
+0000e608 g     F .text.itcm	0000006c qindesign::network::EthernetClient::watchPendingConnect()
+60001e08 g     F .text.code	00000058 TwoWire::setSCL(unsigned char)
+0001b018 g     F .text.itcm	00000030 Adafruit_GFX::Adafruit_GFX(short, short)
+20008568 g     O .bss	0000000c audioShield
+20008c1c g     O .bss	0000003c left_det_2
+000320fc g     F .text.itcm	00000100 __ssprint_r
+20007fc4 g     O .bss	00000010 AudioOutputPWM::dma
+20008be0 g     O .bss	0000003c left_det_1
+0001ea58 g     F .text.itcm	000000dc flexpwmFrequency
+20009574 g     O .bss	00000004 usb_timer1_callback
+000131a4 g     F .text.itcm	0000006c SPIClass::setMOSI(unsigned char)
+0000d10c g     F .text.itcm	0000007c sys_timeouts_init
+0001d148 g     F .text.itcm	00000006 PubSubClient::subscribe(char const*)
+00013a68 g     F .text.itcm	0000003c ExFatFile::dirCache(unsigned char, unsigned char)
+0001826c g     F .text.itcm	00000084 FsBaseFile::FsBaseFile(FsBaseFile const&)
+20007f58 g     O .bss	00000004 ExFatVolume::m_cwv
+00031504 g     F .text.itcm	0000004c _Balloc
+0001a4b0 g     F .text.itcm	00000110 SdioCard::readSector(unsigned long, unsigned char*)
+000185f4 g     F .text.itcm	00000064 DedicatedSpiCard::writeSectors(unsigned long, unsigned char const*, unsigned int)
+20008084 g     O .bss	00000008 AsyncAudioInputSPDIF3::dma
+20007f6c g     O .bss	00000004 AudioInputI2S::block_left
+200095af g     O .bss	00000001 AudioOutputI2S::update_responsibility
+0001dfc0 g     F .text.itcm	00000038 String::String(String const&)
+60002868 g       .text.code	00000000 __preinit_array_start
+0000d888 g     F .text.itcm	00000058 udp_remove
+0000c51c g     F .text.itcm	00000184 tcp_split_unsent_seg
+0001941c g     F .text.itcm	00000024 SdioCard::readCID(CID*)
+200082ec g     O .bss	00000004 __malloc_max_sbrked_mem
+00019440 g     F .text.itcm	00000024 SdioCard::readCSD(csd_t*)
+00017748 g     F .text.itcm	000001c4 FatFormatter::makeFat32()
+2000808c g     O .bss	00000004 FsVolume::m_cwv
+00020364 g     F .text.itcm	00000044 sqrtf
+0001f090  w    F .text.itcm	00000004 __cxa_pure_virtual
+0001bb58 g     F .text.itcm	0000000c lpi2c1_isr()
+0001a8c8 g     F .text.itcm	0000004c FsName::get16()
+0000e864 g     F .text.itcm	0000003c qindesign::network::EthernetClient::availableForWrite()
+20008c58 g     O .bss	0000003c left_det_3
+0001b648 g     F .text.itcm	0000000c Adafruit_GFX::setTextSize(unsigned char)
+000154ec g     F .text.itcm	000000cc ExFatFile::getName8(char*, unsigned int)
+00000cbc  w    F .text.itcm	00000060 AudioMixer4::AudioMixer4()
+00022280  w    F .text.itcm	00000078 std::string::_Rep::_S_create(unsigned int, unsigned int, std::allocator<char> const&)
+6003cc00 g     O .text.csf	00000c00 hab_csf
+0001b94c g     F .text.itcm	00000160 TwoWire::requestFrom(unsigned char, unsigned char, unsigned char)
+00002b34 g     F .text.itcm	000000a0 mdns_resp_announce
+60001cf8 g     F .text.code	00000054 set_audioClock(int, long, unsigned long, bool)
+000113ac  w    F .text.itcm	0000000c DMAChannel::~DMAChannel()
+200062a8 g     O .data	00000010 Serial
+0000d7f0 g     F .text.itcm	00000070 udp_connect
+20007d00 g     O .bss	000001dc StaticInit<qindesign::network::MDNSClass>::buf
+0000e848 g     F .text.itcm	0000001a qindesign::network::EthernetClient::write(unsigned char)
+000281cc g     F .text.itcm	000000c4 __cxa_demangle
+20007fa8 g     O .bss	00000004 AudioOutputI2S::block_left_2nd
+00028ff4 g     F .text.itcm	00000022 .hidden _Unwind_RaiseException
+0001b680  w    F .text.itcm	00000018 TwoWire::peek()
+00031da8 g     F .text.itcm	00000020 __sseek
+0001abe4 g     F .text.itcm	00000018 Adafruit_GFX::writeFillRect(short, short, short, short, unsigned short)
+000293e4 g     F .text.itcm	00000018 calloc
+000320d4 g     F .text.itcm	00000028 fiprintf
+60002950  w    O .text.progmem	00000050 TwoWire::i2c3_hardware
+20207f78 g     O .bss.dma	00000100 memp_memory_PBUF_base
+200072c0 g       .bss	00000000 _sbss
+0003148c g     F .text.itcm	00000076 _putc_r
+00006588 g     F .text.itcm	00000030 etharp_cleanup_netif
+2000958c g     O .bss	00000002 AudioOutputI2S::block_right_offset
+0001dc00  w    F .text.itcm	0000001c _write
+00018148 g     F .text.itcm	00000124 FatPartition::init(FsBlockDeviceInterface*, unsigned char)
+00017458 g     F .text.itcm	00000120 FatFormatter::initFatDir(unsigned char, unsigned long)
+0001d788 g     F .text.itcm	00000004 pendablesrvreq_isr
+200095cf g     O .bss	00000001 tcp_active_pcbs_changed
+0001e0f4 g     F .text.itcm	0000007e String::append(char const*, unsigned int)
+200080d8  w    O .bss	00000010 std::string::_Rep::_S_empty_rep_storage
+00003350 g     F .text.itcm	0000000e mdns_multicast_timeout_25ttl_reset_ipv4
+00017c0c g     F .text.itcm	00000032 FatPartition::freeClusterCount_cb_fat32(unsigned long, unsigned char*, void*)
+00013330 g     F .text.itcm	00000084 SDClass::dateTime(unsigned short*, unsigned short*)
+0001ee6c g     F .text.itcm	0000001c analogWriteRes
+000102bc  w    F .text.itcm	00000006 std::_Sp_counted_ptr_inplace<qindesign::network::internal::ConnectionHolder, std::allocator<qindesign::network::internal::ConnectionHolder>, (__gnu_cxx::_Lock_policy)0>::_M_destroy()
+000134d0  w    F .text.itcm	00000064 SDClass::rename(char const*, char const*)
+0001c024 g     F .text.itcm	00000092 Adafruit_SSD1306::ssd1306_command1(unsigned char)
+0001a84c g     F .text.itcm	0000004e FsCache::prepare(unsigned long, unsigned char)
+20008124 g     O .bss	00000004 __atexit
+00028f44 g     F .text.itcm	00000000 .hidden __gnu_Unwind_Restore_WMMXD
+60001ec8 g     F .text.code	000000f8 AudioStream::initialize_memory(audio_block_struct*, unsigned int)
+0001a6fc g     F .text.itcm	0000004e SdSpiArduinoDriver::deactivate()
+20008b7c g     O .bss	00000018 ip_data
+0000e428 g     F .text.itcm	0000000e non-virtual thunk to qindesign::network::EthernetClient::outgoingTTL() const
+000221ec g     F .text.itcm	00000080 std::logic_error::logic_error(char const*)
+200094c0 g     O .bss	00000004 tcp_input_pcb
+20001da0 g     O .data	00000014 vtable for std::bad_alloc
+60002efc  w    O .text.progmem	00000018 usb_string_manufacturer_name
+00016578 g     F .text.itcm	00000090 FatFile::rmdir()
+0000925c g     F .text.itcm	0000007c tcp_update_rcv_ann_wnd
+20003f10 g     O .data	0000000c memp_REASSDATA
+00010078 g     F .text.itcm	000000e0 driver_poll
+00021474 g     F .text.itcm	0000002e __cxa_allocate_exception
+00029084 g     F .text.itcm	00000022 .hidden _Unwind_Backtrace
+0002d174 g     F .text.itcm	000002f4 __sfvwrite_r
+0001f098 g     F .text.itcm	00000004 Panic_Temp_isr
+20007f74 g     O .bss	00000008 AudioInputI2S::dma
+00006edc g     F .text.itcm	00000054 igmp_report_groups
+00010804  w    F .text.itcm	000000d8 std::vector<unsigned char, std::allocator<unsigned char> >::_M_default_append(unsigned int)
+60001e60 g     F .text.code	00000068 TwoWire::begin()
+00013b28 g     F .text.itcm	0000009c ExFatFile::parsePathName(char const*, ExName_t*, char const**)
+20009488 g     O .bss	00000024 sine1
+0000de44  w    F .text.itcm	00000020 EventResponder::~EventResponder()
+00001484 g     F .text.itcm	00000058 resumeMusic()
+0001dbe4 g     F .text.itcm	0000001c Print::println()
+00009df8 g     F .text.itcm	00000006 tcp_abort
+000194a4 g     F .text.itcm	00000068 SdioCard::sectorCount()
+000183c8 g     F .text.itcm	00000072 FsBaseFile::openNext(FsBaseFile*, int)
+00006f44 g     F .text.itcm	0000009c igmp_input
+0000eb00 g     F .text.itcm	00000098 qindesign::network::EthernetClient::peek()
+0001df84 g     F .text.itcm	0000003a String::String(char const*)
+20008b2c g     O .bss	00000024 ethClient
+000179c0 g     F .text.itcm	0000002a FatFile::getLfnChar(DirLfn_t*, unsigned char)
+000143d4 g     F .text.itcm	000000b4 ExFatFile::remove()
+00028fcc g     F .text.itcm	00000000 .hidden __gnu_Unwind_Restore_WMMXC
+00009174 g     F .text.itcm	00000018 tcp_free
+00015bf4 g     F .text.itcm	00000034 FatFile::addCluster()
+0001a8b0 g     F .text.itcm	00000018 FsDateTime::setCallback(void (*)(unsigned short*, unsigned short*))
+0001332c  w    F .text.itcm	00000002 SDClass::~SDClass()
+00020294 g     F .text.itcm	0000004c sm_align_pool
+00018560  w    F .text.itcm	00000004 DedicatedSpiCard::hasDedicatedSpi()
+0002b714 g     F .text.itcm	00000f8c _vfiprintf_r
+00020128 g     F .text.itcm	00000094 usb_serial_flush_output
+000293b8 g     F .text.itcm	0000000a .hidden _Unwind_GetRegionStart
+000190b4  w    F .text.itcm	00000076 SharedSpiCard::readCID(CID*)
+60001b58 g     F .text.code	00000002 driver_deinit
+0002d158 g     F .text.itcm	0000001c vdprintf
+0001490c g     F .text.itcm	00000176 ExFatFile::timestamp(unsigned char, unsigned short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char)
+00015c28 g     F .text.itcm	00000078 FatFile::addDirCluster()
+0002d008 g     F .text.itcm	00000064 fputc
+200016ec g     O .data	00000008 typeinfo for std::type_info
+0001f9a8 g     F .text.itcm	00000028 usb_transmit
+0000f094 g     F .text.itcm	0000001a qindesign::network::EthernetUDP::peek()
+200056c8 g     O .data	00000010 tcp_pcb_lists
+0000e154 g     F .text.itcm	00000040 qindesign::network::EthernetClass::waitForLocalIP(unsigned long) const
+60001fc8  w    F .text.code	00000002 startup_late_hook
+00029060 g     F .text.itcm	00000022 .hidden ___Unwind_ForcedUnwind
+0001843c g     F .text.itcm	00000004 operator new(unsigned int, unsigned long*)
+0000a170 g     F .text.itcm	0000003c tcp_close
+00007594 g     F .text.itcm	0000017c ip4addr_aton
+0001baac g     F .text.itcm	000000aa TwoWire::isr()
+00010e20  w    F .text.itcm	00000096 std::vector<std::shared_ptr<qindesign::network::internal::ConnectionHolder>, std::allocator<std::shared_ptr<qindesign::network::internal::ConnectionHolder> > >::_M_erase(__gnu_cxx::__normal_iterator<std::shared_ptr<qindesign::network::internal::ConnectionHolder>*, std::vector<std::shared_ptr<qindesign::network::internal::ConnectionHolder>, std::allocator<std::shared_ptr<qindesign::network::internal::ConnectionHolder> > > >)
+20001950 g     O .data	00000070 vtable for DedicatedSpiCard
+000113d8 g     F .text.itcm	00000084 AudioControlSGTL5000::read(unsigned int)
+2000386c g     O .data	00000006 ethbroadcast
+0001163c g     F .text.itcm	00000030 AudioControlSGTL5000::enable()
+200095d9 g     O .bss	00000001 wasLinkedMask
+000196bc g     F .text.itcm	000000b4 SdioCard::writeData(unsigned char const*)
+0000e084 g     F .text.itcm	00000046 qindesign::network::EthernetClass::maybeStartDHCP()
+00017bd8 g     F .text.itcm	00000034 FatPartition::freeClusterCount_cb_fat16(unsigned long, unsigned char*, void*)
+00018764 g     F .text.itcm	0000008c SharedSpiCard::readData(unsigned char*, unsigned int)
+00031dd0 g     F .text.itcm	0000001a __ascii_wctomb
+00000084  w    F .text.itcm	00000028 SDFile::close()
+00011198 g     F .text.itcm	0000002c qnethernet_hal_get_system_mac_address
+00013e7c g     F .text.itcm	00000398 ExFatFile::openPrivate(ExFatFile*, ExName_t*, int)
+200095d6 g     O .bss	00000001 usb_configuration
+200095c5 g     O .bss	00000001 pbuf_free_ooseq_pending
+20006258 g     O .data	00000050 SPI
+0001f8b0 g     F .text.itcm	00000064 usb_config_rx
+000102ac  w    F .text.itcm	0000000e std::_Sp_counted_ptr_inplace<qindesign::network::internal::ConnectionHolder, std::allocator<qindesign::network::internal::ConnectionHolder>, (__gnu_cxx::_Lock_policy)0>::~_Sp_counted_ptr_inplace()
+000110e8 g     F .text.itcm	00000008 enet_get_mac
+0001232c g     F .text.itcm	00000150 AudioPlaySdWav::stop()
+00013b00 g     F .text.itcm	00000028 ExFatFile::openRoot(ExFatVolume*)
+0000fe28 g     F .text.itcm	00000004 driver_get_system_mac
+20009564 g     O .bss	00000008 usb_cdc_line_coding
+00005d4c g     F .text.itcm	00000128 dhcp_release_and_stop
+0001166c  w    F .text.itcm	0000005a AudioControlSGTL5000::inputSelect(int)
+20006d42 g     O .data	00000002 main_period_ms
+0000e230 g     F .text.itcm	00000028 qindesign::network::EthernetClass::linkStatus() const
+00002fec g     F .text.itcm	00000074 mdns_build_host_domain
+0001e938 g     F .text.itcm	00000004 operator delete(void*)
+00000238  w    F .text.itcm	00000054 SDFile::setModifyTime(DateTimeFields const&)
+0001d594 g     F .text.itcm	00000044 AudioStream::update_setup()
+000293de g     F .text.itcm	00000006 .hidden _Unwind_GetTextRelBase
+0000ca0c g     F .text.itcm	0000004e tcp_rst_netif
+0002127c g     F .text.itcm	0000001c std::bad_alloc::~bad_alloc()
+00000718  w    F .text.itcm	0000004c SDFile::available()
+200082c0 g     O .bss	00000001 __lock___sfp_recursive_mutex
+0001855c  w    F .text.itcm	00000004 SharedSpiCard::type() const
+20001ac8  w    O .data	00000024 vtable for Stream
+0001a7a4 g     F .text.itcm	0000004e SdSpiArduinoDriver::send(unsigned char const*, unsigned int)
+00021ce8 g     F .text.itcm	00000014 std::terminate()
+00001438 g     F .text.itcm	0000004c musicPlayerSetup()
+0001e934 g     F .text.itcm	00000004 operator new[](unsigned int)
+20007fec g     O .bss	00000008 AudioOutputI2S2::dma
+00017f80 g     F .text.itcm	000001c8 FatPartition::freeClusterCount()
+0000ea50 g     F .text.itcm	000000b0 qindesign::network::EthernetClient::read()
+0001db30 g     F .text.itcm	00000050 Print::write(unsigned char const*, unsigned int)
+0000e69c g     F .text.itcm	00000084 qindesign::network::EthernetClient::connected()
+20003f34 g     O .data	0000000c memp_TCP_PCB_LISTEN
+0000d4a8 g     F .text.itcm	0000010c udp_bind
+0000c7cc g     F .text.itcm	00000068 tcp_send_fin
+0001ac20 g     F .text.itcm	00000022 Adafruit_GFX::setRotation(unsigned char)
+00002524 g     F .text.itcm	00000150 reverseDnsLookup(IPAddress)
+0000dcb8 g     F .text.itcm	00000034 qindesign::network::DNSClient::getServer(int)
+000113d4  w    F .text.itcm	00000004 AudioControlSGTL5000::inputLevel(float)
+0001dff8 g     F .text.itcm	00000028 String::String(String&&)
+00001ac4 g     F .text.itcm	000000bc parsePtrResponse(unsigned char*, int, int)
+000158dc g     F .text.itcm	00000040 ExFatPartition::fatPut(unsigned long, unsigned long)
+0001d8cc  w    F .text.itcm	00000002 teensy::inplace_function_detail::vtable<void>::vtable()::{lambda(void*)#1}::_FUN(void*)
+00031dc8 g     F .text.itcm	00000008 __sclose
+000002d4  w    F .text.itcm	0000006e SDFile::getModifyTime(DateTimeFields&)
+00003270 g     F .text.itcm	000000d0 mdns_write_domain
+0001b654  w    F .text.itcm	0000001e TwoWire::read()
+0001694c g     F .text.itcm	00000074 FatFile::truncate()
+00021e84 g     F .text.itcm	00000014 __cxxabiv1::__si_class_type_info::~__si_class_type_info()
+20006d28 g     O .data	00000004 thresh
+00028ff4 g     F .text.itcm	00000022 .hidden ___Unwind_RaiseException
+00000644  w    F .text.itcm	00000034 StreamFile<FsBaseFile, unsigned long long>::write(unsigned char)
+0001ffa8 g     F .text.itcm	00000044 usb_serial_peekchar
+00001778 g     F .text.itcm	00000240 playMusic(ContactState)
+0001d3c4 g     F .text.itcm	00000018 AudioConnection::AudioConnection()
+0000fad4 g     F .text.itcm	0000009c qindesign::network::EthernetUDP::begin(unsigned short, bool)
+00020d58 g     F .text.itcm	00000130 __kernel_cos
+0000d990 g     F .text.itcm	000000b8 ethernet_input
+000283d0 g     F .text.itcm	0000007c __cxa_begin_catch
+200018b0 g     O .data	00000018 vtable for PubSubClient
+00014f74 g     F .text.itcm	0000052c ExFatFormatter::format(FsBlockDeviceInterface*, unsigned char*, Print*)
+00007ef0 g     F .text.itcm	00000002 mem_init
+0000fe2c g     F .text.itcm	0000003c driver_get_mac
+00004a88 g     F .text.itcm	00000002 autoip_network_changed_link_up
+000159dc g     F .text.itcm	0000006a ExFatPartition::freeClusterCount()
+200066b4 g     O .data	0000016c __global_locale
+0000da48 g     F .text.itcm	00000090 ethernet_output
+60001674 g     F .text.code	0000007c qindesign::network::EthernetClass::EthernetClass()
+0001dbcc g     F .text.itcm	00000016 Print::print(long)
+20208178 g     O .bss.dma	00000090 memp_memory_IGMP_GROUP_base
+0000eb98 g     F .text.itcm	00000124 qindesign::network::EthernetClient::read(unsigned char*, unsigned int)
+000132a4 g     F .text.itcm	00000038 SPIClass::notUsingInterrupt(IRQ_NUMBER_t)
+00021254 g     F .text.itcm	0000000c std::_Sp_make_shared_tag::_S_eq(std::type_info const&)
+20001858 g     O .data	00000058 vtable for Adafruit_GFX
+0000707c g     F .text.itcm	0000009c igmp_leavegroup_netif
+00021234 g     F .text.itcm	00000020 std::__throw_bad_function_call()
+0002d0f4 g     F .text.itcm	00000018 fputs
+00008e70 g     F .text.itcm	000000a8 pbuf_take
+000282cc g     F .text.itcm	0000001e __cxa_call_terminate
+0002e488 g     F .text.itcm	00000002 __retarget_lock_acquire_recursive
+00028efc g     F .text.itcm	00000018 .hidden restore_core_regs
+0001fa5c  w    F .text.itcm	00000004 usb_serial_class::availableForWrite()
+20009484 g     O .bss	00000004 since_main
+0001a218 g     F .text.itcm	000000fc SdioCard::readData(unsigned char*)
+000007e8  w    F .text.itcm	00000048 SDFile::~SDFile()
+0001c7d0 g     F .text.itcm	00000014 PubSubClient::write(unsigned char)
+200062b8 g     O .data	00000140 Wire
+60002868 g       .text.code	00000000 __init_array_start
+000214a4 g     F .text.itcm	00000020 __cxa_free_exception
+000008e0  w    F .text.itcm	0000008e SDFile::seek(unsigned long long, int)
+00010758 g     F .text.itcm	00000040 qindesign::network::internal::ConnectionManager::instance()
+000293fc g     F .text.itcm	00000078 _calloc_r
+0001c014 g     F .text.itcm	00000010 Adafruit_SSD1306::~Adafruit_SSD1306()
+00000f10 g     F .text.itcm	00000138 getStableLinkedMask()
+00018ebc g     F .text.itcm	00000068 SharedSpiCard::writeStart(unsigned long)
+20008098 g     O .bss	00000004 qindesign::network::Ethernet
+20001c14 g     O .data	00000088 vtable for qindesign::network::EthernetUDP
+0000fbb4  w    F .text.itcm	000000c0 void std::vector<unsigned char, std::allocator<unsigned char> >::_M_realloc_insert<unsigned char const&>(__gnu_cxx::__normal_iterator<unsigned char*, std::vector<unsigned char, std::allocator<unsigned char> > >, unsigned char const&)
+00017f28 g     F .text.itcm	00000056 FatPartition::freeChain(unsigned long)
+00004610 g     F .text.itcm	00000060 acd_add
+00021218 g     F .text.itcm	0000001c std::bad_function_call::~bad_function_call()
+000211fc g     F .text.itcm	00000008 std::bad_function_call::what() const
+00029474 g     F .text.itcm	00000014 tolower
+00028efc g     F .text.itcm	00000018 .hidden __restore_core_regs
+00029100 g     F .text.itcm	0000028a .hidden __gnu_unwind_execute
+000085ec g     F .text.itcm	00000070 netif_set_link_up
+200072c0 g     O .data	00000000 .hidden __TMC_END__
+00016178 g     F .text.itcm	000001a8 FatFile::read(void*, unsigned int)
+200016c4 g     O .data	0000000c typeinfo for std::bad_function_call
+20007fd4 g     O .bss	00000008 AudioOutputTDM::dma
+00010690  w    F .text.itcm	00000054 qindesign::network::internal::ConnectionManager::~ConnectionManager()
+0001ac1c g     F .text.itcm	00000002 Adafruit_GFX::invertDisplay(bool)
+00003b2c g     F .text.itcm	0000004c mdns_multicast_probe_timeout_reset_ipv4
+00017f08 g     F .text.itcm	00000020 FatPartition::fatPut(unsigned long, unsigned long)
+200017d4  w    O .data	00000018 typeinfo name for std::_Sp_make_shared_tag
+000287fc g     F .text.itcm	00000010 .hidden __gnu_Unwind_ForcedUnwind
+00008bfc g     F .text.itcm	00000088 pbuf_cat
+20003ee0 g     O .data	0000000c memp_FRAG_PBUF
+0000f294 g     F .text.itcm	0000005c qindesign::network::EthernetUDP::~EthernetUDP()
+20007edc g     O .bss	00000004 AudioStream::memory_pool
+00007ef4 g     F .text.itcm	00000002 mem_trim
+0000f188 g     F .text.itcm	000000fc qindesign::network::EthernetUDP::endPacket()
+20001a6c  w    O .data	0000005c vtable for SDFile
+00029018 g     F .text.itcm	00000022 .hidden ___Unwind_Resume
+00031704 g     F .text.itcm	0000015c __multiply
+00031860 g     F .text.itcm	000000c0 __pow5mult
+000135c4  w    F .text.itcm	00000036 SDClass::exists(char const*)
+0001fdc8 g     F .text.itcm	00000100 usb_serial_configure
+0001a76c g     F .text.itcm	00000024 SdSpiArduinoDriver::receive(unsigned char*, unsigned int)
+20007fe4 g     O .bss	00000004 EventResponder::firstInterrupt
+000200c0 g     F .text.itcm	00000018 usb_serial_write
+000186e4 g     F .text.itcm	0000007e SharedSpiCard::isBusy()
+200018e0 g     O .data	0000000c vtable for AudioPlaySdWav
+20003578 g     O .data	00000004 dns_mquery_v4group
+0000ecbc g     F .text.itcm	0000012c qindesign::network::EthernetClient::close(bool)
+00000007 g       *ABS*	00000000 _itcm_block_count
+0000d1e4 g     F .text.itcm	00000054 sys_untimeout
+00000184  w    F .text.itcm	00000028 StaticInit<qindesign::network::MDNSClass>::~StaticInit()
+00021d04 g     F .text.itcm	00000014 std::unexpected()
+00011c3e g     F .text.itcm	00000000 memcpy_tointerleaveL
+0001d20c  w    F .text.itcm	00000006 teensy::inplace_function_detail::vtable<void>::vtable<void (*)()>(teensy::inplace_function_detail::wrapper<void (*)()>)::{lambda(void*, void*)#2}::_FUN(void*, void*)
+0002c720 g     F .text.itcm	0000000c __malloc_lock
+00014e78 g     F .text.itcm	0000004c ExFatFormatter::writeUpcaseUnicode(unsigned short)
+00014834 g     F .text.itcm	000000d6 ExFatFile::mkdir(ExFatFile*, char const*, bool)
+200031c4 g     O .data	00000370 digital_pin_to_info_PGM
+00018554  w    F .text.itcm	00000004 SharedSpiCard::errorCode() const
+20001bb0 g     O .data	0000000c vtable for IPAddress
+0001e758 g     F .text.itcm	00000024 digitalRead
+2000802c g     O .bss	00000008 AudioOutputI2SHex::dma
+000001ac  w    F .text.itcm	00000050 SDFile::name()
+0001c808 g     F .text.itcm	00000040 PubSubClient::PubSubClient(Client&)
+00002828 g     F .text.itcm	000000b0 displaySplashScreen()
+20003f1c g     O .data	0000000c memp_SYS_TIMEOUT
+60002fec g       *ABS*	00000000 _stextload
+00019294 g     F .text.itcm	0000001c DedicatedSpiCard::writeSector(unsigned long, unsigned char const*)
+00017578 g     F .text.itcm	00000056 FatFormatter::initPbs()
+0001d884 g     F .text.itcm	00000048 IPAddress::printTo(Print&) const
+20008024 g     O .bss	00000008 AudioInputI2SQuad::dma
+000220d8 g     F .text.itcm	00000004 std::runtime_error::what() const
+0001113c g     F .text.itcm	00000018 qnethernet_hal_stdio_flush
+00029498 g     F .text.itcm	00000010 free
+0000f9e8 g     F .text.itcm	000000dc qindesign::network::EthernetUDP::EthernetUDP(unsigned int)
+0001a74c g     F .text.itcm	00000006 SdSpiArduinoDriver::end()
+0000fed0 g     F .text.itcm	000001a8 driver_proc_input
+20007fbc g     O .bss	00000008 AudioOutputMQS::dma
+20003d30 g     O .data	00000040 lwip_cyclic_timers
+0001ac44 g     F .text.itcm	00000058 Adafruit_GFX::drawFastVLine(short, short, short, unsigned short)
+0000fac4 g     F .text.itcm	0000000e qindesign::network::EthernetUDP::EthernetUDP()
+000029ec g     F .text.itcm	0000001c err_to_errno
+0000006c  w    F .text.itcm	00000002 Print::flush()
+0002215c g     F .text.itcm	00000048 std::logic_error::~logic_error()
+000024a8 g     F .text.itcm	0000007c displayNetworkStatus(char const*)
+00013aa4 g     F .text.itcm	00000014 ExFatFile::close()
+0002167c g     F .text.itcm	00000002 std::exception::~exception()
+00001194 g     F .text.itcm	00000068 driveHaptics(ContactState const&)
+00000564  w    F .text.itcm	00000018 SDFile::peek()
+00031648 g     F .text.itcm	00000060 __lo0bits
+0001c5f0 g     F .text.itcm	0000001e Adafruit_SSD1306::clearDisplay()
+0000057c  w    F .text.itcm	00000026 SDFile::isDirectory()
+00011c7e g     F .text.itcm	00000000 memcpy_tointerleaveR
+20201fb8 g     O .bss.dma	00005fc0 memp_memory_PBUF_POOL_base
+00018524 g     F .text.itcm	00000028 FsVolume::open(char const*, int)
+000192b0 g     F .text.itcm	00000026 DedicatedSpiCard::begin(SdSpiConfig)
+000220d8 g     F .text.itcm	00000004 std::logic_error::what() const
+60002f7c g     O .text.progmem	00000062 usb_config_descriptor_480
+00021268 g     F .text.itcm	00000014 std::bad_alloc::~bad_alloc()
+200085c8 g     O .bss	00000004 currentIdleSongIndex
+2000803c g     O .bss	00000008 AudioOutputPT8211::dma
+0000ce9c g     F .text.itcm	0000005c tcp_keepalive
+0001430c g     F .text.itcm	0000000e ExFatFile::open(ExFatVolume*, char const*, int)
+200063f8 g     O .data	00000140 Wire1
+0002cd80 g     F .text.itcm	00000054 _fflush_r
+000185d8  w    F .text.itcm	00000002 DedicatedSpiCard::~DedicatedSpiCard()
+000201bc  w    F .text.itcm	000000d8 yield
+0000de64 g     F .text.itcm	00000088 qindesign::network::EthernetClass::netifEventFunc(netif*, unsigned short, netif_ext_callback_args_t const*)
+0000e964 g     F .text.itcm	0000004c qindesign::network::EthernetClient::localIP()
+00021e14 g     F .text.itcm	0000006e __cxa_rethrow
+000102a8  w    F .text.itcm	00000002 std::_Sp_counted_ptr_inplace<qindesign::network::internal::ConnectionHolder, std::allocator<qindesign::network::internal::ConnectionHolder>, (__gnu_cxx::_Lock_policy)0>::~_Sp_counted_ptr_inplace()
+0001e020 g     F .text.itcm	0000000e String::~String()
+20006538 g     O .data	00000140 Wire2
+0000e7ac g     F .text.itcm	0000009c qindesign::network::EthernetClient::write(unsigned char const*, unsigned int)
+0002e490 g     F .text.itcm	00000000 memchr
+20006250 g     O .data	00000004 F_BUS_ACTUAL
+0001c858 g     F .text.itcm	00000050 PubSubClient::readByte(unsigned char*)
+00008af0 g     F .text.itcm	000000dc pbuf_realloc
+0002880c g     F .text.itcm	00000044 .hidden __gnu_Unwind_Resume
+20001738 g     O .data	00000024 typeinfo name for __cxxabiv1::__foreign_exception
+0001cde8 g     F .text.itcm	0000003c PubSubClient::connected()
+60002ee4 g     O .text.progmem	00000016 usb_string_product_name_default
+0000db3c g     F .text.itcm	00000050 qindesign::network::DNSClient::dnsFoundFunc(char const*, ip4_addr const*, void*)
+0001ca10 g     F .text.itcm	00000082 PubSubClient::buildHeader(unsigned char, unsigned char*, unsigned short)
+0001912c g     F .text.itcm	00000066 SharedSpiCard::writeData(unsigned char, unsigned char const*)
+0001e93c g     F .text.itcm	00000004 operator delete(void*, unsigned int)
+00031d44 g     F .text.itcm	00000022 __sread
+60001fc4 g     F .text.code	00000002 startup_default_middle_hook
+200072c0 g       .data	00000000 _edata
+00002260 g     F .text.itcm	000000a8 displayFrequencies()
+00010590 g     F .text.itcm	00000092 qindesign::network::internal::ConnectionManager::connectedFunc(void*, tcp_pcb*, signed char)
+0000c9cc g     F .text.itcm	0000003e tcp_rst
+000046a0 g     F .text.itcm	00000010 acd_network_changed_link_down
+0000f16c g     F .text.itcm	0000001c qindesign::network::EthernetUDP::availableForWrite()
+000221a4 g     F .text.itcm	00000048 std::length_error::~length_error()
+00028fe0 g     F .text.itcm	00000000 .hidden __gnu_Unwind_Save_WMMXC
+20009474 g     O .bss	00000004 scale_cpu_cycles_to_microseconds
+0000f4c8 g     F .text.itcm	00000238 qindesign::network::EthernetUDP::recvFunc(void*, udp_pcb*, pbuf*, ip4_addr const*, unsigned short)
+0002e438 g     F .text.itcm	00000048 __libc_init_array
+20009584 g     O .bss	00000002 AudioStream::cpu_cycles_total_max
+00015790 g     F .text.itcm	0000004c ExFatPartition::chainSize(unsigned long)
+0001f038  w    F .text.itcm	00000034 _sbrk
+20007fac g     O .bss	00000004 AudioOutputI2S::block_right_1st
+00008fc8 g     F .text.itcm	00000020 pbuf_try_get_at
+00000678  w    F .text.itcm	00000054 SDFile::setCreateTime(DateTimeFields const&)
+0000f04c g     F .text.itcm	00000008 qindesign::network::EthernetUDP::outgoingDiffServ() const
+000110f0 g     F .text.itcm	0000002c enet_proc_input
+0000e27c g     F .text.itcm	0000000e qindesign::network::EthernetClass::dnsServerIP() const
+00028874 g     F .text.itcm	0000002e .hidden _Unwind_VRS_Get
+00014a84 g     F .text.itcm	000000e4 ExFatFile::truncate()
+0001a6bc g     F .text.itcm	00000004 sdCsWrite(unsigned char, bool)
+0000f284 g     F .text.itcm	00000008 non-virtual thunk to qindesign::network::EthernetUDP::outgoingTTL() const
+00031f10 g     F .text.itcm	0000002c _lseek_r
+000087bc g     F .text.itcm	00000070 pbuf_add_header
+00011cbe g     F .text.itcm	00000000 memcpy_tointerleaveQuad
+00010c90 g     F .text.itcm	00000190 qindesign::network::internal::ConnectionManager::connect(ip4_addr const*, unsigned short)
+00015fcc g     F .text.itcm	00000104 FatFile::open(FatFile*, char const*, int)
+00008fac g     F .text.itcm	0000001c pbuf_get_at
+2000800c g     O .bss	00000008 AudioInputI2SOct::dma
+00013534  w    F .text.itcm	00000054 SDClass::remove(char const*)
+00029018 g     F .text.itcm	00000022 .hidden _Unwind_Resume
+0000d238 g     F .text.itcm	00000080 sys_check_timeouts
+00018b94 g     F .text.itcm	00000076 SharedSpiCard::readOCR(unsigned long*)
+00011a44 g     F .text.itcm	000000cc AudioInputI2S::begin()
+0000fb70 g     F .text.itcm	00000006 qindesign::network::EthernetUDP::begin(unsigned short)
+000120a0 g     F .text.itcm	000000dc AudioOutputI2S::begin()
+0001f280 g     F .text.itcm	00000630 usb_isr
+000068c4 g     F .text.itcm	0000018c etharp_output
+000185e4  w    F .text.itcm	0000000e DedicatedSpiCard::~DedicatedSpiCard()
+20001784 g     O .data	00000010 typeinfo name for std::logic_error
+0002168c g     F .text.itcm	0000000e std::bad_exception::~bad_exception()
+000112ac g     F .text.itcm	00000074 AudioAnalyzeToneDetect::update()
+0001b698  w    F .text.itcm	00000002 TwoWire::flush()
+00008bcc g     F .text.itcm	00000018 pbuf_clen
+00021fa0 g     F .text.itcm	0000002c std::type_info::operator==(std::type_info const&) const
+0001b510 g     F .text.itcm	00000136 Adafruit_GFX::write(unsigned char)
+20008678 g     O .bss	00000008 dnsServer
+0000f804 g     F .text.itcm	00000038 qindesign::network::EthernetUDP::setOutgoingDiffServ(unsigned char)
+20007b98 g     O .bss	00000004 StaticInit<qindesign::network::EthernetClass>::nifty_counter
+000202e0 g     F .text.itcm	00000084 sm_set_pool
+00004278 g     F .text.itcm	0000001e dns_tmr
+200085cc g     O .bss	00000004 currentSongIndex
+00021d18 g     F .text.itcm	00000010 std::get_terminate()
+00021298 g     F .text.itcm	00000034 __cxxabiv1::__class_type_info::__do_upcast(__cxxabiv1::__class_type_info const*, void**) const
+000064f4 g     F .text.itcm	00000094 etharp_tmr
+6000198c g     F .text.code	00000002 driver_set_chip_select_pin
+6000164c g     F .text.code	00000028 ResetHandler
+0000f28c g     F .text.itcm	00000008 non-virtual thunk to qindesign::network::EthernetUDP::outgoingDiffServ() const
+00003b78 g     F .text.itcm	0000003a lwip_strnicmp
+0002226c g     F .text.itcm	00000014 std::length_error::length_error(char const*)
+00008c84 g     F .text.itcm	0000001a pbuf_chain
+00013728 g     F .text.itcm	000000dc SDClass::format(int, char, Print&)
+000212d8 g     F .text.itcm	00000014 __cxxabiv1::__class_type_info::~__class_type_info()
+0000fb78 g     F .text.itcm	0000003c qindesign::network::EthernetUDP::beginMulticast(IPAddress, unsigned short)
+60035554 g       *ABS*	00000000 _sdataload
+0000e8c8 g     F .text.itcm	00000028 qindesign::network::EthernetClient::localPort()
+00020074 g     F .text.itcm	00000020 usb_serial_getchar
+600016f0 g     F .text.code	0000003c qindesign::network::EthernetClass::~EthernetClass()
+000011fc g     F .text.itcm	000000f4 reconnect()
+0001ae2c g     F .text.itcm	000000d4 Adafruit_GFX::drawRect(short, short, short, short, unsigned short)
+0000f928 g     F .text.itcm	00000050 qindesign::network::EthernetUDP::beginPacket(IPAddress, unsigned short)
+20007fe8 g     O .bss	00000004 EventResponder::lastYield
+0000cef8 g     F .text.itcm	000000c4 tcp_zero_window_probe
+6000172c g     F .text.code	0000003a qindesign::network::MDNSClass::MDNSClass()
+20008034 g     O .bss	00000008 AudioOutputI2SOct::dma
+0002ce48 g     F .text.itcm	00000040 sprintf
+00015d34 g     F .text.itcm	00000020 FatFile::getCreateDateTime(unsigned short*, unsigned short*)
+000182f0 g     F .text.itcm	00000028 FsBaseFile::close()
+0001145c g     F .text.itcm	0000005c AudioControlSGTL5000::write(unsigned int, unsigned int)
+000214ec g     F .text.itcm	00000000 __cxa_end_cleanup
+00000344  w    F .text.itcm	0000006e SDFile::getCreateTime(DateTimeFields&)
+00000608  w    F .text.itcm	00000014 SDFile::flush()
+00018f24 g     F .text.itcm	00000118 SharedSpiCard::erase(unsigned long, unsigned long)
+00021f98 g     F .text.itcm	00000002 std::type_info::~type_info()
+00016f70 g     F .text.itcm	00000298 FatFile::open(FatFile*, FatLfn_t*, int)
+00005e74 g     F .text.itcm	0000009c dhcp_start
+0001d560 g     F .text.itcm	00000034 AudioConnection::~AudioConnection()
+000012f0 g     F .text.itcm	00000148 publishState(ContactState)
+0000ef3c g     F .text.itcm	00000006 qindesign::network::EthernetClient::stop()
+0000f324 g     F .text.itcm	000001a4 qindesign::network::EthernetUDP::parsePacket()
+00008e04 g     F .text.itcm	0000006c pbuf_copy_partial
+00016c30 g     F .text.itcm	00000122 FatFile::createLFN(unsigned short, FatLfn_t*, unsigned char)
+0001e7fc g     F .text.itcm	00000134 memcpy
+00006a50 g     F .text.itcm	00000030 etharp_acd_probe
+00014340 g     F .text.itcm	00000092 ExFatFile::addCluster()
+0001fa4c  w    F .text.itcm	00000004 usb_serial_class::peek()
+00021f6c g     F .text.itcm	0000002a __cxxabiv1::__si_class_type_info::__do_upcast(__cxxabiv1::__class_type_info const*, void const*, __cxxabiv1::__class_type_info::__upcast_result&) const
+00021d84 g     F .text.itcm	00000058 __cxa_init_primary_exception
+20007b94 g     O .bss	00000004 FsDateTime::callback2
+00021d28 g     F .text.itcm	00000010 std::get_unexpected()
+0001d8d0  w    F .text.itcm	00000002 teensy::inplace_function_detail::vtable<void>::vtable()::{lambda(void*, void*)#2}::_FUN(void*, void*)
+0001c254 g     F .text.itcm	0000039c Adafruit_SSD1306::begin(unsigned char, unsigned char, bool, bool)
+0001e030 g     F .text.itcm	00000066 String::copy(char const*, unsigned int)
+0001a790 g     F .text.itcm	00000012 SdSpiArduinoDriver::send(unsigned char)
+00000764  w    F .text.itcm	00000044 File::write(unsigned char const*, unsigned int)
+00015624 g     F .text.itcm	000000c0 ExFatPartition::bitmapFind(unsigned long, unsigned long)
+0002c72c g     F .text.itcm	0000000c __malloc_unlock
+0000e438 g     F .text.itcm	0000000e non-virtual thunk to qindesign::network::EthernetClient::outgoingDiffServ() const
+20208510 g     O .bss.dma	000000e0 memp_memory_TCP_PCB_LISTEN_base
+000222f8  w    F .text.itcm	00000004 std::string::_Rep::_M_destroy(std::allocator<char> const&)
+0002134c g     F .text.itcm	0000001a __cxxabiv1::__class_type_info::__do_upcast(__cxxabiv1::__class_type_info const*, void const*, __cxxabiv1::__class_type_info::__upcast_result&) const
+00028908 g     F .text.itcm	00000084 .hidden __gnu_Unwind_Backtrace
+0000054c  w    F .text.itcm	00000018 StreamFile<FsBaseFile, unsigned long long>::peek()
+0001a3e8 g     F .text.itcm	00000098 SdioCard::stopTransmission(bool)
+0001aba8 g     F .text.itcm	00000002 Adafruit_GFX::endWrite()
+0000f978 g     F .text.itcm	00000070 qindesign::network::EthernetUDP::beginPacket(char const*, unsigned short)
+00019e30 g     F .text.itcm	00000088 SdioCard::readSectors(unsigned long, unsigned char*, unsigned int)
+0000fe18 g     F .text.itcm	00000010 driver_is_unknown
+00008118 g     F .text.itcm	00000002 netif_init
+00006e5c g     F .text.itcm	00000020 igmp_init
+0002e540 g     F .text.itcm	000000dc strlen
+00002420 g     F .text.itcm	00000084 loop
+6000272c g     F .text.code	00000054 analog_init
+0001a914 g     F .text.itcm	000000a0 lbaToMbrChs(unsigned char*, unsigned long, unsigned long)
+00002a90 g     F .text.itcm	000000a4 mdns_resp_remove_netif
+00021fcc g     F .text.itcm	0000010c __gnu_cxx::__verbose_terminate_handler()
+0000e418 g     F .text.itcm	00000010 non-virtual thunk to qindesign::network::EthernetClient::setOutgoingTTL(unsigned char)
+00005b38 g     F .text.itcm	00000060 dhcp_network_changed_link_up
+0000e520 g     F .text.itcm	00000058 qindesign::network::EthernetClient::~EthernetClient()
+00011734  w    F .text.itcm	00000088 AudioControlSGTL5000::volume(float)
+00031608 g     F .text.itcm	00000040 __hi0bits
+20003c4c g     O .data	00000004 ip_addr_any
+0001d190 g     F .text.itcm	00000004 PubSubClient::setCallback(void (*)(char*, unsigned char*, unsigned int))
+00031f68 g     F .text.itcm	00000106 _wcsnrtombs_l
+00028f14 g     F .text.itcm	00000000 .hidden __gnu_Unwind_Restore_VFP
+60001fc8 g     F .text.code	00000002 startup_default_late_hook
+20008e24 g     O .bss	00000014 patchCordR3
+20208370 g     O .bss.dma	000000a0 memp_memory_REASSDATA_base
+000009e4  w    F .text.itcm	000000a8 File::~File()
+0000e3b8  w    F .text.itcm	00000004 qindesign::network::EthernetClient::setConnectionTimeoutEnabled(bool)
+20007ee4 g     O .bss	00000070 AudioStream::memory_pool_available_mask
+0001e1b0 g     F .text.itcm	00000010 operator+(StringSumHelper const&, String const&)
+0001d5d8 g     F .text.itcm	000000b4 DMAChannel::begin(bool)
+00008df4 g     F .text.itcm	00000010 pbuf_copy
+0001d800 g     F .text.itcm	00000064 EventResponder::detachNoInterrupts()
+60001768 g     F .text.code	00000034 qindesign::network::MDNSClass::~MDNSClass()
+000045e8 g     F .text.itcm	00000026 lwip_init
+0000e138 g     F .text.itcm	0000001c qindesign::network::EthernetClass::begin()
+000003dc  w    F .text.itcm	00000058 File::read()
+0000e5d8 g     F .text.itcm	00000030 qindesign::network::EthernetClient::EthernetClient()
+0000a204 g     F .text.itcm	0000006c tcp_process_refused_data
+0000e194 g     F .text.itcm	0000009c qindesign::network::EthernetClass::end()
+00011cf8 g     F .text.itcm	000000f0 AudioMixer4::update()
+20003f4c g     O .data	0000000c memp_UDP_PCB
+00019eb8 g     F .text.itcm	00000088 SdioCard::writeSectors(unsigned long, unsigned char const*, unsigned int)
+0001e9a4 g     F .text.itcm	000000b4 flexpwmWrite
+00000434  w    F .text.itcm	00000054 File::write(unsigned char)
+00007118 g     F .text.itcm	00000050 igmp_tmr
+0001d364 g     F .text.itcm	00000018 AudioStream::receiveReadOnly(unsigned int)
+0001e1c0 g     F .text.itcm	0000001c operator+(StringSumHelper const&, char const*)
+00019474  w    F .text.itcm	00000002 SdioCard::~SdioCard()
+2000184c  w    O .data	0000000c vtable for AudioStream
+6000172c g     F .text.code	0000003a qindesign::network::MDNSClass::MDNSClass()
+00002a74 g     F .text.itcm	00000010 netif_mdns_data
+0001c15c g     F .text.itcm	000000f6 Adafruit_SSD1306::ssd1306_commandList(unsigned char const*, unsigned char)
+00018568 g     F .text.itcm	0000006e DedicatedSpiCard::writeSectorsCallback(unsigned long, unsigned int, unsigned char const* (*)(unsigned long, void*), void*)
+00003060 g     F .text.itcm	000000a8 mdns_build_dnssd_domain
+00010ba0 g     F .text.itcm	000000f0 qindesign::network::internal::ConnectionManager::addConnection(std::shared_ptr<qindesign::network::internal::ConnectionHolder> const&)
+00000c64  w    F .text.itcm	00000058 AudioAnalyzeToneDetect::AudioAnalyzeToneDetect()
+00011340 g     F .text.itcm	0000006c AudioAnalyzeToneDetect::read()
+20008b54 g     O .bss	00000010 extmem_smalloc_pool
+0001a6c0 g     F .text.itcm	00000012 SdSpiArduinoDriver::activate()
+20048000 g       .text.csf	00000000 _estack
+00020004 g     F .text.itcm	00000070 usb_serial_flush_input
+00031eec g     F .text.itcm	00000024 _isatty_r
+00005ac4 g     F .text.itcm	00000074 dhcp_set_struct
+0000ede8 g     F .text.itcm	00000104 qindesign::network::EthernetClient::connect(ip4_addr const*, unsigned short, bool)
+0001aa58 g     F .text.itcm	00000098 FsUtf::mbToCp(char const*, char const*, unsigned long*)
+000014dc g     F .text.itcm	0000006c queueNextActiveSong()
+00018658 g     F .text.itcm	0000008c SharedSpiCard::writeStop()
+0000015c  w    F .text.itcm	00000028 StaticInit<qindesign::network::EthernetClass>::~StaticInit()
+00021f9c g     F .text.itcm	00000004 std::type_info::__is_pointer_p() const
+0001bb64 g     F .text.itcm	0000000c lpi2c3_isr()
+200095c2 g     O .bss	00000001 isInitialized
+00021680 g     F .text.itcm	00000002 std::bad_exception::~bad_exception()
+00007ef8 g     F .text.itcm	0000003c mem_malloc
+000000ac  w    F .text.itcm	000000b0 SDFile::openNextFile(unsigned char)
+00014214 g     F .text.itcm	000000f8 ExFatFile::open(ExFatFile*, char const*, int)
+2000958a g     O .bss	00000002 AudioOutputI2S::block_left_offset
+0000e258 g     F .text.itcm	00000024 qindesign::network::EthernetClass::localIP() const
+0000d5b4 g     F .text.itcm	00000158 udp_sendto_if_src
+
+

@@ -793,6 +793,9 @@ def on_message(mqttc, userdata, msg):
 
 
 if __name__ == "__main__":
+    debugstr = os.environ.get('DEBUG', 'false').strip().lower()
+    debug = debugstr in ['t', 'true', '1']
+
     extract_addresses()
     load_audio()
     load_audio_devices()
