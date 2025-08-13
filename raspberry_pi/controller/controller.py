@@ -45,9 +45,9 @@ class Statue(StrEnum):
     ARCHES = auto()
     EROS = auto()
     ELEKTRA = auto()
+    ARIEL = auto()
     SOPHIA = auto()
     ULTIMO = auto()
-    ARIEL = auto()
 
 
 class Board(StrEnum):
@@ -62,6 +62,12 @@ class Effect(IntEnum):
     FIREWORKS = 42
     NOISE = 71
 
+
+# TODO:
+# Support more complex audio channel to audio device mappings
+# Support playing different audio when in dormant mode
+# Multiple output channels
+# Audio device to port id mapping, check stability
 
 # ### Parameters
 
@@ -112,12 +118,13 @@ FADE_MS = 2000  # Fade time in milliseconds
 COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
 
 # Defaults to the settings for DEFAULT
+# TODO: pick colors
 COLORS = {
-    Statue.ELEKTRA: {
-        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
-    },
     Statue.EROS: {
         "active": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
+    },
+    Statue.ELEKTRA: {
+        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
     },
     Statue.DEFAULT: {
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
@@ -153,11 +160,11 @@ segment_map = {
     Statue.ARCHES: {
         # Board.TWELVE_V_1: [0],  # WLED segment ids
     },
-    Statue.ELEKTRA: {},
     Statue.EROS: {},
+    Statue.ELEKTRA: {},
+    Statue.ARIEL: {},
     Statue.SOPHIA: {},
     Statue.ULTIMO: {},
-    Statue.ARIEL: {},
 }
 
 board_config = {
@@ -178,7 +185,7 @@ board_config = {
 # Maps statues to detailed info about its audio device and channels.
 device_map = {
     Statue.EROS: {
-        "port_id": "hw:3,0",  # ID of (USB) port that the device is connected to
+        "port_id": "hw:0,0",  # ID of (USB) port that the device is connected to
         "output": 0,  # Output channel index, ie 0 for first output
         "input": 0,  # Input channel index of the audio file, ie 0 for first channel
         "type": "",  # Derived from device info, ie "c-media usb headphone set"
@@ -186,31 +193,31 @@ device_map = {
         "sample_rate": 0,  # Derived from device info, ie 44100
     },
     Statue.ELEKTRA: {
-        "port_id": "hw:3,1",
+        "port_id": "hw:1,0",
         "output": 0,
         "input": 1,
         "type": "",
         "index": -1,
         "sample_rate": 0,
     },
-    Statue.SOPHIA: {
-        "port_id": "hw:3,2",
+    Statue.ARIEL: {
+        "port_id": "hw:2,0",
         "output": 0,
         "input": 2,
         "type": "",
         "index": -1,
         "sample_rate": 0,
     },
-    Statue.ULTIMO: {
-        "port_id": "hw:3,3",
+    Statue.SOPHIA: {
+        "port_id": "hw:3,0",
         "output": 0,
         "input": 3,
         "type": "",
         "index": -1,
         "sample_rate": 0,
     },
-    Statue.ARIEL: {
-        "port_id": "hw:3,4",
+    Statue.ULTIMO: {
+        "port_id": "hw:4,0",
         "output": 0,
         "input": 4,
         "type": "",
@@ -235,6 +242,13 @@ teensy_config = {
         "mac_address": "",
         "ip_address": "",
     },
+    Statue.ARIEL: {
+        "emit": 14643,
+        "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
+        "threshold": 0.01,
+        "mac_address": "",
+        "ip_address": "",
+    },
     Statue.SOPHIA: {
         "emit": 17227,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.ULTIMO, Statue.ARIEL],
@@ -249,22 +263,15 @@ teensy_config = {
         "mac_address": "",
         "ip_address": "",
     },
-    Statue.ARIEL: {
-        "emit": 14643,
-        "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
-        "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
-    },
 }
 
 # Detected contact pairings
 linked_statues: Dict[Statue, List[Statue]] = {
-    Statue.ELEKTRA: [],
     Statue.EROS: [],
+    Statue.ELEKTRA: [],
+    Statue.ARIEL: [],
     Statue.SOPHIA: [],
     Statue.ULTIMO: [],
-    Statue.ARIEL: [],
 }
 # Statues that are currently active
 active_statues: Set[Statue] = set()
@@ -336,7 +343,7 @@ def load_audio():
     audio["sample_rate"] = int(sample_rate)
 
 
-def load_devices():
+def load_audio_devices():
     """Query audio devices and map them to statues."""
     global device_map
     all_devices = sd.query_devices()
@@ -545,12 +552,14 @@ def initialize_leds():
         segments = resp.json().get("seg", [])
         for segment in segments:
             # "n" field only exists if the segment has been renamed
-            name = segment.get("n", "")
-            for statue in statues:
-                if name == statue or name.startswith(statue + "_"):
-                    segment_map[Statue(statue)].setdefault(board, []).append(
-                        segment["id"]
-                    )
+            name = segment.get("n", "").strip().lower()
+            parts = name.split(" ")
+            if len(parts) < 1:
+                continue
+            for parts[0] in statues:
+                segment_map[Statue(parts[0])].setdefault(board, []).append(
+                    segment["id"]
+                )
 
 
 # ### Actions
@@ -775,7 +784,7 @@ def on_message(mqttc, userdata, msg):
 if __name__ == "__main__":
     extract_addresses()
     load_audio()
-    load_devices()
+    load_audio_devices()
     initialize_playback()
 
     # Give some time for MQTT server to start and for other clients to connect

@@ -85,8 +85,9 @@ tools.install() {
   tar xzf teensy_cli.tar.gz
   cd teensy_loader_cli-2.3 || exit 1
   make teensy_loader_cli
-  chmod +x teensy_loader_cli
-  mv teensy_loader_cli /usr/local/bin/
+  sudo chown root:root teensy_loader_cli
+  sudo chmod +x teensy_loader_cli
+  sudo mv teensy_loader_cli /usr/local/bin/
   cd ..
-  rm -rf teensy_cli teensy_cli.tar.gz
+  rm -rf teensy_loader_cli-2.3 teensy_cli.tar.gz
 }
