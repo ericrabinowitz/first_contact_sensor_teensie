@@ -30,12 +30,3 @@ Teensy
 QuinLED board
 
 - Runs WLED software, which drives light effects.
-
-## Software TODOs
-
-- Update Teensy to sends mqtt msgs on link and unlink.
-- Update Teensy to receive motor cmds over mqtt.
-- Update Teensy to support auto-provisioning. Mainly, which Teensy maps to which statue.
-- Figure out how audio should play across multiple statue contact pairings.
-- Turn off lights during the day.
-- etc
