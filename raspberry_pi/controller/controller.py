@@ -121,10 +121,21 @@ COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
 # TODO: pick colors
 COLORS = {
     Statue.EROS: {
+        # ff 0 0
         "active": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
     },
     Statue.ELEKTRA: {
+        # 0 0 ff
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
+    },
+    Statue.ARIEL: {
+        "active": [[255, 200, 0], [0, 200, 255], [0, 25, 255]],
+    },
+    Statue.SOPHIA: {
+        "active": [[8, 255, 0], [0, 200, 255], [0, 25, 255]],
+    },
+    Statue.ULTIMO: {
+        "active": [[255, 160, 0], [0, 200, 255], [0, 25, 255]],
     },
     Statue.DEFAULT: {
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
@@ -185,7 +196,7 @@ board_config = {
 # Maps statues to detailed info about its audio device and channels.
 device_map = {
     Statue.EROS: {
-        "port_id": "hw:0,0",  # ID of (USB) port that the device is connected to
+        "port_id": "hw:2,0",  # ID of (USB) port that the device is connected to
         "output": 0,  # Output channel index, ie 0 for first output
         "input": 0,  # Input channel index of the audio file, ie 0 for first channel
         "type": "",  # Derived from device info, ie "c-media usb headphone set"
@@ -193,7 +204,7 @@ device_map = {
         "sample_rate": 0,  # Derived from device info, ie 44100
     },
     Statue.ELEKTRA: {
-        "port_id": "hw:1,0",
+        "port_id": "hw:3,0",
         "output": 0,
         "input": 1,
         "type": "",
@@ -201,7 +212,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.ARIEL: {
-        "port_id": "hw:2,0",
+        "port_id": "hw:4,0",
         "output": 0,
         "input": 2,
         "type": "",
@@ -209,7 +220,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.SOPHIA: {
-        "port_id": "hw:3,0",
+        "port_id": "hw:5,0",
         "output": 0,
         "input": 3,
         "type": "",
@@ -217,7 +228,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.ULTIMO: {
-        "port_id": "hw:4,0",
+        "port_id": "hw:6,0",
         "output": 0,
         "input": 4,
         "type": "",
@@ -544,7 +555,7 @@ def initialize_leds():
     statues = segment_map.keys()
 
     for board in board_config.keys():
-        resp = requests.post("http://{}/json/state".format(board), data=payload)
+        resp = requests.post("http://{}/json/state".format(board_config[board]["ip_address"]), data=payload)
         if resp.status_code != 200:
             print(f"Error: Failed to initialize board {board}: {resp.text}")
             continue

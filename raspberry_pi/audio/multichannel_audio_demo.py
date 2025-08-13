@@ -65,7 +65,7 @@ class ChannelToggleInterface:
             print(f"[{i+1}] {statue_name:8s} [{status}]  {bar}\r")
 
         print(f"\r\nActive channels: {self.playback.active_count}/{len(self.devices)}\r")
-        print(f"Playback: {'Playing' if self.playback.is_playing else 'Stopped'} ({progress}%)\r")
+        print(f"Playback: {'Stopped' if self.playback.is_stopped else 'Playing'} ({progress}%)\r")
         print("\r\nPress 1-6 to toggle channels, 'q' to quit\r")
 
     def run(self):
