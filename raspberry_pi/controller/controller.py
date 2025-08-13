@@ -64,12 +64,15 @@ class Effect(IntEnum):
 
 
 # TODO:
-# Support more complex audio channel to audio device mappings
-# Support playing different audio when in dormant mode
-# Multiple output channels
-# Audio device to port id mapping, check stability
+# Support multiple output channels.
 # Update Teensy to support auto-provisioning. Mainly, which Teensy maps to which statue.
 # Turn off lights during the day.
+# Decide if we need to send haptic commands to the Teensy.
+# Check if we can improve audio device to port id map stability. If not initialize mapping on startup.
+# Optional:
+# Support more complex audio channel to audio device mappings.
+# Support playing different audio when in dormant mode.
+# In segment_map, track part that each segment controls.
 
 # ### Parameters
 
@@ -501,16 +504,8 @@ def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
     for statue, emitters in linked_statues.items():
         if len(emitters) > 0:
             active_statues.add(statue)
-            continue
-
-        has_reverse_contact = False
-        for other_emitters in linked_statues.values():
-            if statue in other_emitters:
-                has_reverse_contact = True
-                break
-
-        if has_reverse_contact:
-            active_statues.add(statue)
+        for emitter in emitters:
+            active_statues.add(emitter)
 
     if debug:
         print(f"Active statues: {active_statues}")
@@ -536,13 +531,14 @@ def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
     """Send a WLED command to control the LEDs of a statue."""
     if no_leds:
         return 0
-
     if statue == Statue.DEFAULT:
         print("Error: Cannot send LED command to DEFAULT statue")
         return -1
 
     last_rc = 0
     for board, seg_ids in segment_map[statue].items():
+        if len(seg_ids) == 0:
+            continue
         payload = {
             "tt": 0,
             "seg": [],
@@ -579,7 +575,10 @@ def initialize_leds():
     statues = segment_map.keys()
 
     for board in board_config.keys():
-        resp = requests.post("http://{}/json/state".format(board_config[board]["ip_address"]), json=payload)
+        resp = requests.post(
+            "http://{}/json/state".format(board_config[board]["ip_address"]),
+            json=payload,
+        )
         if resp.status_code != 200:
             print(f"Error: Failed to initialize board {board}: {resp.text}")
             continue
@@ -664,6 +663,29 @@ def audio_dormant(statue: Statue):
         return False
 
     return music_playback.set_music_channel(input_channel, False)
+
+
+def handle_contact_event(payload: dict):
+    """Handle a contact event from a statue."""
+    new_actives, new_dormants = update_active_statues(payload)
+    # active statues
+    if debug:
+        print(f"Activating the following statues: {new_actives}")
+    for statue in new_actives:
+        haptics_on(statue)
+        leds_active(statue)
+        leds_active(Statue.ARCHES)
+    for statue in new_actives:
+        audio_active(statue)
+
+    # dormant statues
+    if debug:
+        print(f"Deactivating the following statues: {new_dormants}")
+    for statue in new_dormants:
+        leds_dormant(statue)
+        leds_dormant(Statue.ARCHES)
+    for statue in new_dormants:
+        audio_dormant(statue)
 
 
 # ### Debug server
@@ -787,33 +809,23 @@ def on_connect(mqttc, userdata, flags, reason_code, properties):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(mqttc, userdata, msg):
-    global mqtt_num_connected
-
+    """Handle incoming MQTT messages."""
     if debug:
         print(f"Received message on topic {msg.topic}: {msg.payload}")
-    try:
-        payload = json.loads(msg.payload)
-    except Exception as e:
-        print(e)
-        return
 
     if msg.topic == CONFIG_REQ_MQTT_TOPIC:
         send_config()
 
     if msg.topic == LINK_MQTT_TOPIC:
-        new_actives, new_dormants = update_active_statues(payload)
-        for statue in new_actives:
-            audio_active(statue)
-            leds_active(statue)
-            leds_active(Statue.ARCHES)
-            haptics_on(statue)
-        for statue in new_dormants:
-            audio_dormant(statue)
-            leds_dormant(statue)
-            leds_dormant(Statue.ARCHES)
+        try:
+            payload = json.loads(msg.payload)
+            handle_contact_event(payload)
+        except Exception as e:
+            print(e)
 
     if msg.topic == STATUS_TOPIC:
-        mqtt_num_connected = int(payload)
+        global mqtt_num_connected
+        mqtt_num_connected = int(msg.payload)
 
 
 if __name__ == "__main__":
@@ -827,9 +839,6 @@ if __name__ == "__main__":
     load_audio_devices()
     initialize_playback()
 
-    # Give some time for MQTT server to start and for other clients to connect
-    time.sleep(STARTUP_DELAY)
-
     # Should be in the global scope, mqttc is a global variable
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     if MQTT_USER and MQTT_PASSWORD:
@@ -840,6 +849,9 @@ if __name__ == "__main__":
 
     print("Starting MQTT client")
     mqttc.loop_start()
+
+    # Give some time for other clients to connect
+    time.sleep(STARTUP_DELAY)
 
     initialize_leds()
     for statue in segment_map.keys():

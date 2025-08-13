@@ -75,6 +75,7 @@ class ToggleableMultiChannelPlayback:
         self.is_stopped = True
         self.is_paused = False
         self.frame_index = 0
+        # TODO: Investigate if this lock is causing timing delays
         self.lock = threading.Lock()
 
         # Initialize all music channels as disabled
