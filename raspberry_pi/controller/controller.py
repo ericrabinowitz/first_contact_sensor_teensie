@@ -807,11 +807,15 @@ def on_message(mqttc, userdata, msg):
 
 
 if __name__ == "__main__":
+
     if TEST_MODE_NO_LEDS:
         print("=" * 60)
         print("TEST MODE ACTIVE: LED/WLED commands disabled")
         print("Audio playback will work, but no LED control")
         print("=" * 60)
+
+    debugstr = os.environ.get('DEBUG', 'false').strip().lower()
+    debug = debugstr in ['t', 'true', '1']
 
     extract_addresses()
     load_audio()
