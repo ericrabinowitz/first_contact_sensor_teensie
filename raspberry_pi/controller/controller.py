@@ -121,10 +121,21 @@ COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
 # TODO: pick colors
 COLORS = {
     Statue.EROS: {
+        # ff 0 0
         "active": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
     },
     Statue.ELEKTRA: {
+        # 0 0 ff
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
+    },
+    Statue.ARIEL: {
+        "active": [[255, 200, 0], [0, 200, 255], [0, 25, 255]],
+    },
+    Statue.SOPHIA: {
+        "active": [[8, 255, 0], [0, 200, 255], [0, 25, 255]],
+    },
+    Statue.ULTIMO: {
+        "active": [[255, 160, 0], [0, 200, 255], [0, 25, 255]],
     },
     Statue.DEFAULT: {
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
@@ -544,7 +555,7 @@ def initialize_leds():
     statues = segment_map.keys()
 
     for board in board_config.keys():
-        resp = requests.post("http://{}/json/state".format(board), data=payload)
+        resp = requests.post("http://{}/json/state".format(board_config[board]["ip_address"]), data=payload)
         if resp.status_code != 200:
             print(f"Error: Failed to initialize board {board}: {resp.text}")
             continue
