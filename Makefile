@@ -34,6 +34,10 @@ sync: ## Sync project files to Raspberry Pi
 controller: sync ## Run multi-channel audio playback test (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && $(PYTHON_WITH_PATH) ./controller.py'"
 
+controller-test: sync ## Run controller with LED/WLED disabled for audio testing (syncs files first)
+	@echo "Starting controller in TEST MODE (no LED control)..."
+	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && TEST_MODE_NO_LEDS=1 $(PYTHON_WITH_PATH) ./controller.py'"
+
 ## Audio Device Management (runs on rpi5)
 audio-list: ## List all audio devices on the Raspberry Pi
 	@ssh $(SSH_TARGET) "echo '=== USB Audio Devices ===' && lsusb | grep -i audio || echo 'No USB audio devices found'; \
@@ -142,4 +146,4 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test
