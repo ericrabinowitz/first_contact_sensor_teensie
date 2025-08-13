@@ -14,10 +14,12 @@ Note this has been enhanced for a full alphabet of keys, emits 3 tones simultane
 
 ## Flash a Teensy board
 
-First connect the Teensy board to the Pi via USB. Then on the Pi, run
+You can generate the compiled binary file from the Arduino IDE. Go to Sketch > Export Compiled Binary, then commit the resulting files to the repo.
+
+From the Pi, you should be able to flash a Teensy board. First connect the Teensy to the Pi via USB. Then on the Pi, run:
 
 ```bash
-teensy_loader_cli --mcu=TEENSY41 -w FirstContact_controller.hex
+sudo teensy_loader_cli --mcu=TEENSY41 -w teensy/FirstContact_controller/build/teensy.avr.teensy41/FirstContact_controller.ino.hex
 ```
 
 ## Reference
