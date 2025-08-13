@@ -75,6 +75,9 @@ VERSION = "1.1"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
 STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 
+# Test mode: Set TEST_MODE_NO_LEDS=1 to disable all LED/WLED functionality
+TEST_MODE_NO_LEDS = os.environ.get("TEST_MODE_NO_LEDS", "0") == "1"
+
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONG = "Missing Link Playa 1 - 6 Channel 6-7.wav"
@@ -517,6 +520,9 @@ def publish_mqtt(topic: str, payload: dict) -> int:
 
 def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
     """Send a WLED command to control the LEDs of a statue."""
+    if TEST_MODE_NO_LEDS:
+        return 0  # Return success code without sending
+
     if statue == Statue.DEFAULT:
         print("Error: Cannot send LED command to DEFAULT statue")
         return -1
@@ -545,6 +551,10 @@ def send_config():
 
 def initialize_leds():
     """Initialize the segment map and turn the LEDs on."""
+    if TEST_MODE_NO_LEDS:
+        print("TEST MODE: Skipping LED initialization (WLED disabled)")
+        return
+
     global segment_map
     payload = {
         "tt": 0,
@@ -581,6 +591,8 @@ def haptics_on(statue: Statue) -> int:
 
 
 def leds_active(statue: Statue):
+    if TEST_MODE_NO_LEDS:
+        return
     send_led_cmd(
         statue,
         {
@@ -598,6 +610,8 @@ def leds_active(statue: Statue):
 
 
 def leds_dormant(statue: Statue):
+    if TEST_MODE_NO_LEDS:
+        return
     send_led_cmd(
         statue,
         {
@@ -793,6 +807,13 @@ def on_message(mqttc, userdata, msg):
 
 
 if __name__ == "__main__":
+
+    if TEST_MODE_NO_LEDS:
+        print("=" * 60)
+        print("TEST MODE ACTIVE: LED/WLED commands disabled")
+        print("Audio playback will work, but no LED control")
+        print("=" * 60)
+
     debugstr = os.environ.get('DEBUG', 'false').strip().lower()
     debug = debugstr in ['t', 'true', '1']
 
