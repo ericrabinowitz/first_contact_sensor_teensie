@@ -68,6 +68,8 @@ class Effect(IntEnum):
 # Support playing different audio when in dormant mode
 # Multiple output channels
 # Audio device to port id mapping, check stability
+# Update Teensy to support auto-provisioning. Mainly, which Teensy maps to which statue.
+# Turn off lights during the day.
 
 # ### Parameters
 
@@ -121,21 +123,24 @@ COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
 # TODO: pick colors
 COLORS = {
     Statue.EROS: {
-        # ff 0 0
+        # red
         "active": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
     },
     Statue.ELEKTRA: {
-        # 0 0 ff
+        # blue
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
     },
     Statue.ARIEL: {
-        "active": [[255, 200, 0], [0, 200, 255], [0, 25, 255]],
+        # yellow
+        "active": [[255, 200, 0], [255, 255, 0], [255, 255, 0]],
     },
     Statue.SOPHIA: {
-        "active": [[8, 255, 0], [0, 200, 255], [0, 25, 255]],
+        # green
+        "active": [[8, 255, 0], [66, 237, 160], [66, 237, 160]],
     },
     Statue.ULTIMO: {
-        "active": [[255, 160, 0], [0, 200, 255], [0, 25, 255]],
+        # orange
+        "active": [[255, 165, 0], [255, 199, 94], [255, 199, 94]],
     },
     Statue.DEFAULT: {
         "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
