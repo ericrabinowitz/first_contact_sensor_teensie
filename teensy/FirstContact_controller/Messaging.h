@@ -7,6 +7,7 @@ Messaging: MQTT, state publishing, and LED state logic.
 
 #include <Arduino.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 #include "AudioSense.h"
 
 // MQTT callbacks and helper functions
@@ -15,6 +16,8 @@ void reconnect();
 void mqttLoop();
 void initMqtt();
 void publishState(ContactState state);
+void requestConfig();
+void parseConfigResponse(char* payload, unsigned int length);
 // LED functions removed - now handled by Pi controller
 // bool setInactiveLedState();
 // bool setActiveLedState();

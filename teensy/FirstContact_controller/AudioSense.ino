@@ -14,8 +14,8 @@ AudioSense: The contact sensing and audio mixing logic.
 // This is the volume tuned for the sense signal sensitivity.
 #define SIGNAL_AUDIO_VOLUME 0.75
 
-// Use configured frequencies from StatueConfig.h
-const int tx_freq = MY_TX_FREQ; // This statue's transmit frequency
+// Frequency will be set from runtime configuration
+int tx_freq = MY_TX_FREQ; // This statue's transmit frequency (initial value)
 
 // This is the tone dection sensitivity.  Currently set for maximum sensitivity.
 // Edit with caution and experimentation.
@@ -74,9 +74,9 @@ void audioSenseSetup() {
   // NOTE: Increased for multiple detectors
   AudioMemory(30);
 
-  // Add debug output for statue identity
-  Serial.printf("Configuring Statue %c (%s)\n", THIS_STATUE_ID, MY_STATUE_NAME);
-  Serial.printf("  TX Frequency: %d Hz\n", tx_freq);
+  // Add debug output for statue identity (using runtime config)
+  Serial.printf("Configuring Statue %s\n", statueNames[myStatueIndex]);
+  Serial.printf("  TX Frequency: %d Hz\n", statueFrequencies[myStatueIndex]);
   Serial.println("  RX Frequencies:");
 
   // Initialize detector arrays for all MAX_STATUES-1 pairs
@@ -109,16 +109,16 @@ void audioSenseSetup() {
 
   const int sample_time_ms = main_period_ms / 2;
 
-  // Configure each detector for the appropriate frequency
+  // Configure each detector for the appropriate frequency (using runtime config)
   int detectorIndex = 0;
-  for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
-    if (statue_idx != MY_STATUE_INDEX) {
-      int freq = STATUE_FREQUENCIES[statue_idx];
+  for (int statue_idx = 0; statue_idx < numStatues; statue_idx++) {
+    if (statue_idx != myStatueIndex) {
+      int freq = statueFrequencies[statue_idx];
       int cycles = sample_time_ms * freq / 1000;
       leftDetectors[detectorIndex]->frequency(freq, cycles);
       rightDetectors[detectorIndex]->frequency(freq, cycles);
       Serial.printf("    Detector %d: %s at %dHz\n", detectorIndex,
-                    STATUE_NAMES[statue_idx], freq);
+                    statueNames[statue_idx], freq);
       detectorIndex++;
     }
   }
@@ -129,9 +129,48 @@ void audioSenseSetup() {
 
   // Configure sine generator to transmit THIS statue's frequency
   AudioNoInterrupts(); // disable audio library momentarily
+  tx_freq = statueFrequencies[myStatueIndex];
   sine1.frequency(tx_freq);
   sine1.amplitude(1.0);
   AudioInterrupts(); // enable, tone will start
+}
+
+// Reconfigure audio frequencies when config is received via MQTT
+void reconfigureAudioFrequencies() {
+  Serial.println("Reconfiguring audio frequencies from MQTT config");
+  
+  // Update TX frequency
+  AudioNoInterrupts();
+  tx_freq = statueFrequencies[myStatueIndex];
+  sine1.frequency(tx_freq);
+  Serial.print("  TX frequency updated to: ");
+  Serial.print(tx_freq);
+  Serial.println(" Hz");
+  
+  // Update detector frequencies
+  const int sample_time_ms = main_period_ms / 2;
+  int detectorIndex = 0;
+  
+  Serial.println("  RX frequencies updated:");
+  for (int statue_idx = 0; statue_idx < numStatues; statue_idx++) {
+    if (statue_idx != myStatueIndex) {
+      int freq = statueFrequencies[statue_idx];
+      int cycles = sample_time_ms * freq / 1000;
+      
+      if (detectorIndex < MAX_STATUES - 1) {
+        leftDetectors[detectorIndex]->frequency(freq, cycles);
+        rightDetectors[detectorIndex]->frequency(freq, cycles);
+        Serial.printf("    Detector %d: %s at %dHz\n", detectorIndex,
+                      statueNames[statue_idx], freq);
+        detectorIndex++;
+      }
+    }
+  }
+  
+  AudioInterrupts();
+  
+  // Update display with new frequencies
+  displayFrequencies();
 }
 
 // Control the tone generator on/off via MQTT

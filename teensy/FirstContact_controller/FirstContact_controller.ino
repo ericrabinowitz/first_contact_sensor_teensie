@@ -91,6 +91,9 @@ I found it helpful to wire one of the buttons to the two pin contacts for conven
 #include "Messaging.h"
 
 void setup() {
+  // Initialize default configuration
+  initDefaultConfig();
+  
   // Display Setup
   displaySetup();
 

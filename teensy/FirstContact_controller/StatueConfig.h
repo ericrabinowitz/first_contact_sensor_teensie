@@ -77,4 +77,14 @@ const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "ARIEL",
 #define MY_TX_FREQ STATUE_FREQUENCIES[MY_STATUE_INDEX]
 #define MY_STATUE_NAME STATUE_NAMES[MY_STATUE_INDEX]
 
+// Runtime configuration variables (can be updated via MQTT)
+extern int statueFrequencies[MAX_STATUES];
+extern char statueNames[MAX_STATUES][10];
+extern int myStatueIndex;
+extern int numStatues;
+extern bool configReceived;
+
+// Function to initialize runtime config from defaults
+void initDefaultConfig();
+
 #endif // STATUE_CONFIG_H

@@ -38,6 +38,11 @@ void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
       Serial.println(payloadStr);
     }
   }
+  
+  // Check if this is a config response
+  if (strcmp(topic, "missing_link/config/response") == 0) {
+    parseConfigResponse(payloadStr, length);
+  }
 }
 
 void reconnect() {
@@ -50,13 +55,20 @@ void reconnect() {
 
       // Subscribe to statue-specific tone control topic
       char toneTopic[32];
-      String statueName = String(MY_STATUE_NAME);
+      String statueName = String(statueNames[myStatueIndex]);
       statueName.toLowerCase();
       snprintf(toneTopic, sizeof(toneTopic), "statue/%s/tone",
                statueName.c_str());
       client.subscribe(toneTopic);
       Serial.print("Subscribed to: ");
       Serial.println(toneTopic);
+      
+      // Subscribe to config response topic
+      client.subscribe("missing_link/config/response");
+      Serial.println("Subscribed to: missing_link/config/response");
+      
+      // Request configuration from controller
+      requestConfig();
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -175,3 +187,85 @@ bool setInactiveLedState() {
   }]}");
 }
 */
+
+// Request configuration from controller
+void requestConfig() {
+  client.publish("missing_link/config/request", "");
+  Serial.println("Requested config from controller");
+}
+
+// Parse configuration response and update frequencies
+void parseConfigResponse(char* payload, unsigned int length) {
+  StaticJsonDocument<512> doc;
+  DeserializationError error = deserializeJson(doc, payload, length);
+  
+  if (error) {
+    Serial.print("Config parse failed: ");
+    Serial.println(error.c_str());
+    return;
+  }
+  
+  // Get hostname to match against config
+  String hostname = String(getHostname());
+  hostname.toLowerCase();
+  
+  Serial.println("Parsing config response:");
+  
+  // Clear and rebuild configuration
+  int idx = 0;
+  int newMyStatueIndex = -1;
+  
+  // Iterate through JSON object
+  for (JsonPair kv : doc.as<JsonObject>()) {
+    if (idx >= MAX_STATUES) {
+      Serial.println("Warning: More statues in config than MAX_STATUES");
+      break;
+    }
+    
+    String statueName = String(kv.key().c_str());
+    int frequency = kv.value()["frequency"];
+    
+    // Store in runtime arrays
+    statueFrequencies[idx] = frequency;
+    
+    // Capitalize first letter for display name
+    String displayName = statueName;
+    displayName[0] = toupper(displayName[0]);
+    strncpy(statueNames[idx], displayName.c_str(), 9);
+    statueNames[idx][9] = '\0';
+    
+    Serial.print("  ");
+    Serial.print(statueName);
+    Serial.print(": ");
+    Serial.print(frequency);
+    Serial.println(" Hz");
+    
+    // Check if this is our statue
+    if (statueName == hostname) {
+      newMyStatueIndex = idx;
+      Serial.println("    ^ This is me!");
+    }
+    
+    idx++;
+  }
+  
+  // Update configuration
+  numStatues = idx;
+  if (newMyStatueIndex >= 0) {
+    myStatueIndex = newMyStatueIndex;
+  } else {
+    Serial.print("Warning: Hostname '");
+    Serial.print(hostname);
+    Serial.println("' not found in config");
+  }
+  
+  configReceived = true;
+  
+  Serial.print("Config updated: ");
+  Serial.print(numStatues);
+  Serial.print(" statues, I am ");
+  Serial.println(statueNames[myStatueIndex]);
+  
+  // Reconfigure audio system with new frequencies
+  reconfigureAudioFrequencies();
+}
