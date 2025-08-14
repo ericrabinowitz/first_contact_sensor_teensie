@@ -64,15 +64,16 @@ class Effect(IntEnum):
 
 
 # TODO:
+# Fix music playback delay.
 # Support multiple output channels.
+# Support multiple active songs.
+# Support playing different audio when in dormant mode.
+# Support more than 1 statue per audio device.
 # Update Teensy to support auto-provisioning. Mainly, which Teensy maps to which statue.
 # Turn off lights during the day.
-# Decide if we need to send haptic commands to the Teensy.
-# Check if we can improve audio device to port id map stability. If not initialize mapping on startup.
 # Optional:
-# Support more complex audio channel to audio device mappings.
-# Support playing different audio when in dormant mode.
 # In segment_map, track part that each segment controls.
+# If all statues are disabled, pause playback.
 
 # ### Parameters
 
@@ -111,10 +112,17 @@ HAPTIC_MQTT_TOPIC = "missing_link/haptic"  # Topic for haptic motor commands
 # }
 WLED_MQTT_TOPIC = "wled/{}/api"  # Topic template for WLED commands, fill in board name
 STATUS_TOPIC = "$SYS/broker/clients/connected"  # Topic for MQTT client status
+# For unix socket grant permission to file
+# MQTT_BROKER = "/tmp/mosquitto.sock"  # unix socket of the MQTT broker
+# MQTT_PORT = 0  # MQTT port, not used with unix socket
 MQTT_BROKER = "127.0.0.1"  # IP address of the MQTT broker
 MQTT_PORT = 1883  # Default MQTT port
 MQTT_USER = None  # If using authentication, otherwise set as None
 MQTT_PASSWORD = None  # If using authentication, otherwise set as None
+MQTT_QOS = 0  # Quality of Service
+# 0 (at most once, fastest)
+# 1 (at least once, expects ack)
+# 2 (exactly once, 4 step handshake, reliable)
 
 # WLED settings
 # TODO: test different palettes, like the default one
@@ -168,6 +176,9 @@ debug = False
 # Disable all LED/WLED functionality
 no_leds = False
 
+# Disable all haptic functionality
+no_haptics = True  # Handled directly by the Teensy
+
 # MQTT client
 mqttc: Any = None
 
@@ -208,7 +219,7 @@ board_config = {
 # Maps statues to detailed info about its audio device and channels.
 device_map = {
     Statue.EROS: {
-        "port_id": "hw:2,0",  # ID of (USB) port that the device is connected to
+        "hw_id": "",  # ID of (USB) port that the device is connected to
         "output": 0,  # Output channel index, ie 0 for first output
         "input": 0,  # Input channel index of the audio file, ie 0 for first channel
         "type": "",  # Derived from device info, ie "c-media usb headphone set"
@@ -216,7 +227,7 @@ device_map = {
         "sample_rate": 0,  # Derived from device info, ie 44100
     },
     Statue.ELEKTRA: {
-        "port_id": "hw:3,0",
+        "hw_id": "",
         "output": 0,
         "input": 1,
         "type": "",
@@ -224,7 +235,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.ARIEL: {
-        "port_id": "hw:4,0",
+        "hw_id": "",
         "output": 0,
         "input": 2,
         "type": "",
@@ -232,7 +243,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.SOPHIA: {
-        "port_id": "hw:5,0",
+        "hw_id": "",
         "output": 0,
         "input": 3,
         "type": "",
@@ -240,7 +251,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.ULTIMO: {
-        "port_id": "hw:6,0",
+        "hw_id": "",
         "output": 0,
         "input": 4,
         "type": "",
@@ -396,7 +407,7 @@ def load_audio_devices():
                 {
                     "index": d["index"],
                     "type": match.group(1).lower(),
-                    "port_id": match.group(2),
+                    "hw_id": match.group(2),
                     "num_outputs": int(d["max_output_channels"]),
                     "sample_rate": int(d["default_samplerate"]),
                 }
@@ -405,37 +416,67 @@ def load_audio_devices():
     total_outputs = sum(d["num_outputs"] for d in transformed_devices)
     if total_outputs < len(device_map.keys()):
         print(
-            f"Error: Not enough audio outputs ({total_outputs} < {len(device_map.keys())})"
+            f"Error: Too few audio outputs ({total_outputs} < {len(device_map.keys())})"
         )
         return
 
-    for device in transformed_devices:
-        for statue, config in device_map.items():
-            if config["port_id"] == device["port_id"]:
-                if config["output"] >= device["num_outputs"]:
-                    print(
-                        f"Error: Device {device['port_id']} does not have output {config['output']}"
-                    )
-                    continue
-                if config["input"] >= audio["data"].shape[1]:
-                    print(
-                        f"Error: {statue.value} does not have music channel {config['input']}"
-                    )
-                    continue
-                if device["sample_rate"] != audio["sample_rate"]:
-                    print(
-                        f"Error: Device {device['port_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
-                    )
-                    continue
+    # Map devices to statues
+    if len(transformed_devices) < len(device_map.keys()):
+        print(
+            f"Error: Too few audio devices ({len(transformed_devices)} < {len(device_map.keys())})"
+        )
+        return
+    for i, (statue, config) in enumerate(device_map.items()):
+        device = transformed_devices[i]
+        config["hw_id"] = device["hw_id"]
+        if config["output"] >= device["num_outputs"]:
+            print(
+                f"Error: Device {device['hw_id']} does not have output {config['output']}"
+            )
+            continue
+        if config["input"] >= audio["data"].shape[1]:
+            print(
+                f"Error: {statue.value} does not have music channel {config['input']}"
+            )
+            continue
+        if device["sample_rate"] != audio["sample_rate"]:
+            print(
+                f"Error: Device {device['hw_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
+            )
+            continue
 
-                config["type"] = device["type"]
-                config["sample_rate"] = device["sample_rate"]
-                config["index"] = device["index"]
+        config["type"] = device["type"]
+        config["sample_rate"] = device["sample_rate"]
+        config["index"] = device["index"]
+
+    # # Map devices to statues
+    # for device in transformed_devices:
+    #     for statue, config in device_map.items():
+    #         if config["hw_id"] == device["hw_id"]:
+    #             if config["output"] >= device["num_outputs"]:
+    #                 print(
+    #                     f"Error: Device {device['hw_id']} does not have output {config['output']}"
+    #                 )
+    #                 continue
+    #             if config["input"] >= audio["data"].shape[1]:
+    #                 print(
+    #                     f"Error: {statue.value} does not have music channel {config['input']}"
+    #                 )
+    #                 continue
+    #             if device["sample_rate"] != audio["sample_rate"]:
+    #                 print(
+    #                     f"Error: Device {device['hw_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
+    #                 )
+    #                 continue
+
+    #             config["type"] = device["type"]
+    #             config["sample_rate"] = device["sample_rate"]
+    #             config["index"] = device["index"]
 
     for statue, config in device_map.items():
-        if config["type"] == "" or config["sample_rate"] == 0:
+        if config["hw_id"] == "" or config["type"] == "" or config["sample_rate"] == 0:
             print(
-                f"Error: No device found for {statue.value} ({config['port_id']}, {config['output']})"  # noqa: E501
+                f"Error: No device found for {statue.value} ({config['hw_id']}, {config['output']})"  # noqa: E501
             )
             continue
 
@@ -457,9 +498,10 @@ def initialize_playback():
     devices.sort(key=lambda d: d["channel_index"])
 
     music_playback = ToggleableMultiChannelPlayback(
-        audio["data"], audio["sample_rate"], devices
+        audio["data"], audio["sample_rate"], devices, loop=True, debug=debug
     )
     music_playback.start()
+    music_playback.pause()
 
 
 def get_statue(path: str) -> Union[Statue, None]:
@@ -479,7 +521,7 @@ def get_statue(path: str) -> Union[Statue, None]:
 
 
 def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
-    """Update the list of active statues based on the received payload."""
+    """Update the list of active statues based on the received payload. Manage playback state."""
     global active_statues
     global linked_statues
 
@@ -510,32 +552,31 @@ def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
     if debug:
         print(f"Active statues: {active_statues}")
 
+    if len(active_statues) == 0 and len(old_actives) > 0:
+        music_playback.pause()
+    if len(active_statues) > 0 and len(old_actives) == 0:
+        music_playback.resume()
+
     new_actives = active_statues - old_actives
     new_dormants = old_actives - active_statues
     return new_actives, new_dormants
 
 
-def publish_mqtt(topic: str, payload: dict) -> int:
+def publish_mqtt(topic: str, payload: dict):
     """Publish a message to the MQTT broker."""
     if debug:
-        print(f"Publishing to {topic}: {json.dumps(payload, indent=2)}")
-    r = mqttc.publish(topic, json.dumps(payload))
-    try:
-        r.wait_for_publish(1)
-    except Exception as e:
-        print(f"Warning: Failed to publish message: {e}")
-    return r.rc
+        print(f"Publishing to {topic}: {json.dumps(payload)}")
+    mqttc.publish(topic, json.dumps(payload), qos=MQTT_QOS)
 
 
-def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
+def send_led_cmd(statue: Statue, seg_payload: dict):
     """Send a WLED command to control the LEDs of a statue."""
     if no_leds:
-        return 0
+        return
     if statue == Statue.DEFAULT:
         print("Error: Cannot send LED command to DEFAULT statue")
-        return -1
+        return
 
-    last_rc = 0
     for board, seg_ids in segment_map[statue].items():
         if len(seg_ids) == 0:
             continue
@@ -550,13 +591,13 @@ def send_led_cmd(statue: Statue, seg_payload: dict) -> int:
                     **seg_payload,
                 }
             )
-        last_rc = publish_mqtt(WLED_MQTT_TOPIC.format(board), payload)
-    return last_rc
+        publish_mqtt(WLED_MQTT_TOPIC.format(board), payload)
+    return
 
 
 def send_config():
     """Send the Teensy configuration via MQTT."""
-    return publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
+    publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
 
 
 def initialize_leds():
@@ -599,11 +640,15 @@ def initialize_leds():
 # ### Actions
 
 
-def haptics_on(statue: Statue) -> int:
-    return publish_mqtt(HAPTIC_MQTT_TOPIC, {"statue": statue})
+def haptics_on(statue: Statue):
+    if no_haptics:
+        return
+    publish_mqtt(HAPTIC_MQTT_TOPIC, {"statue": statue})
 
 
 def leds_active(statue: Statue):
+    if debug:
+        print(f"Activating LEDs for statue: {statue}")
     send_led_cmd(
         statue,
         {
@@ -621,11 +666,13 @@ def leds_active(statue: Statue):
 
 
 def leds_dormant(statue: Statue):
+    if debug:
+        print(f"Deactivating LEDs for statue: {statue}")
     send_led_cmd(
         statue,
         {
             "fx": 0,
-            "bri": 255,
+            "bri": 170,
             "col": [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
         },
     )
@@ -633,7 +680,7 @@ def leds_dormant(statue: Statue):
         statue,
         {
             "on": True,
-            "bri": 255,
+            "bri": 170,
             "col": COLORS.get(statue, {}).get(
                 "dormant", COLORS[Statue.DEFAULT]["dormant"]
             ),
@@ -759,24 +806,16 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
             else:
                 self._send_400()
         elif self.path == "/contact":
-            code = publish_mqtt(LINK_MQTT_TOPIC, data)
-            self._send_response(
-                {
-                    "status_code": code,
-                }
-            )
+            publish_mqtt(LINK_MQTT_TOPIC, data)
+            self._send_response({})
             print("triggered a contact event")
         elif self.path.startswith("/led/"):
             statue = get_statue(self.path)
             if statue is None:
                 self._send_400()
                 return
-            code = send_led_cmd(statue, data)
-            self._send_response(
-                {
-                    "status_code": code,
-                }
-            )
+            send_led_cmd(statue, data)
+            self._send_response({})
             print("sent a LED cmd to:", statue)
         elif self.path.startswith("/haptic/"):
             statue = get_statue(self.path)
@@ -840,12 +879,29 @@ if __name__ == "__main__":
     initialize_playback()
 
     # Should be in the global scope, mqttc is a global variable
-    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    if MQTT_PORT == 0:
+        mqttc = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
+            clean_session=False,
+            client_id="controller",
+            transport="unix",
+        )
+    else:
+        mqttc = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
+            clean_session=False,
+            client_id="controller",
+        )
     if MQTT_USER and MQTT_PASSWORD:
         mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
     mqttc.on_connect = on_connect
     mqttc.on_message = on_message
-    mqttc.connect(MQTT_BROKER, MQTT_PORT)
+    if MQTT_PORT == 0:
+        mqttc.connect(MQTT_BROKER)
+    else:
+        mqttc.connect(MQTT_BROKER, MQTT_PORT)
 
     print("Starting MQTT client")
     mqttc.loop_start()
@@ -869,6 +925,8 @@ if __name__ == "__main__":
     finally:
         server.server_close()
         print("Debug server stopped")
+
+        music_playback.stop()
 
         mqttc.loop_stop()
         print("Disconnected from MQTT broker")
