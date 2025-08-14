@@ -112,10 +112,11 @@ HAPTIC_MQTT_TOPIC = "missing_link/haptic"  # Topic for haptic motor commands
 # }
 WLED_MQTT_TOPIC = "wled/{}/api"  # Topic template for WLED commands, fill in board name
 STATUS_TOPIC = "$SYS/broker/clients/connected"  # Topic for MQTT client status
-MQTT_BROKER = "/tmp/mosquitto.sock"  # unix socket of the MQTT broker
-MQTT_PORT = 0  # MQTT port, not used with unix socket
-# MQTT_BROKER = "127.0.0.1"  # IP address of the MQTT broker
-# MQTT_PORT = 1883  # Default MQTT port
+# For unix socket grant permission to file
+# MQTT_BROKER = "/tmp/mosquitto.sock"  # unix socket of the MQTT broker
+# MQTT_PORT = 0  # MQTT port, not used with unix socket
+MQTT_BROKER = "127.0.0.1"  # IP address of the MQTT broker
+MQTT_PORT = 1883  # Default MQTT port
 MQTT_USER = None  # If using authentication, otherwise set as None
 MQTT_PASSWORD = None  # If using authentication, otherwise set as None
 MQTT_QOS = 0  # Quality of Service
@@ -427,6 +428,7 @@ def load_audio_devices():
         return
     for i, (statue, config) in enumerate(device_map.items()):
         device = transformed_devices[i]
+        config["hw_id"] = device["hw_id"]
         if config["output"] >= device["num_outputs"]:
             print(
                 f"Error: Device {device['hw_id']} does not have output {config['output']}"
@@ -877,18 +879,29 @@ if __name__ == "__main__":
     initialize_playback()
 
     # Should be in the global scope, mqttc is a global variable
-    mqttc = mqtt.Client(
-        mqtt.CallbackAPIVersion.VERSION2,
-        protocol=mqtt.MQTTProtocolVersion.MQTTv311,
-        clean_session=False,
-        client_id="controller",
-        transport="unix",
-    )
+    if MQTT_PORT == 0:
+        mqttc = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
+            clean_session=False,
+            client_id="controller",
+            transport="unix",
+        )
+    else:
+        mqttc = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
+            clean_session=False,
+            client_id="controller",
+        )
     if MQTT_USER and MQTT_PASSWORD:
         mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
     mqttc.on_connect = on_connect
     mqttc.on_message = on_message
-    mqttc.connect(MQTT_BROKER, MQTT_PORT, keepalive=10)
+    if MQTT_PORT == 0:
+        mqttc.connect(MQTT_BROKER)
+    else:
+        mqttc.connect(MQTT_BROKER, MQTT_PORT)
 
     print("Starting MQTT client")
     mqttc.loop_start()
@@ -912,6 +925,8 @@ if __name__ == "__main__":
     finally:
         server.server_close()
         print("Debug server stopped")
+
+        music_playback.stop()
 
         mqttc.loop_stop()
         print("Disconnected from MQTT broker")
