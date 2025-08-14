@@ -1,3 +1,4 @@
+# /etc/systemd/system/controller.service
 [Unit]
 Description="Missing Link controller program"
 StartLimitIntervalSec=30
@@ -11,6 +12,8 @@ Type=simple
 User={{ user }}
 Group={{ user }}
 
+# DEBUG=1
+# TEST_MODE_NO_LEDS=1
 Environment=PATH=/home/{{ user }}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONPATH=/home/{{ user }}/first_contact_sensor_teensie/raspberry_pi/controller
