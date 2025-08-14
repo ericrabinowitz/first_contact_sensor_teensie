@@ -68,7 +68,6 @@ class Effect(IntEnum):
 # Update Teensy to support auto-provisioning. Mainly, which Teensy maps to which statue.
 # Turn off lights during the day.
 # Decide if we need to send haptic commands to the Teensy.
-# Check if we can improve audio device to port id map stability. If not initialize mapping on startup.
 # Optional:
 # Support more complex audio channel to audio device mappings.
 # Support playing different audio when in dormant mode.
@@ -208,7 +207,7 @@ board_config = {
 # Maps statues to detailed info about its audio device and channels.
 device_map = {
     Statue.EROS: {
-        "port_id": "hw:2,0",  # ID of (USB) port that the device is connected to
+        "hw_id": "",  # ID of (USB) port that the device is connected to
         "output": 0,  # Output channel index, ie 0 for first output
         "input": 0,  # Input channel index of the audio file, ie 0 for first channel
         "type": "",  # Derived from device info, ie "c-media usb headphone set"
@@ -216,7 +215,7 @@ device_map = {
         "sample_rate": 0,  # Derived from device info, ie 44100
     },
     Statue.ELEKTRA: {
-        "port_id": "hw:3,0",
+        "hw_id": "",
         "output": 0,
         "input": 1,
         "type": "",
@@ -224,7 +223,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.ARIEL: {
-        "port_id": "hw:4,0",
+        "hw_id": "",
         "output": 0,
         "input": 2,
         "type": "",
@@ -232,7 +231,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.SOPHIA: {
-        "port_id": "hw:5,0",
+        "hw_id": "",
         "output": 0,
         "input": 3,
         "type": "",
@@ -240,7 +239,7 @@ device_map = {
         "sample_rate": 0,
     },
     Statue.ULTIMO: {
-        "port_id": "hw:6,0",
+        "hw_id": "",
         "output": 0,
         "input": 4,
         "type": "",
@@ -396,7 +395,7 @@ def load_audio_devices():
                 {
                     "index": d["index"],
                     "type": match.group(1).lower(),
-                    "port_id": match.group(2),
+                    "hw_id": match.group(2),
                     "num_outputs": int(d["max_output_channels"]),
                     "sample_rate": int(d["default_samplerate"]),
                 }
@@ -409,33 +408,62 @@ def load_audio_devices():
         )
         return
 
-    for device in transformed_devices:
-        for statue, config in device_map.items():
-            if config["port_id"] == device["port_id"]:
-                if config["output"] >= device["num_outputs"]:
-                    print(
-                        f"Error: Device {device['port_id']} does not have output {config['output']}"
-                    )
-                    continue
-                if config["input"] >= audio["data"].shape[1]:
-                    print(
-                        f"Error: {statue.value} does not have music channel {config['input']}"
-                    )
-                    continue
-                if device["sample_rate"] != audio["sample_rate"]:
-                    print(
-                        f"Error: Device {device['port_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
-                    )
-                    continue
+    # Map devices to statues
+    if len(transformed_devices) < len(device_map.keys()):
+        print(
+            f"Error: Not enough audio devices ({len(transformed_devices)} < {len(device_map.keys())})"
+        )
+        return
+    for i, (statue, config) in enumerate(device_map.items()):
+        device = transformed_devices[i]
+        if config["output"] >= device["num_outputs"]:
+            print(
+                f"Error: Device {device['hw_id']} does not have output {config['output']}"
+            )
+            continue
+        if config["input"] >= audio["data"].shape[1]:
+            print(
+                f"Error: {statue.value} does not have music channel {config['input']}"
+            )
+            continue
+        if device["sample_rate"] != audio["sample_rate"]:
+            print(
+                f"Error: Device {device['hw_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
+            )
+            continue
 
-                config["type"] = device["type"]
-                config["sample_rate"] = device["sample_rate"]
-                config["index"] = device["index"]
+        config["type"] = device["type"]
+        config["sample_rate"] = device["sample_rate"]
+        config["index"] = device["index"]
+
+    # # Map devices to statues
+    # for device in transformed_devices:
+    #     for statue, config in device_map.items():
+    #         if config["hw_id"] == device["hw_id"]:
+    #             if config["output"] >= device["num_outputs"]:
+    #                 print(
+    #                     f"Error: Device {device['hw_id']} does not have output {config['output']}"
+    #                 )
+    #                 continue
+    #             if config["input"] >= audio["data"].shape[1]:
+    #                 print(
+    #                     f"Error: {statue.value} does not have music channel {config['input']}"
+    #                 )
+    #                 continue
+    #             if device["sample_rate"] != audio["sample_rate"]:
+    #                 print(
+    #                     f"Error: Device {device['hw_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
+    #                 )
+    #                 continue
+
+    #             config["type"] = device["type"]
+    #             config["sample_rate"] = device["sample_rate"]
+    #             config["index"] = device["index"]
 
     for statue, config in device_map.items():
-        if config["type"] == "" or config["sample_rate"] == 0:
+        if config["hw_id"] == "" or config["type"] == "" or config["sample_rate"] == 0:
             print(
-                f"Error: No device found for {statue.value} ({config['port_id']}, {config['output']})"  # noqa: E501
+                f"Error: No device found for {statue.value} ({config['hw_id']}, {config['output']})"  # noqa: E501
             )
             continue
 
@@ -518,7 +546,7 @@ def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
 def publish_mqtt(topic: str, payload: dict) -> int:
     """Publish a message to the MQTT broker."""
     if debug:
-        print(f"Publishing to {topic}: {json.dumps(payload, indent=2)}")
+        print(f"Publishing to {topic}: {json.dumps(payload)}")
     r = mqttc.publish(topic, json.dumps(payload))
     try:
         r.wait_for_publish(1)
@@ -604,6 +632,8 @@ def haptics_on(statue: Statue) -> int:
 
 
 def leds_active(statue: Statue):
+    if debug:
+        print(f"Activating LEDs for statue: {statue}")
     send_led_cmd(
         statue,
         {
@@ -621,11 +651,13 @@ def leds_active(statue: Statue):
 
 
 def leds_dormant(statue: Statue):
+    if debug:
+        print(f"Deactivating LEDs for statue: {statue}")
     send_led_cmd(
         statue,
         {
             "fx": 0,
-            "bri": 255,
+            "bri": 170,
             "col": [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
         },
     )
@@ -633,7 +665,7 @@ def leds_dormant(statue: Statue):
         statue,
         {
             "on": True,
-            "bri": 255,
+            "bri": 170,
             "col": COLORS.get(statue, {}).get(
                 "dormant", COLORS[Statue.DEFAULT]["dormant"]
             ),
