@@ -20,13 +20,25 @@ import soundfile as sf
 from audio.devices import configure_devices
 from audio.music import ToggleableMultiChannelPlayback
 
+# List of available songs
+SONG_LIST = [
+    "../../audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav",
+    "../../audio_files/Missing Link Playa 3 - Five Channel.wav",
+    # Fallback songs if the main ones aren't found
+    "../../audio_files/Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav",
+]
+
 
 class ChannelToggleInterface:
     """Interactive interface for toggling audio channels."""
 
-    def __init__(self, playback, devices):
+    def __init__(self, playback, devices, song_name, song_index, total_songs, song_switcher):
         self.playback = playback
         self.devices = devices
+        self.song_name = song_name
+        self.song_index = song_index
+        self.total_songs = total_songs
+        self.song_switcher = song_switcher
         self.running = True
         self.old_settings = None
 
@@ -53,6 +65,8 @@ class ChannelToggleInterface:
 
         # In raw mode, we need explicit \r\n for proper line endings
         print("=== Multi-Channel Audio Demo ===\r\n\r")
+        print(f"Current Song: {os.path.basename(self.song_name)}\r")
+        print(f"Song {self.song_index + 1} of {self.total_songs}\r\n")
         print("Channel Status:\r")
 
         statue_names = ["EROS", "ELEKTRA", "SOPHIA", "ULTIMO", "ARIEL", "---"]
@@ -66,7 +80,8 @@ class ChannelToggleInterface:
 
         print(f"\r\nActive channels: {self.playback.active_count}/{len(self.devices)}\r")
         print(f"Playback: {'Stopped' if self.playback.is_stopped else 'Playing'} ({progress}%)\r")
-        print("\r\nPress 1-6 to toggle channels, 'q' to quit\r")
+        print("\r\nControls:\r")
+        print("  1-6: Toggle channels | A: Previous song | D: Next song | Q: Quit\r")
 
     def run(self):
         """Run the interactive interface."""
@@ -86,6 +101,14 @@ class ChannelToggleInterface:
                         channel = int(key) - 1
                         if 0 <= channel < len(self.devices):
                             self.playback.toggle_music_channel(channel)
+                    elif key == 'a' or key == 'A':
+                        # Previous song
+                        self.song_switcher(-1)
+                        self.running = False  # Exit interface to switch songs
+                    elif key == 'd' or key == 'D':
+                        # Next song
+                        self.song_switcher(1)
+                        self.running = False  # Exit interface to switch songs
 
                 time.sleep(0.05)  # Small delay to reduce CPU usage
 
@@ -93,6 +116,22 @@ class ChannelToggleInterface:
             self.restore_terminal()
             self.clear_screen()
             print("Demo ended.")
+
+
+def load_song(song_path):
+    """Load a song file and return audio data and sample rate."""
+    if not os.path.exists(song_path):
+        return None, None
+
+    try:
+        audio_data, sample_rate = sf.read(song_path)
+        # Ensure audio_data is 2D
+        if audio_data.ndim == 1:
+            audio_data = audio_data.reshape(-1, 1)
+        return audio_data, sample_rate
+    except Exception as e:
+        print(f"Error loading audio file {song_path}: {e}")
+        return None, None
 
 
 def main():
@@ -108,49 +147,90 @@ def main():
 
     print(f"Configured {len(devices)} devices")
 
-    # Load the 6-channel audio file
-    audio_file = "../../audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav"
+    # Track current song index
+    current_song_index = 0
+    song_change_direction = 0  # -1 for previous, 0 for none, 1 for next
+    channel_states = None  # To preserve channel states between songs
 
-    if not os.path.exists(audio_file):
-        print("6-channel file not found, trying stereo file...")
-        audio_file = "../../audio_files/Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav"
-        if not os.path.exists(audio_file):
-            print("ERROR: No test audio files found")
-            return
+    # Find available songs
+    available_songs = []
+    for song in SONG_LIST:
+        if os.path.exists(song):
+            available_songs.append(song)
 
-    try:
-        # Load audio data
-        audio_data, sample_rate = sf.read(audio_file)
+    if not available_songs:
+        print("ERROR: No audio files found!")
+        return
 
-        # Ensure audio_data is 2D
-        if audio_data.ndim == 1:
-            audio_data = audio_data.reshape(-1, 1)
+    print(f"Found {len(available_songs)} songs")
+
+    def switch_song(direction):
+        """Callback to switch songs."""
+        nonlocal song_change_direction
+        song_change_direction = direction
+
+    # Main loop for song switching
+    while True:
+        # Load current song
+        audio_file = available_songs[current_song_index]
+        audio_data, sample_rate = load_song(audio_file)
+
+        if audio_data is None:
+            print(f"Failed to load {audio_file}, trying next song...")
+            current_song_index = (current_song_index + 1) % len(available_songs)
+            continue
 
         print(f"\nLoaded: {os.path.basename(audio_file)}")
         print(f"Duration: {len(audio_data) / sample_rate:.1f} seconds")
         print(f"Channels: {audio_data.shape[1]}")
 
-    except Exception as e:
-        print(f"Error loading audio file: {e}")
-        return
+        # Create toggleable playback instance
+        playback = ToggleableMultiChannelPlayback(audio_data, sample_rate, devices)
 
-    # Create toggleable playback instance
-    playback = ToggleableMultiChannelPlayback(audio_data, sample_rate, devices)
+        # Restore channel states if we have them
+        if channel_states is not None:
+            for i, state in enumerate(channel_states):
+                if i < len(devices):
+                    playback.set_music_channel(i, state)
 
-    # Start all output streams (but with channels muted)
-    playback.start()
+        # Start all output streams
+        playback.start()
 
-    # Run the interactive interface
-    interface = ChannelToggleInterface(playback, devices)
+        # Reset song change direction
+        song_change_direction = 0
 
-    try:
-        interface.run()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        # Clean up
+        # Run the interactive interface
+        interface = ChannelToggleInterface(
+            playback,
+            devices,
+            audio_file,
+            current_song_index,
+            len(available_songs),
+            switch_song
+        )
+
+        try:
+            interface.run()
+        except KeyboardInterrupt:
+            playback.stop()
+            print("\nExiting...")
+            break
+
+        # Save channel states before stopping
+        channel_states = playback.get_channel_states()
+
+        # Clean up current playback
         playback.stop()
-        print("\nPlayback stopped.")
+
+        # Check if we should switch songs or quit
+        if song_change_direction != 0:
+            # Switch to next/previous song
+            current_song_index = (current_song_index + song_change_direction) % len(available_songs)
+            print(f"\nSwitching to song {current_song_index + 1} of {len(available_songs)}...")
+        else:
+            # User pressed 'q', exit
+            print("\nPlayback stopped.")
+            break
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 # Commands for managing the Missing Link art installation
 
 # Default SSH target for Raspberry Pi commands
-SSH_TARGET ?= rpi5
+SSH_TARGET ?= rpi5b
 
 # Project directories
 PROJECT_ROOT := ~/workspace/first_contact_sensor_teensie
