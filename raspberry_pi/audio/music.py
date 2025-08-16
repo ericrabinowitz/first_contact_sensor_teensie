@@ -89,7 +89,9 @@ class ToggleableMultiChannelPlayback:
                 self.device_groups[dev_idx] = []
             self.device_groups[dev_idx].append(device)
 
-    def _create_multi_channel_callback(self, device_list: list[dict[str, Any]]) -> Callable:
+    def _create_multi_channel_callback(
+        self, device_list: list[dict[str, Any]]
+    ) -> Callable:
         """Create a callback for multi-channel device handling multiple statues."""
 
         # Determine number of output channels needed
@@ -125,11 +127,15 @@ class ToggleableMultiChannelPlayback:
                 input_ch = device.get("channel_index", 0)
                 output_ch = device.get("output_channel", input_ch)
 
-                if self.channel_enabled[input_ch] and input_ch < self.audio_data.shape[1]:
+                if (
+                    self.channel_enabled[input_ch]
+                    and input_ch < self.audio_data.shape[1]
+                ):
                     # Copy audio data to the appropriate output channel
                     channel_data = self.audio_data[
-                        self.frame_index : self.frame_index + frames_to_play,
-                        input_ch
+                        self.frame_index : self.frame_index  # noqa: E203
+                        + frames_to_play,
+                        input_ch,
                     ]
                     multi_channel_data[:frames_to_play, output_ch] = channel_data
 
@@ -213,7 +219,9 @@ class ToggleableMultiChannelPlayback:
                     blocksize=BLOCK_SIZE,
                 )
                 if self.debug:
-                    print(f"Created {num_channels}-channel stream for device {device_index}")
+                    print(
+                        f"Created {num_channels}-channel stream for device {device_index}"
+                    )
             else:
                 # Single channel device (USB)
                 device = device_list[0]

@@ -11,8 +11,7 @@ else:
 
 class Statue(StrEnum):
     """The Missing Link statues."""
-    DEFAULT = auto()
-    ARCHES = auto()
+
     EROS = auto()
     ELEKTRA = auto()
     ARIEL = auto()
@@ -22,7 +21,7 @@ class Statue(StrEnum):
 
 class Board(StrEnum):
     """WLED board identifiers."""
-    ALL = auto()
+
     FIVE_V_1 = auto()
     FIVE_V_2 = auto()
     TWELVE_V_1 = auto()
@@ -30,6 +29,8 @@ class Board(StrEnum):
 
 class Effect(IntEnum):
     """WLED effect identifiers."""
+
     SOLID = 0
     FIREWORKS = 42
     NOISE = 71
+    LIGHTHOUSE = 41  # consider scanner

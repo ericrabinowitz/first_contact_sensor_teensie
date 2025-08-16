@@ -1,12 +1,14 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["backports.strenum", "numpy", "paho-mqtt", "requests", "sounddevice", "soundfile", "ultraimport"]
+# dependencies = [
+#   "backports.strenum", "numpy", "paho-mqtt", "requests",
+#   "sounddevice", "soundfile", "ultraimport"
+# ]
 # ///
-
 """
 Controller for the Missing Link art installation. Receives contact events from
 each statue's Teensy and configures their signal frequencies. In response to
-events, it plays audio channels and controls the WLED lights and haptic motors.
+events, it plays audio channels and controls the WLED lights.
 
 Install:
 wget -qO- https://astral.sh/uv/install.sh | sh
@@ -16,48 +18,29 @@ Execute: ./controller.py
 
 import json
 import os
-import re
-import sys
+import threading
 import time
+import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, List, Set, Union
 
 import paho.mqtt.client as mqtt
 import requests
-import sounddevice as sd
 import soundfile as sf
 import ultraimport as ui
 
-# Import centralized enums
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config.constants import Statue, Board, Effect
-
-# from ..audio.music import ToggleableMultiChannelPlayback
+Statue, Board, Effect = ui.ultraimport(
+    "__dir__/../config/constants.py", ["Statue", "Board", "Effect"]
+)
 ToggleableMultiChannelPlayback = ui.ultraimport(
     "__dir__/../audio/music.py", "ToggleableMultiChannelPlayback"
 )
+configure_devices = ui.ultraimport("__dir__/../audio/devices.py", "configure_devices")
 
-# Import configure_devices from devices.py
-configure_devices = ui.ultraimport(
-    "__dir__/../audio/devices.py", "configure_devices"
-)
-
-
-# TODO:
-# Fix music playback delay.
-# Support multiple output channels.
-# Support multiple active songs.
-# Support playing different audio when in dormant mode.
-# Support more than 1 statue per audio device.
-# Update Teensy to support auto-provisioning. Mainly, which Teensy maps to which statue.
-# Turn off lights during the day.
-# Optional:
-# In segment_map, track part that each segment controls.
-# If all statues are disabled, pause playback.
 
 # ### Parameters
 
-VERSION = "1.1"  # Version of the script
+VERSION = "1.3"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
 STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 
@@ -112,44 +95,26 @@ MQTT_QOS = 0  # Quality of Service
 # WLED settings
 # TODO: test different palettes, like the default one
 PALETTE_ID = 3
-FADE_MS = 2000  # Fade time in milliseconds
-COOL_DOWN_MS = 2000  # Audio recent song wait time in milliseconds
 
-# Defaults to the settings for DEFAULT
 # TODO: pick colors
 COLORS = {
-    Statue.EROS: {
-        # red
-        "active": [[255, 0, 100], [225, 0, 255], [255, 0, 100]],
-    },
-    Statue.ELEKTRA: {
-        # blue
-        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
-    },
-    Statue.ARIEL: {
-        # yellow
-        "active": [[255, 200, 0], [255, 255, 0], [255, 255, 0]],
-    },
-    Statue.SOPHIA: {
-        # green
-        "active": [[8, 255, 0], [66, 237, 160], [66, 237, 160]],
-    },
-    Statue.ULTIMO: {
-        # orange
-        "active": [[255, 165, 0], [255, 199, 94], [255, 199, 94]],
-    },
-    Statue.DEFAULT: {
-        "active": [[0, 25, 255], [0, 200, 255], [0, 25, 255]],
-        "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
-    },
+    Statue.EROS: [[255, 0, 100], [225, 0, 255], [255, 0, 100]],  # red
+    Statue.ELEKTRA: [[0, 25, 255], [0, 200, 255], [0, 25, 255]],  # blue
+    Statue.ARIEL: [[255, 200, 0], [255, 255, 0], [255, 255, 0]],  # yellow
+    Statue.SOPHIA: [[8, 255, 0], [66, 237, 160], [66, 237, 160]],  # green
+    Statue.ULTIMO: [[255, 165, 0], [255, 199, 94], [255, 199, 94]],  # orange
+    "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
 }
 
-# Defaults to the settings for DEFAULT
+BRIGHTNESS = {
+    "active": 255,  # Max
+    "dormant": 170,  # 2/3rds max
+}
+
 EFFECTS = {
-    Statue.DEFAULT: {
-        "active": Effect.FIREWORKS,
-        "dormant": Effect.NOISE,
-    },
+    "active": Effect.FIREWORKS,
+    "dormant": Effect.NOISE,
+    "arch": Effect.LIGHTHOUSE,
 }
 
 
@@ -160,9 +125,6 @@ debug = False
 
 # Disable all LED/WLED functionality
 no_leds = False
-
-# Disable all haptic functionality
-no_haptics = True  # Handled directly by the Teensy
 
 # MQTT client
 mqttc: Any = None
@@ -183,14 +145,17 @@ dormant_start_time = None  # Track when we entered dormant state
 # Maps statues to QuinLED boards and segment ids.
 # The control pin to segment id mapping is done in the WLED app.
 segment_map = {
-    Statue.ARCHES: {
-        # Board.TWELVE_V_1: [0],  # WLED segment ids
-    },
     Statue.EROS: {},
     Statue.ELEKTRA: {},
     Statue.ARIEL: {},
     Statue.SOPHIA: {},
     Statue.ULTIMO: {},
+    # Statue.EROS: {
+    #     Board.FIVE_V_1: {
+    #         "heart heads": 0, # WLED segment id
+    #         ...
+    #     }
+    # },
 }
 
 board_config = {
@@ -208,49 +173,8 @@ board_config = {
     },
 }
 
-# Maps statues to detailed info about its audio device and channels.
-device_map = {
-    Statue.EROS: {
-        "hw_id": "",  # ID of (USB) port that the device is connected to
-        "output": 0,  # Output channel index, ie 0 for first output
-        "input": 0,  # Input channel index of the audio file, ie 0 for first channel
-        "type": "",  # Derived from device info, ie "c-media usb headphone set"
-        "index": -1,  # Derived from device info, ie 0
-        "sample_rate": 0,  # Derived from device info, ie 44100
-    },
-    Statue.ELEKTRA: {
-        "hw_id": "",
-        "output": 0,
-        "input": 1,
-        "type": "",
-        "index": -1,
-        "sample_rate": 0,
-    },
-    Statue.ARIEL: {
-        "hw_id": "",
-        "output": 0,
-        "input": 2,
-        "type": "",
-        "index": -1,
-        "sample_rate": 0,
-    },
-    Statue.SOPHIA: {
-        "hw_id": "",
-        "output": 0,
-        "input": 3,
-        "type": "",
-        "index": -1,
-        "sample_rate": 0,
-    },
-    Statue.ULTIMO: {
-        "hw_id": "",
-        "output": 0,
-        "input": 4,
-        "type": "",
-        "index": -1,
-        "sample_rate": 0,
-    },
-}
+# List of configured audio devices
+audio_devices: List[dict[str, Any]] = []
 
 # Teensy configuration. Maps statues to their Teensy settings.
 teensy_config = {
@@ -292,7 +216,7 @@ teensy_config = {
 }
 
 # Detected contact pairings
-linked_statues: Dict[Statue, List[Statue]] = {
+linked_statues: Dict[Statue, List[Statue]] = {  # pyright: ignore[reportInvalidTypeForm]
     Statue.EROS: [],
     Statue.ELEKTRA: [],
     Statue.ARIEL: [],
@@ -300,7 +224,7 @@ linked_statues: Dict[Statue, List[Statue]] = {
     Statue.ULTIMO: [],
 }
 # Statues that are currently active
-active_statues: Set[Statue] = set()
+active_statues: Set[Statue] = set()  # pyright: ignore[reportInvalidTypeForm]
 
 music_playback: Any = None
 
@@ -323,7 +247,7 @@ def extract_addresses():
     global board_config
     if not os.path.exists(DNSMASQ_FILE):
         print(f"Error: DNSMASQ file not found: {DNSMASQ_FILE}")
-        return
+        exit(1)
 
     with open(DNSMASQ_FILE, "r") as f:
         lines = f.readlines()
@@ -353,7 +277,7 @@ def extract_addresses():
                 }
 
 
-def load_audio():
+def load_audio_files():
     """Load both active and dormant audio files into memory."""
     global active_audio, dormant_audio
 
@@ -361,13 +285,13 @@ def load_audio():
     active_file = os.path.join(SONG_DIR, ACTIVE_SONGS[current_active_song_index])
     if not os.path.exists(active_file):
         print(f"Error: Active audio file not found: {active_file}")
-        return
+        exit(1)
 
     # Load dormant song
     dormant_file = os.path.join(SONG_DIR, DORMANT_SONG)
     if not os.path.exists(dormant_file):
         print(f"Error: Dormant audio file not found: {dormant_file}")
-        return
+        exit(1)
 
     try:
         # Load active song
@@ -388,109 +312,45 @@ def load_audio():
 
         if debug:
             print(f"\nLoaded active: {os.path.basename(active_file)}")
-            print(f"  Duration: {len(audio_data) / sample_rate:.1f}s, Channels: {audio_data.shape[1]}")
+            print(
+                f"  Duration: {len(audio_data) / sample_rate:.1f}s, Channels: {audio_data.shape[1]}"
+            )
             print(f"Loaded dormant: {os.path.basename(dormant_file)}")
-            print(f"  Duration: {len(dormant_data) / dormant_rate:.1f}s, Channels: {dormant_data.shape[1]}")
+            print(
+                f"  Duration: {len(dormant_data) / dormant_rate:.1f}s, Channels: {dormant_data.shape[1]}"  # noqa: E501
+            )
 
     except Exception as e:
-        print(f"Error loading audio files: {e}")
+        print(f"Error: Failed to load audio files: {e}")
+        exit(1)
 
 
 def load_audio_devices():
     """Query audio devices and map them to statues using devices.py."""
-    global device_map
+    global audio_devices
 
     # Use the devices.py configuration which handles HiFiBerry
-    configured_devices = configure_devices(max_devices=5)
-
-    if not configured_devices:
-        print("Error: No audio devices configured")
-        return
-
-    # Update device_map with configured devices
-    for device in configured_devices:
-        statue = device["statue"]
-        # Handle both string and enum values
-        statue_name = statue.value if hasattr(statue, 'value') else str(statue)
-
-        # Only process real statues (not DEFAULT or ARCHES)
-        if statue_name not in [Statue.EROS, Statue.ELEKTRA,
-                               Statue.SOPHIA, Statue.ULTIMO,
-                               Statue.ARIEL]:
-            continue
-
-        # Ensure statue exists in device_map
-        if statue_name not in device_map:
-            # Get input channel index (0-4 for the 5 statues)
-            statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.ARIEL,
-                          Statue.SOPHIA, Statue.ULTIMO]
-            input_idx = next((i for i, s in enumerate(statue_list)
-                             if s == statue_name), 0)
-
-            device_map[statue_name] = {
-                "hw_id": "",
-                "output": 0,
-                "input": input_idx,
-                "type": "",
-                "index": -1,
-                "sample_rate": 0,
-            }
-
-        # Update with device info
-        config = device_map[statue_name]
-        config["index"] = device["device_index"]
-        config["sample_rate"] = device["sample_rate"]
-        config["type"] = device.get("device_type", "stereo")
-
-        # For HiFiBerry, store output channel
-        if "output_channel" in device:
-            config["output_channel"] = device["output_channel"]
-
-        if debug:
-            print(f"Configured {statue_name}: device {config['index']}, "
-                  f"type {config['type']}")
+    audio_devices = configure_devices(debug=debug)  # max_devices=X for testing
+    audio_devices.sort(key=lambda d: d["channel_index"])
+    if debug:
+        print(f"Audio devices: {json.dumps(audio_devices, indent=2)}")
+    if len(audio_devices) == 0:
+        exit(1)
 
 
 def initialize_playback():
     """Initialize the music playback object."""
     global music_playback, is_dormant
 
-    devices = []
-    for statue_name, config in device_map.items():
-        if config["index"] < 0:
-            continue  # Skip unconfigured devices
-
-        device_dict = {
-            "statue": statue_name,
-            "device_index": config["index"],
-            "sample_rate": config["sample_rate"],
-            "channel_index": config["input"],
-        }
-
-        # Add fields for HiFiBerry support
-        if "output_channel" in config:
-            device_dict["output_channel"] = config["output_channel"]
-        if config["type"]:
-            device_dict["device_type"] = config["type"]
-
-        devices.append(device_dict)
-
-    devices.sort(key=lambda d: d["channel_index"])
-
-    if debug:
-        print(f"Initializing playback with {len(devices)} channels")
-        for d in devices:
-            print(f"  {d['statue']}: device {d['device_index']}, "
-                  f"channel {d['channel_index']}")
-
+    print(f"Initializing playback with {len(audio_devices)} channels")
     # Start with dormant song since no connections at startup
     is_dormant = True
     music_playback = ToggleableMultiChannelPlayback(
         dormant_audio["data"],  # Start with dormant song
         dormant_audio["sample_rate"],
-        devices,
+        audio_devices,
         loop=True,
-        debug=debug
+        debug=debug,
     )
     music_playback.start()
 
@@ -501,7 +361,9 @@ def initialize_playback():
         print("Playback initialized with dormant song on all channels")
 
 
-def get_statue(path: str) -> Union[Statue, None]:
+def get_statue(
+    path: str,
+) -> Union[Statue, None]:  # pyright: ignore[reportInvalidTypeForm]
     parts = path.split("/")
     if len(parts) != 3:
         print(f"Warning: Invalid path: {path}")
@@ -517,17 +379,20 @@ def get_statue(path: str) -> Union[Statue, None]:
         return None
 
 
-def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
-    """Update the list of active statues based on the received payload. Manage playback state."""
-    global active_statues
-    global linked_statues
+def update_active_statues(
+    payload: dict,
+) -> tuple[Set[Statue], Set[Statue], bool]:  # pyright: ignore[reportInvalidTypeForm]
+    """Update the list of active statues based on the received payload.
+    Returns a tuple of new active and dormant statues, and whether the playback state changed.
+    """
+    global active_statues, linked_statues
 
     statue_name = payload.get("detector", "")
     try:
         detector = Statue(statue_name)
     except ValueError:
         print(f"Error: Unknown statue: {statue_name}")
-        return set(), set()
+        return set(), set(), False
 
     emitters = []
     for statue_name in payload.get("emitters", []):
@@ -553,37 +418,17 @@ def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
     was_dormant = len(old_actives) == 0
     now_dormant = len(active_statues) == 0
 
-    if now_dormant and not was_dormant:
-        # Transition to dormant: all statues disconnected
-        if debug:
-            print("All statues dormant - switching to dormant song")
-        music_playback.switch_to_song(dormant_audio["data"], enable_all=True)
-        global is_dormant, dormant_start_time
-        is_dormant = True
-        dormant_start_time = time.time()  # Record when we entered dormant state
-
-    elif not now_dormant and was_dormant:
-        # Transition to active: first connection made
-        global current_active_song_index
-        
-        # Check if we should advance to next song
-        if dormant_start_time and (time.time() - dormant_start_time >= DORMANT_TIMEOUT_SECONDS):
-            # Advance to next song
-            current_active_song_index = (current_active_song_index + 1) % len(ACTIVE_SONGS)
-            if debug:
-                print(f"Advancing to next active song: {ACTIVE_SONGS[current_active_song_index]}")
-            # Reload the new active song
-            load_audio()
-        
-        if debug:
-            print(f"Connection detected - switching to active song: {ACTIVE_SONGS[current_active_song_index]}")
-        music_playback.switch_to_song(active_audio["data"], enable_all=False)
-        is_dormant = False
-        dormant_start_time = None  # Reset timer
-
     new_actives = active_statues - old_actives
     new_dormants = old_actives - active_statues
-    return new_actives, new_dormants
+    return new_actives, new_dormants, was_dormant != now_dormant
+
+
+def get_channel(statue: Statue) -> int:  # pyright: ignore[reportInvalidTypeForm]
+    """Get the audio channel index for a statue."""
+    for device in audio_devices:
+        if device["statue"] == statue:
+            return device["channel_index"]
+    return -1
 
 
 def publish_mqtt(topic: str, payload: dict):
@@ -591,32 +436,6 @@ def publish_mqtt(topic: str, payload: dict):
     if debug:
         print(f"Publishing to {topic}: {json.dumps(payload)}")
     mqttc.publish(topic, json.dumps(payload), qos=MQTT_QOS)
-
-
-def send_led_cmd(statue: Statue, seg_payload: dict):
-    """Send a WLED command to control the LEDs of a statue."""
-    if no_leds:
-        return
-    if statue == Statue.DEFAULT:
-        print("Error: Cannot send LED command to DEFAULT statue")
-        return
-
-    for board, seg_ids in segment_map[statue].items():
-        if len(seg_ids) == 0:
-            continue
-        payload = {
-            "tt": 0,
-            "seg": [],
-        }
-        for seg_id in seg_ids:
-            payload["seg"].append(
-                {
-                    "id": seg_id,
-                    **seg_payload,
-                }
-            )
-        publish_mqtt(WLED_MQTT_TOPIC.format(board), payload)
-    return
 
 
 def send_config():
@@ -646,7 +465,7 @@ def initialize_leds():
         )
         if resp.status_code != 200:
             print(f"Error: Failed to initialize board {board}: {resp.text}")
-            continue
+            exit(1)
 
         segments = resp.json().get("seg", [])
         for segment in segments:
@@ -655,74 +474,159 @@ def initialize_leds():
             parts = name.split(" ")
             if len(parts) < 1:
                 continue
-            for parts[0] in statues:
-                segment_map[Statue(parts[0])].setdefault(board, []).append(
-                    segment["id"]
-                )
+            if parts[0] in statues:
+                rest = " ".join(parts[1:]).strip()
+                if rest == "":
+                    rest = "default"
+                segment_map[Statue(parts[0])].setdefault(board, {})[rest] = segment[
+                    "id"
+                ]
 
 
 # ### Actions
 
 
-def haptics_on(statue: Statue):
-    if no_haptics:
+def get_temperature():
+    cmd = "vcgencmd measure_temp"
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, shell=True, check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        # Handle errors if the command fails
+        print(f"Error: Command failed with exit code {e.returncode}")
+        print(f"Error: {e.stderr}")
+    except Exception as e:
+        print(f"Error: {e}")
+    return "failed"
+
+
+def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
+    if no_leds:
         return
-    publish_mqtt(HAPTIC_MQTT_TOPIC, {"statue": statue})
-
-
-def leds_active(statue: Statue):
     if debug:
-        print(f"Activating LEDs for statue: {statue}")
-    send_led_cmd(
-        statue,
-        {
+        print(f"Activating LEDs for statues: {statues}")
+
+    board_payloads = {}
+    for board in board_config.keys():
+        board_payloads[board] = {
+            "tt": 0,
             "on": True,
-            "bri": 255,
-            "col": COLORS.get(statue, {}).get(
-                "active", COLORS[Statue.DEFAULT]["active"]
-            ),
-            "fx": EFFECTS.get(statue, {}).get(
-                "active", EFFECTS[Statue.DEFAULT]["active"]
-            ),
-            "pal": PALETTE_ID,
-        },
-    )
+            "seg": [],
+        }
+
+    for statue in statues:
+        color = COLORS.get(statue, COLORS["dormant"])
+        for board, seg_map in segment_map[statue].items():
+            for part, seg_id in seg_map.items():
+                board_payloads[board]["seg"].append(
+                    {
+                        "id": seg_id,
+                        "bri": BRIGHTNESS["active"],
+                        "col": color,
+                        "fx": EFFECTS["active"],
+                        "pal": PALETTE_ID,
+                    }
+                )
+
+    for board, payload in board_payloads.items():
+        if len(payload["seg"]) == 0:
+            continue
+        thread = threading.Thread(
+            target=publish_mqtt, args=(WLED_MQTT_TOPIC.format(board), payload)
+        )
+        thread.start()
 
 
-def leds_dormant(statue: Statue):
+def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
+    if no_leds:
+        return
     if debug:
-        print(f"Deactivating LEDs for statue: {statue}")
-    send_led_cmd(
-        statue,
-        {
-            "fx": 0,
-            "bri": 170,
-            "col": [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        },
-    )
-    send_led_cmd(
-        statue,
-        {
+        print(f"Deactivating LEDs for statues: {statues}")
+
+    board_payloads = {}
+    for board in board_config.keys():
+        board_payloads[board] = {
+            "tt": 0,
             "on": True,
-            "bri": 170,
-            "col": COLORS.get(statue, {}).get(
-                "dormant", COLORS[Statue.DEFAULT]["dormant"]
-            ),
-            "fx": EFFECTS.get(statue, {}).get(
-                "dormant", EFFECTS[Statue.DEFAULT]["dormant"]
-            ),
-            "pal": PALETTE_ID,
-        },
-    )
+            "seg": [],
+        }
+
+    for statue in statues:
+        for board, seg_map in segment_map[statue].items():
+            for part, seg_id in seg_map.items():
+                fx = EFFECTS["dormant"]
+                color = COLORS["dormant"]
+                if "hand" in part:
+                    color = COLORS.get(statue, COLORS["dormant"])
+                if "arch" in part:
+                    fx = EFFECTS["arch"]
+
+                board_payloads[board]["seg"].append(
+                    {
+                        "id": seg_id,
+                        "bri": BRIGHTNESS["active"],
+                        "col": color,
+                        "fx": fx,
+                        "pal": PALETTE_ID,
+                    }
+                )
+
+    for board, payload in board_payloads.items():
+        if len(payload["seg"]) == 0:
+            continue
+        thread = threading.Thread(
+            target=publish_mqtt, args=(WLED_MQTT_TOPIC.format(board), payload)
+        )
+        thread.start()
 
 
-def audio_active(statue: Statue) -> bool:
+def change_playback_state():
+    global is_dormant, dormant_start_time, current_active_song_index
+
+    if len(active_statues) == 0:
+        # Transition to dormant: all statues disconnected
+        if debug:
+            print("All statues dormant - switching to dormant song")
+
+        music_playback.switch_to_song(dormant_audio["data"], enable_all=True)
+        is_dormant = True
+        dormant_start_time = time.time()  # Record when we entered dormant state
+
+    else:
+        # Transition to active: first connection made
+        # Check if we should advance to next song
+        if dormant_start_time and (
+            time.time() - dormant_start_time >= DORMANT_TIMEOUT_SECONDS
+        ):
+            # Advance to next song
+            current_active_song_index = (current_active_song_index + 1) % len(
+                ACTIVE_SONGS
+            )
+            if debug:
+                print(
+                    f"Advancing to next active song: {ACTIVE_SONGS[current_active_song_index]}"
+                )
+            # Reload the new active song
+            load_audio_files()
+
+        if debug:
+            print(
+                f"Connection detected - switching to active song: {ACTIVE_SONGS[current_active_song_index]}"  # noqa: E501
+            )
+        music_playback.switch_to_song(active_audio["data"], enable_all=False)
+        is_dormant = False
+        dormant_start_time = None  # Reset timer
+
+
+def audio_active(statue: Statue) -> bool:  # pyright: ignore[reportInvalidTypeForm]
     """Enable audio playback for a statue."""
     # In dormant mode, all channels are already enabled
     if is_dormant:
         return True
 
-    input_channel = device_map.get(statue, {}).get("input", -1)
+    input_channel = get_channel(statue)
     if input_channel < 0:
         print(f"Error: No audio input configured for statue {statue}")
         return False
@@ -730,13 +634,13 @@ def audio_active(statue: Statue) -> bool:
     return music_playback.set_music_channel(input_channel, True)
 
 
-def audio_dormant(statue: Statue):
+def audio_dormant(statue: Statue):  # pyright: ignore[reportInvalidTypeForm]
     """Disable audio playback for a statue."""
     # In dormant mode, all channels stay enabled
     if is_dormant:
         return True
 
-    input_channel = device_map.get(statue, {}).get("input", -1)
+    input_channel = get_channel(statue)
     if input_channel < 0:
         print(f"Error: No audio input configured for statue {statue}")
         return False
@@ -746,25 +650,24 @@ def audio_dormant(statue: Statue):
 
 def handle_contact_event(payload: dict):
     """Handle a contact event from a statue."""
-    new_actives, new_dormants = update_active_statues(payload)
+    new_actives, new_dormants, transitioned = update_active_statues(payload)
+
+    if transitioned:
+        change_playback_state()
+
     # active statues
     if debug:
         print(f"Activating the following statues: {new_actives}")
     for statue in new_actives:
-        haptics_on(statue)
-        leds_active(statue)
-        leds_active(Statue.ARCHES)
-    for statue in new_actives:
         audio_active(statue)
+    leds_active(new_actives)
 
     # dormant statues
     if debug:
         print(f"Deactivating the following statues: {new_dormants}")
     for statue in new_dormants:
-        leds_dormant(statue)
-        leds_dormant(Statue.ARCHES)
-    for statue in new_dormants:
         audio_dormant(statue)
+    leds_dormant(new_dormants)
 
 
 # ### Debug server
@@ -799,17 +702,16 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                     "description": "Missing Link rpi controller script",
                     "version": VERSION,
                     "mqtt_num_connected": mqtt_num_connected,
+                    "temperature": get_temperature(),
                 }
             )
         elif self.path == "/config/static":
             self._send_response(
                 {
-                    "colors": COLORS,
-                    "effects": EFFECTS,
                     "board_config": board_config,
                     "teensy_config": teensy_config,
                     "segment_map": segment_map,
-                    "device_map": device_map,
+                    "audio_devices": audio_devices,
                 }
             )
         elif self.path == "/config/dynamic":
@@ -817,9 +719,9 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                 {
                     "debug": debug,
                     "active_song": ACTIVE_SONGS[current_active_song_index],
-                    "active_songs_list": ACTIVE_SONGS,
-                    "current_song_index": current_active_song_index,
-                    "dormant_time": time.time() - dormant_start_time if dormant_start_time else 0,
+                    "dormant_time": (
+                        time.time() - dormant_start_time if dormant_start_time else 0
+                    ),
                     "linked_statues": linked_statues,
                     "active_statues": list(active_statues),
                 }
@@ -844,26 +746,6 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
             publish_mqtt(LINK_MQTT_TOPIC, data)
             self._send_response({})
             print("triggered a contact event")
-        elif self.path.startswith("/led/"):
-            statue = get_statue(self.path)
-            if statue is None:
-                self._send_400()
-                return
-            send_led_cmd(statue, data)
-            self._send_response({})
-            print("sent a LED cmd to:", statue)
-        elif self.path.startswith("/haptic/"):
-            statue = get_statue(self.path)
-            if statue is None:
-                self._send_400()
-                return
-            code = haptics_on(statue)
-            self._send_response(
-                {
-                    "status_code": code,
-                }
-            )
-            print("sent a haptic motor cmd to:", statue)
         else:
             self._send_404()
 
@@ -909,7 +791,7 @@ if __name__ == "__main__":
     no_leds = bool_env_var("TEST_MODE_NO_LEDS")
 
     extract_addresses()
-    load_audio()
+    load_audio_files()
     load_audio_devices()
     initialize_playback()
 
@@ -945,9 +827,9 @@ if __name__ == "__main__":
     time.sleep(STARTUP_DELAY)
 
     initialize_leds()
-    for statue in segment_map.keys():
-        leds_dormant(statue)
     send_config()
+    time.sleep(1)
+    leds_dormant(set(segment_map.keys()))
 
     server = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
     try:
