@@ -93,45 +93,45 @@ for statue in [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue
 
 def configure_hifiberry(device: dict[str, Any]) -> list[dict[str, Any]]:
     """Configure HiFiBerry DAC8x for all 5 statues.
-    
+
     The HiFiBerry DAC8x has 8 output channels, allowing us to assign
     one channel per statue for music playback.
-    
+
     Args:
         device: The HiFiBerry device dictionary from sounddevice
-        
+
     Returns:
         list: Configured devices for all 5 statues
     """
-    statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, 
+    statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA,
                    Statue.ULTIMO, Statue.ARIEL]
-    
+
     configured_devices = []
     sample_rate = int(device["default_samplerate"])
-    
+
     print(f"\nConfiguring HiFiBerry DAC8x with 8 channels")
     print(f"Device: {device['name']}")
     print(f"Sample rate: {sample_rate} Hz")
     print("Channel assignments:")
-    
+
     for i, statue in enumerate(statue_list):
         print(f"  Channel {i}: {statue.upper()}")
-        
+
         # Update dynConfig for compatibility
         if statue in dynConfig:
             dynConfig[statue]["audio"]["device_index"] = device["index"]
             dynConfig[statue]["audio"]["sample_rate"] = sample_rate
             dynConfig[statue]["audio"]["channel"] = i
-        
+
         configured_devices.append({
             "statue": statue,
             "device_index": device["index"],
             "sample_rate": sample_rate,
             "channel_index": i,  # Audio file channel (0-4)
-            "output_channel": i,  # HiFiBerry output channel (0-4)  
+            "output_channel": i,  # HiFiBerry output channel (0-4)
             "device_type": "multi_channel"
         })
-    
+
     return configured_devices
 
 
@@ -177,10 +177,10 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
         if "hifiberry" in device["name"].lower() and device["max_output_channels"] >= 8:
             print("\nFound HiFiBerry DAC8x!")
             return configure_hifiberry(device)
-    
+
     # Fallback to USB devices
     print("\nNo HiFiBerry DAC8x found, falling back to USB devices...")
-    
+
     # Updated pattern for "USB PnP Sound Device: Audio (hw:2,0)" format
     pattern = r"^([^:]*): ([^(]*) \((hw:\d+,\d+)\)$"
 
@@ -211,7 +211,7 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
     print("Music-only mode (no tone generation)")
 
     # Get list of available statues (skip DEFAULT and ARCHES)
-    statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, 
+    statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA,
                    Statue.ULTIMO, Statue.ARIEL]
     configured_devices = []
 

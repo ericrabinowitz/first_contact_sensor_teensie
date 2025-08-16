@@ -368,34 +368,34 @@ def load_audio():
 def load_audio_devices():
     """Query audio devices and map them to statues using devices.py."""
     global device_map
-    
+
     # Use the devices.py configuration which handles HiFiBerry
     configured_devices = configure_devices(max_devices=5)
-    
+
     if not configured_devices:
         print("Error: No audio devices configured")
         return
-    
+
     # Update device_map with configured devices
     for device in configured_devices:
         statue = device["statue"]
         # Handle both string and enum values
         statue_name = statue.value if hasattr(statue, 'value') else str(statue)
-        
+
         # Only process real statues (not DEFAULT or ARCHES)
-        if statue_name not in [Statue.EROS, Statue.ELEKTRA, 
-                               Statue.SOPHIA, Statue.ULTIMO, 
+        if statue_name not in [Statue.EROS, Statue.ELEKTRA,
+                               Statue.SOPHIA, Statue.ULTIMO,
                                Statue.ARIEL]:
             continue
-            
+
         # Ensure statue exists in device_map
         if statue_name not in device_map:
             # Get input channel index (0-4 for the 5 statues)
-            statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.ARIEL, 
+            statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.ARIEL,
                           Statue.SOPHIA, Statue.ULTIMO]
-            input_idx = next((i for i, s in enumerate(statue_list) 
+            input_idx = next((i for i, s in enumerate(statue_list)
                              if s == statue_name), 0)
-            
+
             device_map[statue_name] = {
                 "hw_id": "",
                 "output": 0,
@@ -404,17 +404,17 @@ def load_audio_devices():
                 "index": -1,
                 "sample_rate": 0,
             }
-        
+
         # Update with device info
         config = device_map[statue_name]
         config["index"] = device["device_index"]
         config["sample_rate"] = device["sample_rate"]
         config["type"] = device.get("device_type", "stereo")
-        
+
         # For HiFiBerry, store output channel
         if "output_channel" in device:
             config["output_channel"] = device["output_channel"]
-        
+
         if debug:
             print(f"Configured {statue_name}: device {config['index']}, "
                   f"type {config['type']}")
@@ -428,24 +428,24 @@ def initialize_playback():
     for statue_name, config in device_map.items():
         if config["index"] < 0:
             continue  # Skip unconfigured devices
-            
+
         device_dict = {
             "statue": statue_name,
             "device_index": config["index"],
             "sample_rate": config["sample_rate"],
             "channel_index": config["input"],
         }
-        
+
         # Add fields for HiFiBerry support
         if "output_channel" in config:
             device_dict["output_channel"] = config["output_channel"]
         if config["type"]:
             device_dict["device_type"] = config["type"]
-            
+
         devices.append(device_dict)
-    
+
     devices.sort(key=lambda d: d["channel_index"])
-    
+
     if debug:
         print(f"Initializing playback with {len(devices)} channels")
         for d in devices:
