@@ -16,6 +16,7 @@ wget -qO- https://astral.sh/uv/install.sh | sh
 Execute: ./controller.py
 """
 
+import datetime
 import json
 import os
 import threading
@@ -40,9 +41,13 @@ configure_devices = ui.ultraimport("__dir__/../audio/devices.py", "configure_dev
 
 # ### Parameters
 
-VERSION = "1.3"  # Version of the script
+VERSION = "2.0"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
 STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
+
+# Roughly match sunrise/sunset times in SF in August 2025
+SUNRISE = datetime.time(6, 50)  # 6:50 AM
+SUNSET = datetime.time(19, 30)  # 7:30 PM
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -483,6 +488,39 @@ def initialize_leds():
                 ]
 
 
+def manage_power():
+    """Manage power consumption by turning off LEDs during the day."""
+    global no_leds
+    if debug:
+        print("Checking power management...")
+
+    now = datetime.datetime.now().time()
+    is_daytime = SUNRISE <= now <= SUNSET
+    if is_daytime and not no_leds:
+        print("Daytime detected - turning off LEDs")
+        no_leds = True
+        publish_mqtt(
+            WLED_MQTT_TOPIC.format("all"),
+            {
+                "tt": 0,
+                "on": False,
+                "bri": 0,
+            },
+        )
+    elif not is_daytime and no_leds:
+        print("Nighttime detected - turning on LEDs")
+        no_leds = False
+        publish_mqtt(
+            WLED_MQTT_TOPIC.format("all"),
+            {
+                "tt": 0,
+                "on": True,
+                "bri": 0,
+            },
+        )
+        leds_dormant(set(segment_map.keys()))
+
+
 # ### Actions
 
 
@@ -831,6 +869,12 @@ if __name__ == "__main__":
     time.sleep(1)
     leds_dormant(set(segment_map.keys()))
 
+    timer_thread = None
+    if bool_env_var("CONSERVE_POWER") and not no_leds:
+        # Run power management once a minute
+        timer_thread = threading.Timer(60, manage_power)
+        timer_thread.start()
+
     server = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
     try:
         print(f"Starting debug server on port {DEBUG_PORT}")
@@ -847,3 +891,7 @@ if __name__ == "__main__":
 
         mqttc.loop_stop()
         print("Disconnected from MQTT broker")
+
+        if timer_thread is not None:
+            timer_thread.cancel()
+            print("Timer thread stopped")
