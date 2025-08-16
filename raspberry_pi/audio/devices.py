@@ -32,27 +32,17 @@ Example:
 """
 
 import re
-from enum import Enum
+import sys
+import os
 from typing import Any, Optional
 
 import sounddevice as sd
 
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.constants import Statue
+
 USB_ADAPTER: str = "usb"  # Match any USB device
-
-
-class Statue(Enum):
-    """Enumeration of the five Missing Link statues.
-
-    Each statue represents a figure in the art installation and requires
-    its own USB audio device for contact sensing and audio playback.
-    """
-
-    EROS = "eros"
-    ELEKTRA = "elektra"
-    SOPHIA = "sophia"
-    ULTIMO = "ultimo"
-    ARIEL = "ariel"
-    CH6 = "ch6"
 
 
 # ALSA system has a default limit of 32 cards
@@ -73,9 +63,9 @@ dynConfig: dict[str, Any] = {
     "touch_threshold": 0.1,
 }
 
-# Add configuration for each statue
-for statue in Statue:
-    dynConfig[statue.value] = {
+# Add configuration for each statue (using string values for compatibility)
+for statue in [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL]:
+    dynConfig[statue] = {
         "audio": {
             "device_id": "",
             "device_index": -1,
@@ -125,12 +115,13 @@ def configure_hifiberry(device: dict[str, Any]) -> list[dict[str, Any]]:
     print("Channel assignments:")
     
     for i, statue in enumerate(statue_list):
-        print(f"  Channel {i}: {statue.value.upper()}")
+        print(f"  Channel {i}: {statue.upper()}")
         
         # Update dynConfig for compatibility
-        dynConfig[statue.value]["audio"]["device_index"] = device["index"]
-        dynConfig[statue.value]["audio"]["sample_rate"] = sample_rate
-        dynConfig[statue.value]["audio"]["channel"] = i
+        if statue in dynConfig:
+            dynConfig[statue]["audio"]["device_index"] = device["index"]
+            dynConfig[statue]["audio"]["sample_rate"] = sample_rate
+            dynConfig[statue]["audio"]["channel"] = i
         
         configured_devices.append({
             "statue": statue,
@@ -219,8 +210,9 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
     print(f"\nFound {len(usb_devices)} USB audio devices")
     print("Music-only mode (no tone generation)")
 
-    # Get list of available statues
-    statue_list = list(Statue)[:5]  # Only use first 5 statues
+    # Get list of available statues (skip DEFAULT and ARCHES)
+    statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, 
+                   Statue.ULTIMO, Statue.ARIEL]
     configured_devices = []
 
     # Configure each USB device with a statue
@@ -233,19 +225,20 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
 
         statue = statue_list[i]
         print(
-            f"\nConfiguring {statue.value.upper()} with device {usb_device['index']}: {usb_device['name']}"  # noqa: E501
+            f"\nConfiguring {statue.upper()} with device {usb_device['index']}: {usb_device['name']}"  # noqa: E501
         )
 
         # Configure output for music only
         if usb_device["max_output"] > 0:
-            print(f"  {statue.value}: stereo music output")
+            print(f"  {statue}: stereo music output")
 
             # Update dynConfig for compatibility
-            dynConfig[statue.value]["audio"]["device_index"] = usb_device["index"]
-            dynConfig[statue.value]["audio"]["device_id"] = usb_device["device_id"]
-            dynConfig[statue.value]["audio"]["sample_rate"] = usb_device["sample_rate"]
-            dynConfig[statue.value]["audio"]["device_type"] = usb_device["name"]
-            dynConfig[statue.value]["audio"]["channel"] = 0  # left channel
+            if statue in dynConfig:
+                dynConfig[statue]["audio"]["device_index"] = usb_device["index"]
+                dynConfig[statue]["audio"]["device_id"] = usb_device["device_id"]
+                dynConfig[statue]["audio"]["sample_rate"] = usb_device["sample_rate"]
+                dynConfig[statue]["audio"]["device_type"] = usb_device["name"]
+                dynConfig[statue]["audio"]["channel"] = 0  # left channel
 
             configured_devices.append(
                 {
@@ -261,7 +254,7 @@ def configure_devices(max_devices: Optional[int] = None) -> list[dict[str, Any]]
         print("\nConfiguration summary:")
         print(f"  {len(configured_devices)} devices configured successfully")
         for dev in configured_devices:
-            print(f"  {dev['statue'].value}: device {dev['device_index']}")
+            print(f"  {dev['statue']}: device {dev['device_index']}")
 
     return configured_devices
 
