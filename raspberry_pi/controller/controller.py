@@ -63,8 +63,12 @@ STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
-ACTIVE_SONG = "Missing Link Playa 1 - 6 Channel 6-7.wav"
+ACTIVE_SONGS = [
+    "Missing Link Playa 1 - 6 Channel 6-7.wav",
+    "Missing Link Playa 3 - Five Channel.wav",
+]
 DORMANT_SONG = "Missing Link Playa Dormant - 5 Channel.wav"
+DORMANT_TIMEOUT_SECONDS = 10  # Time in dormant before advancing to next song
 DNSMASQ_FILE = os.path.join(os.path.dirname(__file__), "../setup/dnsmasq.conf")
 
 # MQTT server settings
@@ -173,6 +177,8 @@ dormant_audio = {
     "sample_rate": 0,
 }
 is_dormant = True  # Track whether we're playing dormant or active song
+current_active_song_index = 0  # Track which active song to play
+dormant_start_time = None  # Track when we entered dormant state
 
 # Maps statues to QuinLED boards and segment ids.
 # The control pin to segment id mapping is done in the WLED app.
@@ -352,7 +358,7 @@ def load_audio():
     global active_audio, dormant_audio
 
     # Load active song
-    active_file = os.path.join(SONG_DIR, ACTIVE_SONG)
+    active_file = os.path.join(SONG_DIR, ACTIVE_SONGS[current_active_song_index])
     if not os.path.exists(active_file):
         print(f"Error: Active audio file not found: {active_file}")
         return
@@ -552,15 +558,28 @@ def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
         if debug:
             print("All statues dormant - switching to dormant song")
         music_playback.switch_to_song(dormant_audio["data"], enable_all=True)
-        global is_dormant
+        global is_dormant, dormant_start_time
         is_dormant = True
+        dormant_start_time = time.time()  # Record when we entered dormant state
 
     elif not now_dormant and was_dormant:
         # Transition to active: first connection made
+        global current_active_song_index
+        
+        # Check if we should advance to next song
+        if dormant_start_time and (time.time() - dormant_start_time >= DORMANT_TIMEOUT_SECONDS):
+            # Advance to next song
+            current_active_song_index = (current_active_song_index + 1) % len(ACTIVE_SONGS)
+            if debug:
+                print(f"Advancing to next active song: {ACTIVE_SONGS[current_active_song_index]}")
+            # Reload the new active song
+            load_audio()
+        
         if debug:
-            print("Connection detected - switching to active song")
+            print(f"Connection detected - switching to active song: {ACTIVE_SONGS[current_active_song_index]}")
         music_playback.switch_to_song(active_audio["data"], enable_all=False)
         is_dormant = False
+        dormant_start_time = None  # Reset timer
 
     new_actives = active_statues - old_actives
     new_dormants = old_actives - active_statues
@@ -797,7 +816,10 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
             self._send_response(
                 {
                     "debug": debug,
-                    "active_song": ACTIVE_SONG,
+                    "active_song": ACTIVE_SONGS[current_active_song_index],
+                    "active_songs_list": ACTIVE_SONGS,
+                    "current_song_index": current_active_song_index,
+                    "dormant_time": time.time() - dormant_start_time if dormant_start_time else 0,
                     "linked_statues": linked_statues,
                     "active_statues": list(active_statues),
                 }
