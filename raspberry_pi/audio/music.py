@@ -80,7 +80,64 @@ class ToggleableMultiChannelPlayback:
         # Whether to loop audio playback
         self.loop = loop
         self.debug = debug
+        
+        # Group devices by device_index to identify shared devices
+        self.device_groups = {}
+        for device in devices:
+            dev_idx = device["device_index"]
+            if dev_idx not in self.device_groups:
+                self.device_groups[dev_idx] = []
+            self.device_groups[dev_idx].append(device)
 
+    def _create_multi_channel_callback(self, device_list: list[dict[str, Any]]) -> Callable:
+        """Create a callback for multi-channel device handling multiple statues."""
+        
+        # Determine number of output channels needed
+        max_channel = max(d.get("output_channel", 0) for d in device_list)
+        num_channels = max(8, max_channel + 1)  # At least 8 for HiFiBerry
+        
+        def callback(outdata, frames, _time_info, status):
+            if status:
+                print(f"\rMulti-channel stream status: {status}")
+            
+            if self.is_paused:
+                outdata.fill(0)
+                return
+            
+            # Calculate remaining frames
+            remaining_frames = len(self.audio_data) - self.frame_index
+            if remaining_frames <= 0:
+                if self.loop:
+                    self.frame_index = 0
+                    remaining_frames = len(self.audio_data)
+                else:
+                    outdata.fill(0)
+                    self.is_stopped = True
+                    return
+            
+            frames_to_play = min(frames, remaining_frames)
+            
+            # Create multi-channel output
+            multi_channel_data = np.zeros((frames, num_channels))
+            
+            # Map each input channel to its output channel
+            for device in device_list:
+                input_ch = device.get("channel_index", 0)
+                output_ch = device.get("output_channel", input_ch)
+                
+                if self.channel_enabled[input_ch] and input_ch < self.audio_data.shape[1]:
+                    # Copy audio data to the appropriate output channel
+                    channel_data = self.audio_data[
+                        self.frame_index : self.frame_index + frames_to_play,
+                        input_ch
+                    ]
+                    multi_channel_data[:frames_to_play, output_ch] = channel_data
+            
+            outdata[:] = multi_channel_data
+            self.frame_index += frames_to_play
+        
+        return callback
+    
     def _create_callback(self, channel_index: int) -> Callable:
         """Create a callback function with mute control for a specific channel."""
 
@@ -141,17 +198,37 @@ class ToggleableMultiChannelPlayback:
         if not self.is_stopped:
             return
 
-        # Create output streams for each device
-        for i, device in enumerate(self.devices):
-            channel_index = i  # Map device index to audio channel
-
-            stream = sd.OutputStream(
-                device=device["device_index"],
-                channels=2,  # Stereo output
-                samplerate=self.sample_rate,
-                callback=self._create_callback(channel_index),
-                blocksize=BLOCK_SIZE,
-            )
+        # Create streams for each unique device
+        for device_index, device_list in self.device_groups.items():
+            if len(device_list) > 1:
+                # Multi-channel device (HiFiBerry DAC8x)
+                max_channel = max(d.get("output_channel", 0) for d in device_list)
+                num_channels = max(8, max_channel + 1)
+                
+                stream = sd.OutputStream(
+                    device=device_index,
+                    channels=num_channels,
+                    samplerate=device_list[0]["sample_rate"],
+                    callback=self._create_multi_channel_callback(device_list),
+                    blocksize=BLOCK_SIZE,
+                )
+                if self.debug:
+                    print(f"Created {num_channels}-channel stream for device {device_index}")
+            else:
+                # Single channel device (USB)
+                device = device_list[0]
+                channel_index = device.get("channel_index", 0)
+                
+                stream = sd.OutputStream(
+                    device=device_index,
+                    channels=2,  # Stereo output
+                    samplerate=device["sample_rate"],
+                    callback=self._create_callback(channel_index),
+                    blocksize=BLOCK_SIZE,
+                )
+                if self.debug:
+                    print(f"Created stereo stream for device {device_index}")
+            
             self.streams.append(stream)
 
         # Start all streams
@@ -159,7 +236,7 @@ class ToggleableMultiChannelPlayback:
         for stream in self.streams:
             stream.start()
 
-        print(f"Started {len(self.streams)}-channel playback")
+        print(f"Started {len(self.devices)}-channel playback")
 
     def pause(self):
         """Pause playback."""

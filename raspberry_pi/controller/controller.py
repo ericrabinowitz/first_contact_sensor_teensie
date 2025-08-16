@@ -19,14 +19,8 @@ import os
 import re
 import sys
 import time
-from enum import IntEnum, auto
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, List, Set, Union
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from backports.strenum import StrEnum
 
 import paho.mqtt.client as mqtt
 import requests
@@ -34,33 +28,19 @@ import sounddevice as sd
 import soundfile as sf
 import ultraimport as ui
 
+# Import centralized enums
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.constants import Statue, Board, Effect
+
 # from ..audio.music import ToggleableMultiChannelPlayback
 ToggleableMultiChannelPlayback = ui.ultraimport(
     "__dir__/../audio/music.py", "ToggleableMultiChannelPlayback"
 )
 
-
-class Statue(StrEnum):
-    DEFAULT = auto()
-    ARCHES = auto()
-    EROS = auto()
-    ELEKTRA = auto()
-    ARIEL = auto()
-    SOPHIA = auto()
-    ULTIMO = auto()
-
-
-class Board(StrEnum):
-    ALL = auto()
-    FIVE_V_1 = auto()
-    FIVE_V_2 = auto()
-    TWELVE_V_1 = auto()
-
-
-class Effect(IntEnum):
-    SOLID = 0
-    FIREWORKS = 42
-    NOISE = 71
+# Import configure_devices from devices.py
+configure_devices = ui.ultraimport(
+    "__dir__/../audio/devices.py", "configure_devices"
+)
 
 
 # TODO:
@@ -386,99 +366,58 @@ def load_audio():
 
 
 def load_audio_devices():
-    """Query audio devices and map them to statues."""
+    """Query audio devices and map them to statues using devices.py."""
     global device_map
-    all_devices = sd.query_devices()
-    if debug:
-        print("Available audio devices:")
-        for d in all_devices:
-            print(
-                f"  {d['index']}: {d['name']} ({d['max_input_channels']} in, {d['max_output_channels']} out)"  # noqa: E501
-            )
 
-    # Updated pattern for "USB PnP Sound Device: Audio (hw:2,0)" format
-    pattern = r"^([^:]*): [^(]* \((hw:\d+,\d+)\)$"
+    # Use the devices.py configuration which handles HiFiBerry
+    configured_devices = configure_devices(max_devices=5)
 
-    transformed_devices = []
-    for d in all_devices:
-        match = re.search(pattern, d["name"])
-        if match:
-            transformed_devices.append(
-                {
-                    "index": d["index"],
-                    "type": match.group(1).lower(),
-                    "hw_id": match.group(2),
-                    "num_outputs": int(d["max_output_channels"]),
-                    "sample_rate": int(d["default_samplerate"]),
-                }
-            )
-
-    total_outputs = sum(d["num_outputs"] for d in transformed_devices)
-    if total_outputs < len(device_map.keys()):
-        print(
-            f"Error: Too few audio outputs ({total_outputs} < {len(device_map.keys())})"
-        )
+    if not configured_devices:
+        print("Error: No audio devices configured")
         return
 
-    # Map devices to statues
-    if len(transformed_devices) < len(device_map.keys()):
-        print(
-            f"Error: Too few audio devices ({len(transformed_devices)} < {len(device_map.keys())})"
-        )
-        return
-    for i, (statue, config) in enumerate(device_map.items()):
-        device = transformed_devices[i]
-        config["hw_id"] = device["hw_id"]
-        if config["output"] >= device["num_outputs"]:
-            print(
-                f"Error: Device {device['hw_id']} does not have output {config['output']}"
-            )
-            continue
-        if config["input"] >= audio["data"].shape[1]:
-            print(
-                f"Error: {statue.value} does not have music channel {config['input']}"
-            )
-            continue
-        if device["sample_rate"] != audio["sample_rate"]:
-            print(
-                f"Error: Device {device['hw_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
-            )
+    # Update device_map with configured devices
+    for device in configured_devices:
+        statue = device["statue"]
+        # Handle both string and enum values
+        statue_name = statue.value if hasattr(statue, 'value') else str(statue)
+
+        # Only process real statues (not DEFAULT or ARCHES)
+        if statue_name not in [Statue.EROS, Statue.ELEKTRA,
+                               Statue.SOPHIA, Statue.ULTIMO,
+                               Statue.ARIEL]:
             continue
 
-        config["type"] = device["type"]
+        # Ensure statue exists in device_map
+        if statue_name not in device_map:
+            # Get input channel index (0-4 for the 5 statues)
+            statue_list = [Statue.EROS, Statue.ELEKTRA, Statue.ARIEL,
+                          Statue.SOPHIA, Statue.ULTIMO]
+            input_idx = next((i for i, s in enumerate(statue_list)
+                             if s == statue_name), 0)
+
+            device_map[statue_name] = {
+                "hw_id": "",
+                "output": 0,
+                "input": input_idx,
+                "type": "",
+                "index": -1,
+                "sample_rate": 0,
+            }
+
+        # Update with device info
+        config = device_map[statue_name]
+        config["index"] = device["device_index"]
         config["sample_rate"] = device["sample_rate"]
-        config["index"] = device["index"]
+        config["type"] = device.get("device_type", "stereo")
 
-    # # Map devices to statues
-    # for device in transformed_devices:
-    #     for statue, config in device_map.items():
-    #         if config["hw_id"] == device["hw_id"]:
-    #             if config["output"] >= device["num_outputs"]:
-    #                 print(
-    #                     f"Error: Device {device['hw_id']} does not have output {config['output']}"
-    #                 )
-    #                 continue
-    #             if config["input"] >= audio["data"].shape[1]:
-    #                 print(
-    #                     f"Error: {statue.value} does not have music channel {config['input']}"
-    #                 )
-    #                 continue
-    #             if device["sample_rate"] != audio["sample_rate"]:
-    #                 print(
-    #                     f"Error: Device {device['hw_id']} default sample rate ({device['sample_rate']}) != audio file ({audio['sample_rate']})"  # noqa: E501
-    #                 )
-    #                 continue
+        # For HiFiBerry, store output channel
+        if "output_channel" in device:
+            config["output_channel"] = device["output_channel"]
 
-    #             config["type"] = device["type"]
-    #             config["sample_rate"] = device["sample_rate"]
-    #             config["index"] = device["index"]
-
-    for statue, config in device_map.items():
-        if config["hw_id"] == "" or config["type"] == "" or config["sample_rate"] == 0:
-            print(
-                f"Error: No device found for {statue.value} ({config['hw_id']}, {config['output']})"  # noqa: E501
-            )
-            continue
+        if debug:
+            print(f"Configured {statue_name}: device {config['index']}, "
+                  f"type {config['type']}")
 
 
 def initialize_playback():
@@ -486,16 +425,32 @@ def initialize_playback():
     global music_playback
 
     devices = []
-    for statue, config in device_map.items():
-        devices.append(
-            {
-                "statue": statue.value,
-                "device_index": config["index"],
-                "sample_rate": config["sample_rate"],
-                "channel_index": config["input"],
-            }
-        )
+    for statue_name, config in device_map.items():
+        if config["index"] < 0:
+            continue  # Skip unconfigured devices
+
+        device_dict = {
+            "statue": statue_name,
+            "device_index": config["index"],
+            "sample_rate": config["sample_rate"],
+            "channel_index": config["input"],
+        }
+
+        # Add fields for HiFiBerry support
+        if "output_channel" in config:
+            device_dict["output_channel"] = config["output_channel"]
+        if config["type"]:
+            device_dict["device_type"] = config["type"]
+
+        devices.append(device_dict)
+
     devices.sort(key=lambda d: d["channel_index"])
+
+    if debug:
+        print(f"Initializing playback with {len(devices)} channels")
+        for d in devices:
+            print(f"  {d['statue']}: device {d['device_index']}, "
+                  f"channel {d['channel_index']}")
 
     music_playback = ToggleableMultiChannelPlayback(
         audio["data"], audio["sample_rate"], devices, loop=True, debug=debug
