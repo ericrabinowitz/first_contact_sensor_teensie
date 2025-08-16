@@ -2,6 +2,7 @@
 # Commands for managing the Missing Link art installation
 
 # Default SSH target for Raspberry Pi commands
+# This has ip address 192.168.5.73.
 SSH_TARGET ?= rpi5b
 
 # Project directories
