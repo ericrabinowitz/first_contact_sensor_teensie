@@ -80,7 +80,7 @@ class ToggleableMultiChannelPlayback:
         # Whether to loop audio playback
         self.loop = loop
         self.debug = debug
-        
+
         # Group devices by device_index to identify shared devices
         self.device_groups = {}
         for device in devices:
@@ -91,19 +91,19 @@ class ToggleableMultiChannelPlayback:
 
     def _create_multi_channel_callback(self, device_list: list[dict[str, Any]]) -> Callable:
         """Create a callback for multi-channel device handling multiple statues."""
-        
+
         # Determine number of output channels needed
         max_channel = max(d.get("output_channel", 0) for d in device_list)
         num_channels = max(8, max_channel + 1)  # At least 8 for HiFiBerry
-        
+
         def callback(outdata, frames, _time_info, status):
             if status:
                 print(f"\rMulti-channel stream status: {status}")
-            
+
             if self.is_paused:
                 outdata.fill(0)
                 return
-            
+
             # Calculate remaining frames
             remaining_frames = len(self.audio_data) - self.frame_index
             if remaining_frames <= 0:
@@ -114,17 +114,17 @@ class ToggleableMultiChannelPlayback:
                     outdata.fill(0)
                     self.is_stopped = True
                     return
-            
+
             frames_to_play = min(frames, remaining_frames)
-            
+
             # Create multi-channel output
             multi_channel_data = np.zeros((frames, num_channels))
-            
+
             # Map each input channel to its output channel
             for device in device_list:
                 input_ch = device.get("channel_index", 0)
                 output_ch = device.get("output_channel", input_ch)
-                
+
                 if self.channel_enabled[input_ch] and input_ch < self.audio_data.shape[1]:
                     # Copy audio data to the appropriate output channel
                     channel_data = self.audio_data[
@@ -132,12 +132,12 @@ class ToggleableMultiChannelPlayback:
                         input_ch
                     ]
                     multi_channel_data[:frames_to_play, output_ch] = channel_data
-            
+
             outdata[:] = multi_channel_data
             self.frame_index += frames_to_play
-        
+
         return callback
-    
+
     def _create_callback(self, channel_index: int) -> Callable:
         """Create a callback function with mute control for a specific channel."""
 
@@ -204,7 +204,7 @@ class ToggleableMultiChannelPlayback:
                 # Multi-channel device (HiFiBerry DAC8x)
                 max_channel = max(d.get("output_channel", 0) for d in device_list)
                 num_channels = max(8, max_channel + 1)
-                
+
                 stream = sd.OutputStream(
                     device=device_index,
                     channels=num_channels,
@@ -218,7 +218,7 @@ class ToggleableMultiChannelPlayback:
                 # Single channel device (USB)
                 device = device_list[0]
                 channel_index = device.get("channel_index", 0)
-                
+
                 stream = sd.OutputStream(
                     device=device_index,
                     channels=2,  # Stereo output
@@ -228,7 +228,7 @@ class ToggleableMultiChannelPlayback:
                 )
                 if self.debug:
                     print(f"Created stereo stream for device {device_index}")
-            
+
             self.streams.append(stream)
 
         # Start all streams
@@ -296,6 +296,47 @@ class ToggleableMultiChannelPlayback:
         # with self.lock:
         for i in range(len(self.channel_enabled)):
             self.set_music_channel(i, True)
+
+    def disable_all_music_channels(self):
+        """Disable all music channels."""
+        if self.debug:
+            print("Disabling all music channels")
+        for i in range(len(self.channel_enabled)):
+            self.set_music_channel(i, False)
+
+    def switch_to_song(self, audio_data: np.ndarray, enable_all: bool = False):
+        """Switch to a different song.
+
+        Args:
+            audio_data: New audio data to play
+            enable_all: If True, enable all channels (for dormant mode)
+        """
+        if self.debug:
+            print(f"Switching song (enable_all={enable_all})")
+
+        # Update audio data
+        self.audio_data = audio_data
+
+        # Reset playback position to start from beginning
+        self.frame_index = 0
+
+        # Reset paused state
+        self.is_paused = False
+
+        # Configure channels
+        if enable_all:
+            # Enable all channels for dormant mode
+            for i in range(len(self.channel_enabled)):
+                self.channel_enabled[i] = True
+            self.active_count = len(self.channel_enabled)
+        else:
+            # Disable all channels (will be selectively enabled for active statues)
+            for i in range(len(self.channel_enabled)):
+                self.channel_enabled[i] = False
+            self.active_count = 0
+
+        if self.debug:
+            print(f"Song switched. Active channels: {self.active_count}")
 
     def set_music_channel(self, channel_index: int, enabled: bool) -> bool:
         """Set music channel state explicitly.
