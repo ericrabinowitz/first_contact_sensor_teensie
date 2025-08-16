@@ -23,6 +23,7 @@
     "teensie",
     "Toggleable",
     "ultraimport",
+    "vcgencmd",
     "WLED"
   ],
   "files.associations": {
