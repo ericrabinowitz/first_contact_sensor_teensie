@@ -64,6 +64,7 @@ STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONG = "Missing Link Playa 1 - 6 Channel 6-7.wav"
+DORMANT_SONG = "Missing Link Playa Dormant - 5 Channel.wav"
 DNSMASQ_FILE = os.path.join(os.path.dirname(__file__), "../setup/dnsmasq.conf")
 
 # MQTT server settings
@@ -163,10 +164,15 @@ no_haptics = True  # Handled directly by the Teensy
 mqttc: Any = None
 
 # Derived from audio file
-audio = {
-    "data": None,  # Loaded audio data
+active_audio = {
+    "data": None,  # Loaded active song data
     "sample_rate": 0,
 }
+dormant_audio = {
+    "data": None,  # Loaded dormant song data
+    "sample_rate": 0,
+}
+is_dormant = True  # Track whether we're playing dormant or active song
 
 # Maps statues to QuinLED boards and segment ids.
 # The control pin to segment id mapping is done in the WLED app.
@@ -342,27 +348,46 @@ def extract_addresses():
 
 
 def load_audio():
-    """Load audio files into memory."""
-    global audio
-    file = os.path.join(SONG_DIR, ACTIVE_SONG)
-    if not os.path.exists(file):
-        print(f"Error: Audio file not found: {file}")
+    """Load both active and dormant audio files into memory."""
+    global active_audio, dormant_audio
+
+    # Load active song
+    active_file = os.path.join(SONG_DIR, ACTIVE_SONG)
+    if not os.path.exists(active_file):
+        print(f"Error: Active audio file not found: {active_file}")
         return
+
+    # Load dormant song
+    dormant_file = os.path.join(SONG_DIR, DORMANT_SONG)
+    if not os.path.exists(dormant_file):
+        print(f"Error: Dormant audio file not found: {dormant_file}")
+        return
+
     try:
-        audio_data, sample_rate = sf.read(file)
-        # Ensure audio_data is 2D
+        # Load active song
+        audio_data, sample_rate = sf.read(active_file)
         if audio_data.ndim == 1:
             audio_data = audio_data.reshape(-1, 1)
 
+        active_audio["data"] = audio_data
+        active_audio["sample_rate"] = int(sample_rate)
+
+        # Load dormant song
+        dormant_data, dormant_rate = sf.read(dormant_file)
+        if dormant_data.ndim == 1:
+            dormant_data = dormant_data.reshape(-1, 1)
+
+        dormant_audio["data"] = dormant_data
+        dormant_audio["sample_rate"] = int(dormant_rate)
+
         if debug:
-            print(f"\nLoaded: {os.path.basename(file)}")
-            print(f"Duration: {len(audio_data) / sample_rate:.1f} seconds")
-            print(f"Channels: {audio_data.shape[1]}")
+            print(f"\nLoaded active: {os.path.basename(active_file)}")
+            print(f"  Duration: {len(audio_data) / sample_rate:.1f}s, Channels: {audio_data.shape[1]}")
+            print(f"Loaded dormant: {os.path.basename(dormant_file)}")
+            print(f"  Duration: {len(dormant_data) / dormant_rate:.1f}s, Channels: {dormant_data.shape[1]}")
+
     except Exception as e:
-        print(f"Error: Failed to load audio file: {e}")
-        return
-    audio["data"] = audio_data
-    audio["sample_rate"] = int(sample_rate)
+        print(f"Error loading audio files: {e}")
 
 
 def load_audio_devices():
@@ -422,7 +447,7 @@ def load_audio_devices():
 
 def initialize_playback():
     """Initialize the music playback object."""
-    global music_playback
+    global music_playback, is_dormant
 
     devices = []
     for statue_name, config in device_map.items():
@@ -452,11 +477,22 @@ def initialize_playback():
             print(f"  {d['statue']}: device {d['device_index']}, "
                   f"channel {d['channel_index']}")
 
+    # Start with dormant song since no connections at startup
+    is_dormant = True
     music_playback = ToggleableMultiChannelPlayback(
-        audio["data"], audio["sample_rate"], devices, loop=True, debug=debug
+        dormant_audio["data"],  # Start with dormant song
+        dormant_audio["sample_rate"],
+        devices,
+        loop=True,
+        debug=debug
     )
     music_playback.start()
-    music_playback.pause()
+
+    # Enable all channels for dormant mode
+    music_playback.enable_all_music_channels()
+
+    if debug:
+        print("Playback initialized with dormant song on all channels")
 
 
 def get_statue(path: str) -> Union[Statue, None]:
@@ -507,10 +543,24 @@ def update_active_statues(payload: dict) -> tuple[Set[Statue], Set[Statue]]:
     if debug:
         print(f"Active statues: {active_statues}")
 
-    if len(active_statues) == 0 and len(old_actives) > 0:
-        music_playback.pause()
-    if len(active_statues) > 0 and len(old_actives) == 0:
-        music_playback.resume()
+    # Song switching logic
+    was_dormant = len(old_actives) == 0
+    now_dormant = len(active_statues) == 0
+
+    if now_dormant and not was_dormant:
+        # Transition to dormant: all statues disconnected
+        if debug:
+            print("All statues dormant - switching to dormant song")
+        music_playback.switch_to_song(dormant_audio["data"], enable_all=True)
+        global is_dormant
+        is_dormant = True
+
+    elif not now_dormant and was_dormant:
+        # Transition to active: first connection made
+        if debug:
+            print("Connection detected - switching to active song")
+        music_playback.switch_to_song(active_audio["data"], enable_all=False)
+        is_dormant = False
 
     new_actives = active_statues - old_actives
     new_dormants = old_actives - active_statues
@@ -649,6 +699,10 @@ def leds_dormant(statue: Statue):
 
 def audio_active(statue: Statue) -> bool:
     """Enable audio playback for a statue."""
+    # In dormant mode, all channels are already enabled
+    if is_dormant:
+        return True
+
     input_channel = device_map.get(statue, {}).get("input", -1)
     if input_channel < 0:
         print(f"Error: No audio input configured for statue {statue}")
@@ -659,6 +713,10 @@ def audio_active(statue: Statue) -> bool:
 
 def audio_dormant(statue: Statue):
     """Disable audio playback for a statue."""
+    # In dormant mode, all channels stay enabled
+    if is_dormant:
+        return True
+
     input_channel = device_map.get(statue, {}).get("input", -1)
     if input_channel < 0:
         print(f"Error: No audio input configured for statue {statue}")
