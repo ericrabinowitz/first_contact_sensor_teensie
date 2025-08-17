@@ -115,7 +115,7 @@ COLORS = {
 
 BRIGHTNESS = {
     "active": 255,  # Max
-    "dormant": 170,  # 2/3rds max
+    "dormant": 127,  # 1/2 max
 }
 
 EFFECTS = {
@@ -152,7 +152,7 @@ is_dormant = True  # Track whether we're playing dormant or active song
 current_active_song_index = 0  # Track which active song to play
 dormant_start_time = None  # Track when we entered dormant state
 
-# Maps statues to QuinLED boards and segment ids.
+# Maps a statue to QuinLED boards to body parts to a segment id.
 # The control pin to segment id mapping is done in the WLED app.
 segment_map = {
     Statue.EROS: {},
@@ -162,7 +162,7 @@ segment_map = {
     Statue.ULTIMO: {},
     # Statue.EROS: {
     #     Board.FIVE_V_1: {
-    #         "heart heads": 0, # WLED segment id
+    #         "heart head": 0, # WLED segment id
     #         ...
     #     }
     # },
@@ -453,6 +453,12 @@ def send_config():
     publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
 
 
+def set_debug(enable: bool):
+    """Enable or disable debug mode."""
+    global debug
+    debug = enable
+
+
 def initialize_leds():
     """Initialize the segment map and turn the LEDs on."""
     if no_leds:
@@ -469,9 +475,20 @@ def initialize_leds():
     statues = segment_map.keys()
 
     for board in board_config.keys():
+        preset = payload.copy()
+        preset_file = os.path.join(
+            os.path.dirname(__file__), "../../quinled", f"{board}_preset.json"
+        )
+        if not os.path.exists(preset_file):
+            print(f"Error: Preset file not found for board {board}: {preset_file}")
+            exit(1)
+        with open(preset_file, "r") as f:
+            preset = json.load(f)
+            preset["v"] = True
+
         resp = requests.post(
             "http://{}/json/state".format(board_config[board]["ip_address"]),
-            json=payload,
+            json=preset,
         )
         if resp.status_code != 200:
             print(f"Error: Failed to initialize board {board}: {resp.text}")
@@ -560,10 +577,11 @@ def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
     for board, payload in board_payloads.items():
         if len(payload["seg"]) == 0:
             continue
-        thread = threading.Thread(
-            target=publish_mqtt, args=(WLED_MQTT_TOPIC.format(board), payload)
-        )
-        thread.start()
+        # thread = threading.Thread(
+        #     target=publish_mqtt, args=(WLED_MQTT_TOPIC.format(board), payload)
+        # )
+        # thread.start()
+        publish_mqtt(WLED_MQTT_TOPIC.format(board), payload)
 
 
 def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
@@ -606,10 +624,11 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
     for board, payload in board_payloads.items():
         if len(payload["seg"]) == 0:
             continue
-        thread = threading.Thread(
-            target=publish_mqtt, args=(WLED_MQTT_TOPIC.format(board), payload)
-        )
-        thread.start()
+        # thread = threading.Thread(
+        #     target=publish_mqtt, args=(WLED_MQTT_TOPIC.format(board), payload)
+        # )
+        # thread.start()
+        publish_mqtt(WLED_MQTT_TOPIC.format(board), payload)
 
 
 def change_playback_state():
@@ -783,6 +802,39 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
 # ### MQTT client
 
 
+def connect_to_mqtt():
+    """Connect to the MQTT broker and set up callbacks."""
+    global mqttc
+
+    # Should be in the global scope, mqttc is a global variable
+    if MQTT_PORT == 0:
+        mqttc = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
+            clean_session=False,
+            client_id="controller",
+            transport="unix",
+        )
+    else:
+        mqttc = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
+            clean_session=False,
+            client_id="controller",
+        )
+    if MQTT_USER and MQTT_PASSWORD:
+        mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
+    mqttc.on_connect = on_connect
+    mqttc.on_message = on_message
+    if MQTT_PORT == 0:
+        mqttc.connect(MQTT_BROKER)
+    else:
+        mqttc.connect(MQTT_BROKER, MQTT_PORT)
+
+    print("Starting MQTT client")
+    mqttc.loop_start()
+
+
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(mqttc, userdata, flags, reason_code, properties):
     print(f"Connected to MQTT broker with result code {reason_code}")
@@ -825,33 +877,7 @@ if __name__ == "__main__":
     load_audio_devices()
     initialize_playback()
 
-    # Should be in the global scope, mqttc is a global variable
-    if MQTT_PORT == 0:
-        mqttc = mqtt.Client(
-            mqtt.CallbackAPIVersion.VERSION2,
-            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
-            clean_session=False,
-            client_id="controller",
-            transport="unix",
-        )
-    else:
-        mqttc = mqtt.Client(
-            mqtt.CallbackAPIVersion.VERSION2,
-            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
-            clean_session=False,
-            client_id="controller",
-        )
-    if MQTT_USER and MQTT_PASSWORD:
-        mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
-    mqttc.on_connect = on_connect
-    mqttc.on_message = on_message
-    if MQTT_PORT == 0:
-        mqttc.connect(MQTT_BROKER)
-    else:
-        mqttc.connect(MQTT_BROKER, MQTT_PORT)
-
-    print("Starting MQTT client")
-    mqttc.loop_start()
+    connect_to_mqtt()
 
     # Give some time for other clients to connect
     time.sleep(STARTUP_DELAY)
