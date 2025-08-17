@@ -13,6 +13,7 @@ The Missing Link art project involves life-sized statues that light up and play 
 ## Development Commands
 
 ### Raspberry Pi Setup
+
 ```bash
 # Initial setup (run on fresh Pi image with username=pi, hostname=rpi)
 ssh pi@rpi.local
@@ -29,6 +30,7 @@ git pull
 ```
 
 ### Controller Script (Python)
+
 ```bash
 # Run controller script directly
 cd ~/first_contact_sensor_teensie/raspberry_pi/controller
@@ -41,6 +43,7 @@ controller.restart
 ```
 
 ### Service Management
+
 ```bash
 # Check service status
 NetworkManager.status
@@ -54,6 +57,7 @@ dnsmasq.logs
 ```
 
 ### Testing & Debugging
+
 ```bash
 # Controller API endpoints
 curl http://192.168.4.1:8080/info
@@ -62,7 +66,7 @@ curl -H "Content-Type: application/json" -X POST http://192.168.4.1:8080/touch -
 
 # MQTT testing
 mosquitto_sub -t "missing_link/touch"
-mosquito_pub -t "missing_link/haptic" -m '{"statue":"eros"}'
+mosquitto_pub -t "missing_link/haptic" -m '{"statue":"eros"}'
 
 # Audio testing
 aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 Remi Wolf Polo Pan Hello.wav"
@@ -71,18 +75,21 @@ aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 
 ## Architecture
 
 ### Teensy 4.1 (Arduino)
+
 - **Main file**: `teensy/FirstContact_controller/FirstContact_controller.ino`
 - **Modules**: AudioSense, Display, MusicPlayer, Networking, Haptics, Lights
 - **Libraries**: QNEthernet, PubSubClient, Adafruit GFX/SSD1306, Audio Shield
 - **Hardware**: Audio Shield, SSD1306 OLED, Ethernet, haptic motors
 
 ### Raspberry Pi Controller
+
 - **Main file**: `raspberry_pi/controller/controller.py`
 - **Dependencies**: Uses `uv` with inline script dependencies (deepmerge, just-playback, paho-mqtt)
 - **Services**: MQTT broker (mosquitto), DHCP/DNS (dnsmasq), controller script
 - **Network**: Acts as 192.168.4.1 gateway with DHCP range 192.168.4.100-200
 
 ### Communication Flow
+
 1. Teensy detects contact via sine wave tone detection
 2. Publishes to MQTT topic `missing_link/touch` with link/unlink action
 3. Pi controller receives MQTT message and orchestrates:
@@ -91,6 +98,7 @@ aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 
    - Haptic feedback via MQTT (`missing_link/haptic`)
 
 ### File Organization
+
 - `/teensy/`: Arduino IDE projects and libraries for Teensy development
 - `/raspberry_pi/`: Python controller, setup scripts, and configuration files
 - `/quinled/`: WLED configuration documentation
@@ -109,6 +117,7 @@ aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 
 ## Code Style Guidelines
 
 ### Python
+
 - Use type hints for all function parameters and return values
 - Follow PEP 8 style guide (enforced by ruff linter)
 - Follow Google Style Guide for Python (https://google.github.io/styleguide/pyguide.html)
@@ -119,6 +128,7 @@ aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 
 - Use `from __future__ import annotations` for forward references when needed
 
 ### General
+
 - No trailing whitespace
 - Use consistent indentation (4 spaces for Python)
 - Line length limit: 100 characters
@@ -127,6 +137,7 @@ aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 
 ## Testing
 
 ### Quick Tests
+
 ```bash
 # Run tone detection demo with 2-second timeout
 make tone-detect-test
@@ -142,6 +153,7 @@ make freq-sweep
 ```
 
 ### Code Quality
+
 ```bash
 # Run linter
 make lint
@@ -155,6 +167,7 @@ make typecheck-install
 ```
 
 ### Integration Testing
+
 - Always test with actual hardware before committing
 - Test with multiple USB devices connected (up to 5 for full setup)
 - Verify tone detection between all statue pairs
@@ -163,6 +176,7 @@ make typecheck-install
 ## Troubleshooting
 
 ### USB Audio Device Issues
+
 - **"Device unavailable" error**: Run `make stop` then retry
 - **Check device permissions**: `ls -la /dev/snd/`
 - **Verify PortAudio installation**: `make audio-deps`
@@ -170,12 +184,14 @@ make typecheck-install
 - **Check detailed audio status**: `make audio-status`
 
 ### ALSA Errors
+
 - **"resource busy"**: Another process is using the device
   - Solution: `make kill-all` to stop all Python processes
 - **"Invalid number of channels"**: Device doesn't support stereo
   - Check device capabilities with `aplay -l`
 
 ### Python Import Errors
+
 - The Makefile sets `PYTHONPATH` automatically
 - Never use `sys.path.append()` in code
 - All imports should be absolute: `from audio.devices import ...`
@@ -183,6 +199,7 @@ make typecheck-install
 ## Design Patterns
 
 ### Statue Communication
+
 - Each statue has unique tone frequency (defined in `contact/config.py`):
   - EROS: 3000 Hz
   - ELEKTRA: 17000 Hz
@@ -194,6 +211,7 @@ make typecheck-install
 - Goertzel algorithm for efficient single-frequency detection
 
 ### Audio Architecture
+
 - **Stereo channel allocation**:
   - Left channel: WAV file playback (music)
   - Right channel: Sine wave tone generation
@@ -202,6 +220,7 @@ make typecheck-install
 - Each statue gets its own USB audio device
 
 ### Threading Model
+
 - Main thread: UI and coordination
 - Detection threads: One per statue for tone detection
 - Audio threads: Managed by sounddevice callbacks
@@ -219,6 +238,7 @@ make typecheck-install
 ## Hardware Configuration
 
 ### USB Audio Devices
+
 - Device 0: Reserved for Raspberry Pi audio jack (bcm2835)
 - Devices 1-5: USB audio adapters for statues
 - Physical mapping maintained in `audio/devices.py`:
@@ -229,6 +249,7 @@ make typecheck-install
   - Device 5: ARIEL
 
 ### Network Setup
+
 - **Raspberry Pi**: Static IP 192.168.4.1
 - **DHCP range**: 192.168.4.100-200
 - **Services**: dnsmasq (DHCP/DNS), mosquitto (MQTT), controller.py
@@ -239,15 +260,17 @@ make typecheck-install
 ### Topics
 
 #### Published by Teensy
+
 - `missing_link/touch`: Contact detection events
   ```json
   {
-    "action": "link",    // or "unlink"
+    "action": "link", // or "unlink"
     "statues": ["eros", "elektra"]
   }
   ```
 
 #### Subscribed by Teensy
+
 - `missing_link/haptic`: Haptic feedback commands
   ```json
   {
@@ -256,11 +279,13 @@ make typecheck-install
   ```
 
 #### Published by Controller
+
 - `wled/{statue}/api`: WLED light control commands
 
 ## Dependencies
 
 ### Python (3.9+)
+
 - **fastgoertzel**: Efficient tone detection algorithm
 - **numpy**: Signal processing and array operations
 - **sounddevice**: Cross-platform audio I/O
@@ -270,6 +295,7 @@ make typecheck-install
 - **just-playback**: Simple audio playback (controller only)
 
 ### System Requirements
+
 - **PortAudio**: Required for sounddevice (`make audio-deps`)
 - **ALSA**: Linux audio subsystem
 - **USB audio support**: Multiple USB audio devices
@@ -277,18 +303,21 @@ make typecheck-install
 ## Common Tasks
 
 ### Adding a New Statue
+
 1. Add to `Statue` enum in `audio/devices.py`
 2. Update `TONE_FREQUENCIES` in `contact/config.py`
 3. Add USB device mapping in `configure_devices()`
 4. Update display formatting if needed
 
 ### Changing Tone Frequencies
+
 1. Run `make freq-sweep` to test new frequencies
 2. Update `TONE_FREQUENCIES` in `contact/config.py`
 3. Ensure frequencies are non-harmonic (avoid 2:1, 3:2 ratios)
 4. Test with all statue pairs
 
 ### Debugging Connection Issues
+
 1. Check USB devices: `make audio-list`
 2. Run tone detection: `make tone-detect-demo`
 3. Monitor detection matrix for signal levels
@@ -297,6 +326,7 @@ make typecheck-install
 ## Production Deployment
 
 ### Pre-deployment Checklist
+
 - [ ] Run `make lint` and fix all issues
 - [ ] Run `make typecheck` and verify no errors
 - [ ] Test all 5 statues with `make tone-detect-demo`
@@ -305,6 +335,7 @@ make typecheck-install
 - [ ] Check service auto-start: `controller.status`
 
 ### Production Settings
+
 - Set `dynConfig["debug"] = False` in `audio/devices.py`
 - Use production audio files in `/home/pi/audio_files/`
 - Ensure all services start on boot
