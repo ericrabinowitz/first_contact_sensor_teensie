@@ -52,8 +52,11 @@ SUNSET = datetime.time(19, 30)  # 7:30 PM
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONGS = [
-    "Missing Link Playa 1 - 6 Channel 6-7.wav",
-    "Missing Link Playa 3 - Five Channel.wav",
+    "Missing Link Playa 1 - 5 channel.wav",
+    "Missing Link Playa 2 - 5 Channel.wav",
+    "Missing Link Playa 3 - 5 Channel.wav",
+#    "Missing Link Playa 1 - 6 Channel 6-7.wav",
+#    "Missing Link Playa 3 - Five Channel.wav",
 ]
 DORMANT_SONG = "Missing Link Playa Dormant - 5 Channel.wav"
 DORMANT_TIMEOUT_SECONDS = 10  # Time in dormant before advancing to next song

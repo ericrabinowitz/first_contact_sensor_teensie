@@ -84,6 +84,22 @@ audio-test: sync ## Run multi-channel audio playback test (syncs files first)
 audio-demo: sync ## Run interactive multi-channel audio demo with channel toggles (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./multichannel_audio_demo.py'"
 
+## 8-Channel HiFiBerry DAC8x Testing
+8ch-test: sync ## Run 8-channel HiFiBerry DAC8x test with interactive controls
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./eight_channel_test.py'"
+
+8ch-generate-tones: sync ## Generate 8-channel test tone WAV file
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./eight_channel_test.py --generate tones --output test_8ch_tones.wav'"
+
+8ch-generate-sweep: sync ## Generate 8-channel sweep test WAV file
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./eight_channel_test.py --generate sweep --output test_8ch_sweep.wav'"
+
+8ch-generate-mixed: sync ## Generate 8-channel mixed waveform WAV file
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./eight_channel_test.py --generate mixed --output test_8ch_mixed.wav'"
+
+8ch-list: ## List audio devices with 8+ channels
+	@$(SSH_EXEC) "bash -l -c 'cd $(AUDIO_DIR) && $(PYTHON_WITH_PATH) ./eight_channel_test.py --list-devices'"
+
 freq-sweep: sync ## Run frequency sweep test to find optimal tone frequencies (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./frequency_sweep_test.py'"
 
@@ -147,4 +163,4 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test
