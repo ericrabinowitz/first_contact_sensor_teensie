@@ -21,7 +21,6 @@ import json
 import os
 import threading
 import time
-import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Dict, List, Set, Union
 
@@ -41,7 +40,7 @@ configure_devices = ui.ultraimport("__dir__/../audio/devices.py", "configure_dev
 
 # ### Parameters
 
-VERSION = "2.0"  # Version of the script
+VERSION = "2.1"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
 STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 
@@ -136,6 +135,8 @@ no_leds = False
 
 # MQTT client
 mqttc: Any = None
+
+start_time = time.time()  # Track when the script started
 
 # Derived from audio file
 active_audio = {
@@ -527,22 +528,6 @@ def manage_power():
 # ### Actions
 
 
-def get_temperature():
-    cmd = "vcgencmd measure_temp"
-    try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, shell=True, check=True
-        )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        # Handle errors if the command fails
-        print(f"Error: Command failed with exit code {e.returncode}")
-        print(f"Error: {e.stderr}")
-    except Exception as e:
-        print(f"Error: {e}")
-    return "failed"
-
-
 def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
     if no_leds:
         return
@@ -599,15 +584,17 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
             for part, seg_id in seg_map.items():
                 fx = EFFECTS["dormant"]
                 color = COLORS["dormant"]
+                bri = BRIGHTNESS["dormant"]
                 if "hand" in part:
                     color = COLORS.get(statue, COLORS["dormant"])
+                    bri = BRIGHTNESS["active"]
                 if "arch" in part:
                     fx = EFFECTS["arch"]
 
                 board_payloads[board]["seg"].append(
                     {
                         "id": seg_id,
-                        "bri": BRIGHTNESS["active"],
+                        "bri": bri,
                         "col": color,
                         "fx": fx,
                         "pal": PALETTE_ID,
@@ -743,7 +730,7 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                     "description": "Missing Link rpi controller script",
                     "version": VERSION,
                     "mqtt_num_connected": mqtt_num_connected,
-                    "temperature": get_temperature(),
+                    "uptime_sec": round(time.time() - start_time),
                 }
             )
         elif self.path == "/config/static":
@@ -867,8 +854,14 @@ if __name__ == "__main__":
     # Give some time for other clients to connect
     time.sleep(STARTUP_DELAY)
 
+    # Initialize Teensy config and WLED segments
     initialize_leds()
     send_config()
+
+    # Start in the dormant state
+    leds_dormant(set(segment_map.keys()))
+    for d in audio_devices:
+        audio_dormant(d["statue"])
     time.sleep(1)
     leds_dormant(set(segment_map.keys()))
 

@@ -97,7 +97,7 @@ aplay ~/first_contact_sensor_teensie/audio_files/"Missing Link unSCruz active 1 
 mosquitto_sub -t "missing_link/contact"
 
 # Send a MQTT message
-mosquito_pub -t "missing_link/haptic" -m '{"statue":"eros"}'
+mosquitto_pub -t "missing_link/contact" -m '{"detector":"eros", "emitters":["elektra"]}'
 ```
 
 ## Reference docs

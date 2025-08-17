@@ -48,10 +48,11 @@ controller.install() {
   sudo apt install -y build-essential python3-dev libportaudio2
   curl -LsSf https://astral.sh/uv/install.sh | sh
   sudo timedatectl set-timezone America/Los_Angeles
+  pip3 install --break-system-packages numpy paho-mqtt requests sounddevice soundfile ultraimport
 }
 
 tools.install() {
-  sudo apt install -y vim git less curl wget net-tools arp-scan iproute2 dnsutils ethtool libusb-dev
+  sudo apt install -y vim git less curl wget net-tools arp-scan iproute2 dnsutils ethtool libusb-dev sysstat
   
   wget --output-document=teensy_cli.tar.gz "https://github.com/PaulStoffregen/teensy_loader_cli/archive/refs/tags/2.3.tar.gz"
   tar xzf teensy_cli.tar.gz
