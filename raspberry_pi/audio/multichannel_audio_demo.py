@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# dependencies = ["numpy", "sounddevice", "soundfile"]
+# dependencies = ["numpy", "sounddevice", "soundfile", "ultraimport"]
 # ///
 
 """
