@@ -11,6 +11,7 @@ PI_CODE_ROOT := $(PROJECT_ROOT)/raspberry_pi
 AUDIO_DIR := $(PI_CODE_ROOT)/audio
 TONE_DIR := $(PI_CODE_ROOT)/contact
 CONTROLLER_DIR := $(PI_CODE_ROOT)/controller
+WLED_DIR := $(PI_CODE_ROOT)/setup
 
 # Python unbuffered output options
 PYTHON_UNBUF := PYTHONUNBUFFERED=1 stdbuf -o0 -e0
@@ -115,6 +116,9 @@ tone-detect-tx: sync ## Run tone detection demo with TX control enabled (syncs f
 
 tone-detect-tx-sim: sync ## Run tone detection demo with TX control in simulation mode (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(TONE_DIR) && $(PYTHON_WITH_PATH) ./tone_detect_demo.py --tx-simulate'"
+
+wled-test: sync ## Run WLED test
+	@$(SSH_EXEC) "bash -l -c 'cd $(WLED_DIR) && $(PYTHON_WITH_PATH) ./wled.py'"
 
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi

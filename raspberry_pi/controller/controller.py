@@ -115,7 +115,7 @@ COLORS = {
 
 BRIGHTNESS = {
     "active": 255,  # Max
-    "dormant": 170,  # 2/3rds max
+    "dormant": 127,  # 1/2 max
 }
 
 EFFECTS = {
