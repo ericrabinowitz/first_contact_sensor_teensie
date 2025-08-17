@@ -14,7 +14,7 @@ Group={{ user }}
 
 # Environment=DEBUG=1
 # Environment=TEST_MODE_NO_LEDS=1
-Environment=CONSERVE_POWER=1
+# Environment=CONSERVE_POWER=1
 Environment=PATH=/home/{{ user }}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONPATH=/home/{{ user }}/first_contact_sensor_teensie/raspberry_pi/controller
