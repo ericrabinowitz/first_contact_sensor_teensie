@@ -54,8 +54,8 @@ ACTIVE_SONGS = [
     "Missing Link Playa 1 - 5 channel.wav",
     "Missing Link Playa 2 - 5 Channel.wav",
     "Missing Link Playa 3 - 5 Channel.wav",
-#    "Missing Link Playa 1 - 6 Channel 6-7.wav",
-#    "Missing Link Playa 3 - Five Channel.wav",
+    #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
+    #    "Missing Link Playa 3 - Five Channel.wav",
 ]
 DORMANT_SONG = "Missing Link Playa Dormant - 5 Channel.wav"
 DORMANT_TIMEOUT_SECONDS = 10  # Time in dormant before advancing to next song
@@ -122,6 +122,7 @@ EFFECTS = {
     "active": Effect.FIREWORKS,
     "dormant": Effect.NOISE,
     "arch": Effect.LIGHTHOUSE,
+    "hand": Effect.SOLID,
 }
 
 
@@ -588,6 +589,7 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
                 if "hand" in part:
                     color = COLORS.get(statue, COLORS["dormant"])
                     bri = BRIGHTNESS["active"]
+                    fx = EFFECTS["hand"]
                 if "arch" in part:
                     fx = EFFECTS["arch"]
 

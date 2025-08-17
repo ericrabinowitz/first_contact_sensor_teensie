@@ -22,7 +22,7 @@ echo "CPU and I/O stats:"
 iostat
 echo "CPU Temperature:"
 vcgencmd measure_temp
-sleep 3
+sleep 5
 
 printf "\nNetwork configuration:\n"
 echo "Interfaces:"
@@ -32,7 +32,7 @@ arp -a | grep 192.168.4.
 echo "DNSMasq leases:"
 sudo cat /var/lib/misc/dnsmasq.leases
 
-sleep 3
+sleep 5
 
 printf "\nService statuses:\n"
 echo "NetworkManager:"
@@ -72,7 +72,7 @@ curl http://127.0.0.1:8080/info
 printf "\nController current status:\n"
 curl http://192.168.4.1:8080/config/dynamic
 
-sleep 3
+sleep 5
 
 printf "\nStop the controller and test the audio:\n"
 sudo systemctl stop controller
@@ -90,10 +90,7 @@ mosquitto_pub -t "wled/all/api" -m '{"on":"t", "bri":255, "tt":0}'
 sleep 3
 mosquitto_pub -t "wled/all/api" -m '{"on":"t", "bri":0, "tt":0}'
 
-echo "eros on:"
-# mosquitto_pub -t "wled/five_v_1/api" -m '{"on":"t", "bri":255, "tt":0}'
-# sleep 3
-# mosquitto_pub -t "wled/five_v_1/api" -m '{"on":"t", "bri":0, "tt":0}'
+./wled.py
 
 printf "\nStart controller and simulate a series of touches:\n"
 sudo systemctl start controller
