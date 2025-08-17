@@ -21,7 +21,7 @@ Statue, Board, Effect = ui.ultraimport(
     leds_active,
     leds_dormant,
 ) = ui.ultraimport(
-    "__dir__/../config/constants.py",
+    "__dir__/../controller/controller.py",
     [
         "segment_map",
         "board_config",
@@ -37,6 +37,6 @@ if __name__ == "__main__":
     initialize_leds()
     for statue in Statue:
         print(f"Activating statue: {statue}")
-        leds_active(statue)
+        leds_active({statue})
         time.sleep(3)
-        leds_dormant()
+        leds_dormant({statue})
