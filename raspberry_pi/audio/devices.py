@@ -38,6 +38,9 @@ import sounddevice as sd
 import ultraimport as ui
 
 Statue = ui.ultraimport("__dir__/../config/constants.py", "Statue")
+get_channel_mapping, print_configuration = ui.ultraimport(
+    "__dir__/../config/audio_config.py", ["get_channel_mapping", "print_configuration"]
+)
 
 USB_ADAPTER: str = "usb"  # Match any USB device
 
@@ -63,36 +66,42 @@ STATUES = [
 # }
 
 
-def configure_hifiberry(device: dict[str, Any]) -> list[dict[str, Any]]:
-    """Configure HiFiBerry DAC8x for all 5 statues.
+def configure_hifiberry(device: dict[str, Any], channel_mode: Optional[str] = None) -> list[dict[str, Any]]:
+    """Configure HiFiBerry DAC8x for all 5 statues with flexible channel mapping.
 
-    The HiFiBerry DAC8x has 8 output channels, allowing us to assign
-    one channel per statue for music playback.
+    The HiFiBerry DAC8x has 8 output channels, allowing flexible assignment
+    of statues to channels based on hardware availability and configuration.
 
     Args:
         device: The HiFiBerry device dictionary from sounddevice
+        channel_mode: Optional channel mapping mode override
 
     Returns:
         list: Configured devices for all 5 statues
     """
     configured_devices = []
     sample_rate = int(device["default_samplerate"])
+    
+    # Get the channel mapping for this mode
+    channel_mapping = get_channel_mapping(channel_mode)
 
     print("\nConfiguring HiFiBerry DAC8x with 8 channels")
     print(f"Device: {device['name']}")
     print(f"Sample rate: {sample_rate} Hz")
-    print("Channel assignments:")
+    
+    # Print the channel configuration
+    print_configuration(channel_mode)
 
     for i, statue in enumerate(STATUES):
-        print(f"  Channel {i}: {statue.upper()}")
-
+        output_channel = channel_mapping[statue]
+        
         configured_devices.append(
             {
                 "statue": statue,
                 "device_index": device["index"],
                 "sample_rate": sample_rate,
                 "channel_index": i,  # Audio file channel (0-4)
-                "output_channel": i,  # HiFiBerry output channel (0-4)
+                "output_channel": output_channel,  # Physical output channel from mapping
                 "device_type": "multi_channel",
             }
         )
@@ -101,7 +110,7 @@ def configure_hifiberry(device: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def configure_devices(
-    max_devices: Optional[int] = None, debug: bool = False
+    max_devices: Optional[int] = None, debug: bool = False, channel_mode: Optional[str] = None
 ) -> list[dict[str, Any]]:
     """Configure audio devices for statue assignments.
 
@@ -118,6 +127,9 @@ def configure_devices(
     Args:
         max_devices (int, optional): Limit number of devices configured.
             Useful for testing with fewer than 5 devices.
+        debug (bool, optional): Enable debug output.
+        channel_mode (str, optional): Channel mapping mode override.
+            If not provided, uses AUDIO_CHANNEL_MODE env var.
 
     Returns:
         list: Configured device dictionaries containing:
@@ -140,7 +152,7 @@ def configure_devices(
     for device in devices:
         if "hifiberry" in device["name"].lower() and device["max_output_channels"] >= 8:
             print("\nFound HiFiBerry DAC8x!")
-            return configure_hifiberry(device)
+            return configure_hifiberry(device, channel_mode)
 
     # Fallback to USB devices
     print("\nNo HiFiBerry DAC8x found, falling back to USB devices...")

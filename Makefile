@@ -167,4 +167,20 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test
+## Channel Mapping Tests
+channel-test: ## Test audio channel mapping (default mode)
+	@echo "Testing audio channel mapping..."
+	@cd raspberry_pi && ./audio/test_channel_mapping.py
+
+channel-test-spare: ## Test spare DAC8x channel mapping (channels 0,1,4,5)
+	@echo "Testing spare DAC8x mode (Eros/Elektra share channel 0)..."
+	@cd raspberry_pi && ./audio/test_channel_mapping.py --mode SPARE_DAC8X
+
+channel-test-single: ## Test single speaker mode (all on channel 0)
+	@echo "Testing single speaker mode..."
+	@cd raspberry_pi && ./audio/test_channel_mapping.py --mode SINGLE_SPEAKER
+
+channel-modes: ## List available channel mapping modes
+	@cd raspberry_pi && ./audio/test_channel_mapping.py --list
+
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test channel-test channel-test-spare channel-test-single channel-modes

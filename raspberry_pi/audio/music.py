@@ -26,6 +26,11 @@ from typing import Any, Callable
 
 import numpy as np
 import sounddevice as sd
+import ultraimport as ui
+
+get_mixing_gain, requires_mixing = ui.ultraimport(
+    "__dir__/../config/audio_config.py", ["get_mixing_gain", "requires_mixing"]
+)
 
 
 BLOCK_SIZE = 1024  # Default block size for audio processing
@@ -97,6 +102,17 @@ class ToggleableMultiChannelPlayback:
         # Determine number of output channels needed
         max_channel = max(d.get("output_channel", 0) for d in device_list)
         num_channels = max(8, max_channel + 1)  # At least 8 for HiFiBerry
+        
+        # Group devices by output channel for mixing
+        output_mapping = {}
+        for device in device_list:
+            output_ch = device.get("output_channel", device.get("channel_index", 0))
+            if output_ch not in output_mapping:
+                output_mapping[output_ch] = []
+            output_mapping[output_ch].append(device)
+        
+        # Get mixing gain if needed
+        mixing_gain = get_mixing_gain()
 
         def callback(outdata, frames, _time_info, status):
             if status:
@@ -122,22 +138,47 @@ class ToggleableMultiChannelPlayback:
             # Create multi-channel output
             multi_channel_data = np.zeros((frames, num_channels))
 
-            # Map each input channel to its output channel
-            for device in device_list:
-                input_ch = device.get("channel_index", 0)
-                output_ch = device.get("output_channel", input_ch)
-
-                if (
-                    self.channel_enabled[input_ch]
-                    and input_ch < self.audio_data.shape[1]
-                ):
-                    # Copy audio data to the appropriate output channel
-                    channel_data = self.audio_data[
-                        self.frame_index : self.frame_index  # noqa: E203
-                        + frames_to_play,
-                        input_ch,
-                    ]
-                    multi_channel_data[:frames_to_play, output_ch] = channel_data
+            # Process each output channel
+            for output_ch, devices in output_mapping.items():
+                if len(devices) == 1:
+                    # Single input for this output - no mixing needed
+                    device = devices[0]
+                    input_ch = device.get("channel_index", 0)
+                    
+                    if (
+                        self.channel_enabled[input_ch]
+                        and input_ch < self.audio_data.shape[1]
+                    ):
+                        # Copy audio data directly
+                        channel_data = self.audio_data[
+                            self.frame_index : self.frame_index  # noqa: E203
+                            + frames_to_play,
+                            input_ch,
+                        ]
+                        multi_channel_data[:frames_to_play, output_ch] = channel_data
+                else:
+                    # Multiple inputs for this output - mix them
+                    mixed_audio = np.zeros(frames_to_play)
+                    active_inputs = 0
+                    
+                    for device in devices:
+                        input_ch = device.get("channel_index", 0)
+                        
+                        if (
+                            self.channel_enabled[input_ch]
+                            and input_ch < self.audio_data.shape[1]
+                        ):
+                            # Add this channel's audio with gain adjustment
+                            channel_data = self.audio_data[
+                                self.frame_index : self.frame_index  # noqa: E203
+                                + frames_to_play,
+                                input_ch,
+                            ]
+                            mixed_audio += channel_data * mixing_gain
+                            active_inputs += 1
+                    
+                    if active_inputs > 0:
+                        multi_channel_data[:frames_to_play, output_ch] = mixed_audio
 
             outdata[:] = multi_channel_data
             self.frame_index += frames_to_play
