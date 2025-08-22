@@ -3,6 +3,7 @@
 #include "Networking.h"
 #include "StatueConfig.h"
 #include "defines.h"
+#include "Mister.h"
 
 // Use accessor to get the EthernetClient instance
 PubSubClient client(getEthClient());
@@ -38,6 +39,58 @@ void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
       Serial.println(payloadStr);
     }
   }
+  
+  // Check if this is a mister control message
+  #if MISTER_ENABLED
+  if (strcmp(topic, "missing_link/mister") == 0) {
+    // Try to parse as JSON for mister commands
+    // Simple JSON parsing for {"action":"activate","duration":10000}
+    char action[32] = "";
+    unsigned long duration = 0;
+    
+    // Look for "action" field
+    char* actionPtr = strstr(payloadStr, "\"action\"");
+    if (actionPtr) {
+      actionPtr = strchr(actionPtr + 8, ':');  // Skip to after "action":
+      if (actionPtr) {
+        actionPtr = strchr(actionPtr, '"');  // Find opening quote
+        if (actionPtr) {
+          actionPtr++;  // Skip opening quote
+          char* endPtr = strchr(actionPtr, '"');  // Find closing quote
+          if (endPtr) {
+            int len = endPtr - actionPtr;
+            if (len < 32) {
+              strncpy(action, actionPtr, len);
+              action[len] = '\0';
+            }
+          }
+        }
+      }
+    }
+    
+    // Look for "duration" field (optional)
+    char* durationPtr = strstr(payloadStr, "\"duration\"");
+    if (durationPtr) {
+      durationPtr = strchr(durationPtr + 10, ':');  // Skip to after "duration":
+      if (durationPtr) {
+        duration = strtoul(durationPtr + 1, NULL, 10) * 1000;  // Convert seconds to ms
+      }
+    }
+    
+    // Process the mister command
+    if (strlen(action) > 0) {
+      Serial.print("Mister command received: action=");
+      Serial.print(action);
+      if (duration > 0) {
+        Serial.print(", duration=");
+        Serial.print(duration);
+      }
+      Serial.println();
+      
+      processMisterCommand(action, duration);
+    }
+  }
+  #endif
 }
 
 void reconnect() {
@@ -57,6 +110,12 @@ void reconnect() {
       client.subscribe(toneTopic);
       Serial.print("Subscribed to: ");
       Serial.println(toneTopic);
+      
+      // Subscribe to mister control topic if enabled
+      #if MISTER_ENABLED
+      client.subscribe("missing_link/mister");
+      Serial.println("Subscribed to: missing_link/mister (mister control enabled)");
+      #endif
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
