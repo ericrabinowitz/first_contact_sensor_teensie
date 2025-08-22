@@ -57,7 +57,7 @@ ACTIVE_SONGS = [
     #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
     #    "Missing Link Playa 3 - Five Channel.wav",
 ]
-DORMANT_SONG = "Missing Link Playa Dormant - 5 Channel.wav"
+DORMANT_SONG = "Missing Link Playa Dormant - 5 channel deux.wav"
 DORMANT_TIMEOUT_SECONDS = 10  # Time in dormant before advancing to next song
 DNSMASQ_FILE = os.path.join(os.path.dirname(__file__), "../setup/dnsmasq.conf")
 
