@@ -1,0 +1,17 @@
+[Unit]
+Description=Monitor NTP synchronization status
+Requires=network-online.target
+After=network-online.target
+
+[Timer]
+# Start 30 seconds after boot
+OnBootSec=30s
+
+# Check every 60 seconds
+OnUnitActiveSec=60s
+
+# Randomize by up to 10 seconds to prevent thundering herd
+RandomizedDelaySec=10s
+
+[Install]
+WantedBy=timers.target
