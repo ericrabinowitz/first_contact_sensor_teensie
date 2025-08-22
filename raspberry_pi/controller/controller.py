@@ -29,6 +29,14 @@ import requests
 import soundfile as sf
 import ultraimport as ui
 
+# GPIO control for relay
+try:
+    import RPi.GPIO as GPIO
+    GPIO_AVAILABLE = True
+except ImportError:
+    GPIO_AVAILABLE = False
+    print("Warning: RPi.GPIO not available - relay control disabled")
+
 Statue, Board, Effect = ui.ultraimport(
     "__dir__/../config/constants.py", ["Statue", "Board", "Effect"]
 )
@@ -47,6 +55,10 @@ STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 # Roughly match sunrise/sunset times in SF in August 2025
 SUNRISE = datetime.time(6, 50)  # 6:50 AM
 SUNSET = datetime.time(19, 30)  # 7:30 PM
+
+# Relay control settings for mister
+MISTER_RELAY_PIN = 4  # GPIO 4 (Physical Pin 7) - Compatible with HiFiBerry DAC8x
+MISTER_DURATION_SECONDS = 10  # Duration to run mister when all statues connected
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -371,6 +383,69 @@ def initialize_playback():
         print("Playback initialized with dormant song on all channels")
 
 
+# Global variables for mister control
+mister_timer = None
+mister_active = False
+
+
+def initialize_gpio():
+    """Initialize GPIO for relay control."""
+    if not GPIO_AVAILABLE:
+        print("GPIO not available - relay control disabled")
+        return
+    
+    GPIO.setmode(GPIO.BCM)  # Use BCM pin numbering
+    GPIO.setup(MISTER_RELAY_PIN, GPIO.OUT, initial=GPIO.HIGH)  # Start with relay OFF (high = off for low-level trigger)
+    
+    if debug:
+        print(f"GPIO {MISTER_RELAY_PIN} initialized for relay control")
+
+
+def activate_mister():
+    """Activate the mister for specified duration."""
+    global mister_timer, mister_active
+    
+    if not GPIO_AVAILABLE:
+        if debug:
+            print("GPIO not available - cannot activate mister")
+        return
+    
+    # Cancel any existing timer
+    if mister_timer is not None:
+        mister_timer.cancel()
+    
+    # Check if already active
+    if mister_active:
+        if debug:
+            print("Mister already active, resetting timer")
+    
+    if debug:
+        print(f"Activating mister for {MISTER_DURATION_SECONDS} seconds")
+    
+    # Turn relay ON (LOW for low-level trigger)
+    GPIO.output(MISTER_RELAY_PIN, GPIO.LOW)
+    mister_active = True
+    
+    # Create timer to turn off after duration
+    mister_timer = threading.Timer(MISTER_DURATION_SECONDS, deactivate_mister)
+    mister_timer.start()
+
+
+def deactivate_mister():
+    """Deactivate the mister."""
+    global mister_active
+    
+    if not GPIO_AVAILABLE:
+        return
+    
+    if debug:
+        print("Deactivating mister")
+    
+    # Turn relay OFF (HIGH for low-level trigger)
+    GPIO.output(MISTER_RELAY_PIN, GPIO.HIGH)
+    mister_active = False
+
+
 def get_statue(
     path: str,
 ) -> Union[Statue, None]:  # pyright: ignore[reportInvalidTypeForm]
@@ -391,9 +466,10 @@ def get_statue(
 
 def update_active_statues(
     payload: dict,
-) -> tuple[Set[Statue], Set[Statue], bool]:  # pyright: ignore[reportInvalidTypeForm]
+) -> tuple[Set[Statue], Set[Statue], bool, bool]:  # pyright: ignore[reportInvalidTypeForm]
     """Update the list of active statues based on the received payload.
-    Returns a tuple of new active and dormant statues, and whether the playback state changed.
+    Returns a tuple of new active and dormant statues, whether the playback state changed,
+    and whether all 5 statues just became connected.
     """
     global active_statues, linked_statues
 
@@ -402,7 +478,7 @@ def update_active_statues(
         detector = Statue(statue_name)
     except ValueError:
         print(f"Error: Unknown statue: {statue_name}")
-        return set(), set(), False
+        return set(), set(), False, False
 
     emitters = []
     for statue_name in payload.get("emitters", []):
@@ -421,8 +497,15 @@ def update_active_statues(
         for emitter in emitters:
             active_statues.add(emitter)
 
+    # Check if all 5 statues are now connected
+    all_connected = len(active_statues) == 5
+    was_all_connected = len(old_actives) == 5
+    all_just_connected = all_connected and not was_all_connected
+
     if debug:
         print(f"Active statues: {active_statues}")
+        if all_just_connected:
+            print("ALL 5 STATUES ARE NOW CONNECTED!")
 
     # Song switching logic
     was_dormant = len(old_actives) == 0
@@ -430,7 +513,7 @@ def update_active_statues(
 
     new_actives = active_statues - old_actives
     new_dormants = old_actives - active_statues
-    return new_actives, new_dormants, was_dormant != now_dormant
+    return new_actives, new_dormants, was_dormant != now_dormant, all_just_connected
 
 
 def get_channel(statue: Statue) -> int:  # pyright: ignore[reportInvalidTypeForm]
@@ -699,10 +782,14 @@ def audio_dormant(statue: Statue):  # pyright: ignore[reportInvalidTypeForm]
 
 def handle_contact_event(payload: dict):
     """Handle a contact event from a statue."""
-    new_actives, new_dormants, transitioned = update_active_statues(payload)
+    new_actives, new_dormants, transitioned, all_just_connected = update_active_statues(payload)
 
     if transitioned:
         change_playback_state()
+
+    # Trigger mister when all 5 statues connect
+    if all_just_connected:
+        activate_mister()
 
     # active statues
     if debug:
@@ -876,6 +963,7 @@ if __name__ == "__main__":
     load_audio_files()
     load_audio_devices()
     initialize_playback()
+    initialize_gpio()  # Initialize GPIO for relay control
 
     connect_to_mqtt()
 
@@ -919,3 +1007,12 @@ if __name__ == "__main__":
         if timer_thread is not None:
             timer_thread.cancel()
             print("Timer thread stopped")
+        
+        # Clean up GPIO and mister timer
+        if mister_timer is not None:
+            mister_timer.cancel()
+            print("Mister timer cancelled")
+        
+        if GPIO_AVAILABLE:
+            GPIO.cleanup()
+            print("GPIO cleaned up")
