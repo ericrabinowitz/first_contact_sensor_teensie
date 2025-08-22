@@ -1,0 +1,15 @@
+[Unit]
+Description=Initialize DS3231 RTC
+Before=chrony.service
+After=sysinit.target
+
+[Service]
+Type=oneshot
+# Check if device exists before trying to create it
+ExecStart=/bin/sh -c 'if [ ! -e /sys/class/i2c-adapter/i2c-1/1-0068 ]; then echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-1/new_device; fi'
+# Sync system time from hardware RTC
+ExecStart=/sbin/hwclock -s
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
