@@ -59,6 +59,8 @@ SUNSET = datetime.time(19, 30)  # 7:30 PM
 # Relay control settings for mister
 MISTER_RELAY_PIN = 4  # GPIO 4 (Physical Pin 7) - Compatible with HiFiBerry DAC8x
 MISTER_DURATION_SECONDS = 10  # Duration to run mister when all statues connected
+MISTER_MODE = os.environ.get("MISTER_MODE", "mqtt")  # "mqtt" or "local" - mqtt delegates to Pi Zero
+MISTER_MQTT_TOPIC = "missing_link/mister"  # Topic for mister control commands
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -389,7 +391,12 @@ mister_active = False
 
 
 def initialize_gpio():
-    """Initialize GPIO for relay control."""
+    """Initialize GPIO for relay control (only in local mode)."""
+    if MISTER_MODE != "local":
+        if debug:
+            print(f"Mister in {MISTER_MODE} mode - GPIO not initialized")
+        return
+        
     if not GPIO_AVAILABLE:
         print("GPIO not available - relay control disabled")
         return
@@ -405,6 +412,25 @@ def activate_mister():
     """Activate the mister for specified duration."""
     global mister_timer, mister_active
     
+    if MISTER_MODE == "mqtt":
+        # Delegate to Pi Zero via MQTT
+        if debug:
+            print(f"Sending mister activation command via MQTT (duration: {MISTER_DURATION_SECONDS}s)")
+        
+        payload = {
+            "action": "activate",
+            "duration": MISTER_DURATION_SECONDS
+        }
+        
+        try:
+            mqttc.publish(MISTER_MQTT_TOPIC, json.dumps(payload), qos=1)
+            if debug:
+                print(f"Published to {MISTER_MQTT_TOPIC}: {payload}")
+        except Exception as e:
+            print(f"Error publishing mister command: {e}")
+        return
+    
+    # Local mode - control GPIO directly
     if not GPIO_AVAILABLE:
         if debug:
             print("GPIO not available - cannot activate mister")
@@ -420,7 +446,7 @@ def activate_mister():
             print("Mister already active, resetting timer")
     
     if debug:
-        print(f"Activating mister for {MISTER_DURATION_SECONDS} seconds")
+        print(f"Activating mister locally for {MISTER_DURATION_SECONDS} seconds")
     
     # Turn relay ON (LOW for low-level trigger)
     GPIO.output(MISTER_RELAY_PIN, GPIO.LOW)
@@ -432,14 +458,18 @@ def activate_mister():
 
 
 def deactivate_mister():
-    """Deactivate the mister."""
+    """Deactivate the mister (local mode only)."""
     global mister_active
+    
+    # Only used in local mode - MQTT mode handles deactivation on Pi Zero
+    if MISTER_MODE != "local":
+        return
     
     if not GPIO_AVAILABLE:
         return
     
     if debug:
-        print("Deactivating mister")
+        print("Deactivating mister locally")
     
     # Turn relay OFF (HIGH for low-level trigger)
     GPIO.output(MISTER_RELAY_PIN, GPIO.HIGH)
@@ -1008,11 +1038,12 @@ if __name__ == "__main__":
             timer_thread.cancel()
             print("Timer thread stopped")
         
-        # Clean up GPIO and mister timer
-        if mister_timer is not None:
-            mister_timer.cancel()
-            print("Mister timer cancelled")
-        
-        if GPIO_AVAILABLE:
-            GPIO.cleanup()
-            print("GPIO cleaned up")
+        # Clean up GPIO and mister timer (local mode only)
+        if MISTER_MODE == "local":
+            if mister_timer is not None:
+                mister_timer.cancel()
+                print("Mister timer cancelled")
+            
+            if GPIO_AVAILABLE:
+                GPIO.cleanup()
+                print("GPIO cleaned up")
