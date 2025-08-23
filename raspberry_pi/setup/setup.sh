@@ -48,6 +48,22 @@ controller.status
 
 tools.install
 
+# Configure NTP client to use Pi Zero NTP server
+echo "Configuring NTP client..."
+sudo cp timesyncd.conf /etc/systemd/timesyncd.conf
+sudo systemctl restart systemd-timesyncd
+
+# Install NTP monitor for dynamic power management
+echo "Installing NTP monitor..."
+sudo cp ntp-monitor.sh /usr/local/bin/
+sudo chmod +x /usr/local/bin/ntp-monitor.sh
+sudo cp ntp-monitor.timer /etc/systemd/system/
+sudo cp ntp-monitor.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable ntp-monitor.timer
+sudo systemctl start ntp-monitor.timer
+echo "NTP client configuration complete"
+
 # Add additional commands above this line. Script might fail after
 # attempting to start dnsmasq.
 

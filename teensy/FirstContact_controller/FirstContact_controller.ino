@@ -89,6 +89,7 @@ I found it helpful to wire one of the buttons to the two pin contacts for conven
 #include "Networking.h"
 #include "Haptics.h"
 #include "Messaging.h"
+#include "Mister.h"
 
 void setup() {
   // Display Setup
@@ -122,6 +123,9 @@ void setup() {
 
   // Haptic Setup
   initHaptics();
+  
+  // Mister Setup (only if enabled for this statue)
+  initMister();
 }
 
 void loop() {
@@ -151,4 +155,7 @@ void loop() {
 
   // Drive haptics based on state
   driveHaptics(state);
+  
+  // Handle mister timer (check for auto-off)
+  handleMisterTimer();
 }
