@@ -339,8 +339,8 @@ def load_audio_devices():
     """Query audio devices and map them to statues using devices.py."""
     global audio_devices
 
-    # Use the devices.py configuration which handles HiFiBerry
-    audio_devices = configure_devices(debug=debug)  # max_devices=X for testing
+    # Use the devices.py configuration which handles HiFiBerry and channel mapping
+    audio_devices = configure_devices(debug=debug)  # max_devices=X for testing, channel_mode auto-detected from env
     audio_devices.sort(key=lambda d: d["channel_index"])
     if debug:
         print(f"Audio devices: {json.dumps(audio_devices, indent=2)}")
@@ -755,12 +755,16 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                 }
             )
         elif self.path == "/config/static":
+            # Include channel mode info if available
+            import os
+            channel_mode = os.environ.get("AUDIO_CHANNEL_MODE", "ORIGINAL")
             self._send_response(
                 {
                     "board_config": board_config,
                     "teensy_config": teensy_config,
                     "segment_map": segment_map,
                     "audio_devices": audio_devices,
+                    "audio_channel_mode": channel_mode,
                 }
             )
         elif self.path == "/config/dynamic":
