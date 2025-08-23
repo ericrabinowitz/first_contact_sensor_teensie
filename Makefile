@@ -167,4 +167,45 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test
+## Mister Relay Control
+mister-test: ## Test mister relay (interactive mode)
+	@echo "Starting interactive mister test..."
+	@$(SSH_EXEC) "cd $(PI_CODE_ROOT)/mister && python3 test_mister_mqtt.py --interactive"
+
+mister-activate: ## Activate mister for 5 seconds
+	@echo "Activating mister for 5 seconds..."
+	@$(SSH_EXEC) "cd $(PI_CODE_ROOT)/mister && python3 test_mister_mqtt.py --basic"
+
+mister-simulate: ## Simulate all 5 statues connected (triggers mister)
+	@echo "Simulating all statues connected..."
+	@$(SSH_EXEC) "cd $(PI_CODE_ROOT)/mister && python3 test_mister_mqtt.py --simulate"
+
+mister-status: ## Check mister controller service status on Pi Zero
+	@echo "Checking mister service status on Pi Zero..."
+	@ssh pi@192.168.4.2 "sudo systemctl status mister || echo 'Service not found'"
+
+mister-logs: ## View mister controller logs from Pi Zero
+	@echo "Viewing mister controller logs..."
+	@ssh pi@192.168.4.2 "sudo journalctl -u mister -n 50 --no-pager"
+
+mister-logs-follow: ## Follow mister controller logs from Pi Zero
+	@echo "Following mister controller logs (Ctrl+C to exit)..."
+	@ssh pi@192.168.4.2 "sudo journalctl -u mister -f"
+
+mister-restart: ## Restart mister service on Pi Zero
+	@echo "Restarting mister service on Pi Zero..."
+	@ssh pi@192.168.4.2 "sudo systemctl restart mister && echo '✓ Service restarted'"
+
+mister-relay-test: ## Test relay hardware directly on main Pi
+	@echo "Testing relay hardware on main Pi..."
+	@$(SSH_EXEC) "cd $(CONTROLLER_DIR) && python3 test_relay.py"
+
+mister-local-mode: ## Run controller with local GPIO mister control
+	@echo "Starting controller with LOCAL mister mode..."
+	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && MISTER_MODE=local $(PYTHON_WITH_PATH) ./controller.py'"
+
+mister-setup-pi-zero: ## Setup mister controller on Pi Zero (run on Pi Zero)
+	@echo "Setting up mister controller on Pi Zero..."
+	@ssh pi@192.168.4.2 "cd ~/first_contact_sensor_teensie/raspberry_pi/setup && bash pi_zero_mister_setup.sh"
+
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test mister-test mister-activate mister-simulate mister-status mister-logs mister-logs-follow mister-restart mister-relay-test mister-local-mode mister-setup-pi-zero
