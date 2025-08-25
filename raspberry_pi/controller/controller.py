@@ -47,6 +47,7 @@ STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 # Roughly match sunrise/sunset times in SF in August 2025
 SUNRISE = datetime.time(6, 50)  # 6:50 AM
 SUNSET = datetime.time(19, 30)  # 7:30 PM
+POWER_CHECK_INTERVAL_SECS = 60
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -133,6 +134,9 @@ debug = False
 
 # Disable all LED/WLED functionality
 no_leds = False
+
+# Global timer for power
+power_timer_thread = None
 
 # MQTT client
 mqttc: Any = None
@@ -513,6 +517,7 @@ def initialize_leds():
 def manage_power():
     """Manage power consumption by turning off LEDs during the day."""
     global no_leds
+    global power_timer_thread
     if debug:
         print("Checking power management...")
 
@@ -541,6 +546,10 @@ def manage_power():
             },
         )
         leds_dormant(set(segment_map.keys()))
+
+    # Restart the timer thread.
+    power_timer_thread = threading.Timer(POWER_CHECK_INTERVAL_SECS, manage_power)
+    power_timer_thread.start()
 
 
 # ### Actions
@@ -893,11 +902,15 @@ if __name__ == "__main__":
     time.sleep(1)
     leds_dormant(set(segment_map.keys()))
 
-    timer_thread = None
     if bool_env_var("CONSERVE_POWER") and not no_leds:
+        print(f"CONSERVE_POWER is {bool_env_var('CONSERVE_POWER')}. Starting manage_power")
+        now = datetime.datetime.now().time()
+        print(f"Lights turn on at {SUNSET} and off at {SUNRISE}. It is now {now}")
         # Run power management once a minute
-        timer_thread = threading.Timer(60, manage_power)
-        timer_thread.start()
+        power_timer_thread = threading.Timer(10, manage_power)
+        power_timer_thread.start()
+    else:
+        print(f"CONSERVE_POWER is {bool_env_var('CONSERVE_POWER')}. No power management.")
 
     server = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
     try:
@@ -916,6 +929,6 @@ if __name__ == "__main__":
         mqttc.loop_stop()
         print("Disconnected from MQTT broker")
 
-        if timer_thread is not None:
-            timer_thread.cancel()
+        if power_timer_thread is not None:
+            power_timer_thread.cancel()
             print("Timer thread stopped")
