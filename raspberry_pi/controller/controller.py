@@ -595,6 +595,7 @@ def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
 
 def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
     if no_leds:
+        print("No leds: skipping dormant")
         return
     if debug:
         print(f"Deactivating LEDs for statues: {statues}")
@@ -617,8 +618,8 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
                     color = COLORS.get(statue, COLORS["dormant"])
                     bri = BRIGHTNESS["active"]
                     fx = EFFECTS["hand"]
-                if "arch" in part:
-                    fx = EFFECTS["arch"]
+                #if "arch" in part:
+                #    fx = EFFECTS["arch"]
 
                 board_payloads[board]["seg"].append(
                     {
