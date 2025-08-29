@@ -498,6 +498,16 @@ def initialize_leds():
             print(f"Error: Failed to initialize board {board}: {resp.text}")
             exit(1)
 
+        # Activate preset 1 to ensure it's properly set
+        resp_preset = requests.post(
+            "http://{}/json/state".format(board_config[board]["ip_address"]),
+            json={"ps": 1},
+        )
+        if resp_preset.status_code != 200:
+            print(f"Warning: Failed to activate preset 1 for board {board}: {resp_preset.text}")
+        else:
+            print(f"Activated preset 1 for board {board}")
+
         segments = resp.json().get("seg", [])
         for segment in segments:
             # "n" field only exists if the segment has been renamed
