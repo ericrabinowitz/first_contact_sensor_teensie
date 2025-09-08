@@ -498,7 +498,7 @@ def initialize_leds():
             print(f"Error: Failed to initialize board {board}: {resp.text}")
             exit(1)
 
-        # Delay to help propogate?
+        # Delay to help propagate?
         time.sleep(1)
         # Activate preset 1 to ensure it's properly set
         resp_preset = requests.post(
