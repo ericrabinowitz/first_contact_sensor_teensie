@@ -22,10 +22,12 @@ from audio.music import ToggleableMultiChannelPlayback
 
 # List of available songs
 SONG_LIST = [
-    "../../audio_files/Missing Link Playa 1 - 6 Channel 6-7.wav",
+    "../../audio_files/Missing Link Playa 1 - 5 channel.wav",
+    "../../audio_files/Missing Link Playa 2 - 5 Channel.wav",
     "../../audio_files/Missing Link Playa 3 - Five Channel.wav",
+    "../../audio_files/Missing Link Playa Dormant - 5 channel deux.wav",
     # Fallback songs if the main ones aren't found
-    "../../audio_files/Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav",
+    #"../../audio_files/Missing Link unSCruz active 01 Remi Wolf Polo Pan Hello.wav",
 ]
 
 
@@ -69,7 +71,7 @@ class ChannelToggleInterface:
         print(f"Song {self.song_index + 1} of {self.total_songs}\r\n")
         print("Channel Status:\r")
 
-        statue_names = ["EROS", "ELEKTRA", "SOPHIA", "ULTIMO", "ARIEL", "---"]
+        statue_names = ["EROS", "ELEKTRA", "ARIEL", "SOPHIA", "ULTIMO", "---"]
 
         for i in range(len(self.devices)):
             statue_name = statue_names[i] if i < len(statue_names) else f"CH{i+1}"
@@ -157,6 +159,8 @@ def main():
     for song in SONG_LIST:
         if os.path.exists(song):
             available_songs.append(song)
+        else:
+            print(f"Couldn't find song {song}")
 
     if not available_songs:
         print("ERROR: No audio files found!")

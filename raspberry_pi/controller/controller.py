@@ -42,11 +42,12 @@ configure_devices = ui.ultraimport("__dir__/../audio/devices.py", "configure_dev
 
 VERSION = "2.1"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
-STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
+STARTUP_DELAY = 60  # Delay to allow MQTT clients to connect, seconds
 
 # Roughly match sunrise/sunset times in SF in August 2025
-SUNRISE = datetime.time(6, 50)  # 6:50 AM
-SUNSET = datetime.time(19, 30)  # 7:30 PM
+SUNRISE = datetime.time(7, 00)  # 7:00 AM
+SUNSET = datetime.time(19, 00)  # 7:00 PM
+POWER_CHECK_INTERVAL_SECS = 60
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -109,7 +110,7 @@ COLORS = {
     Statue.ELEKTRA: [[0, 25, 255], [0, 200, 255], [0, 25, 255]],  # blue
     Statue.ARIEL: [[255, 200, 0], [255, 255, 0], [255, 255, 0]],  # yellow
     Statue.SOPHIA: [[8, 255, 0], [66, 237, 160], [66, 237, 160]],  # green
-    Statue.ULTIMO: [[255, 165, 0], [255, 199, 94], [255, 199, 94]],  # orange
+    Statue.ULTIMO: [[255, 100, 0], [255, 199, 94], [255, 199, 94]],  # orange
     "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
 }
 
@@ -133,6 +134,9 @@ debug = False
 
 # Disable all LED/WLED functionality
 no_leds = False
+
+# Global timer for power
+power_timer_thread = None
 
 # MQTT client
 mqttc: Any = None
@@ -494,6 +498,18 @@ def initialize_leds():
             print(f"Error: Failed to initialize board {board}: {resp.text}")
             exit(1)
 
+        # Delay to help propagate?
+        time.sleep(1)
+        # Activate preset 1 to ensure it's properly set
+        resp_preset = requests.post(
+            "http://{}/json/state".format(board_config[board]["ip_address"]),
+            json={"ps": 1},
+        )
+        if resp_preset.status_code != 200:
+            print(f"Warning: Failed to activate preset 1 for board {board}: {resp_preset.text}")
+        else:
+            print(f"Activated preset 1 for board {board}")
+
         segments = resp.json().get("seg", [])
         for segment in segments:
             # "n" field only exists if the segment has been renamed
@@ -513,6 +529,7 @@ def initialize_leds():
 def manage_power():
     """Manage power consumption by turning off LEDs during the day."""
     global no_leds
+    global power_timer_thread
     if debug:
         print("Checking power management...")
 
@@ -541,6 +558,10 @@ def manage_power():
             },
         )
         leds_dormant(set(segment_map.keys()))
+
+    # Restart the timer thread.
+    power_timer_thread = threading.Timer(POWER_CHECK_INTERVAL_SECS, manage_power)
+    power_timer_thread.start()
 
 
 # ### Actions
@@ -586,6 +607,7 @@ def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
 
 def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
     if no_leds:
+        print("No leds: skipping dormant")
         return
     if debug:
         print(f"Deactivating LEDs for statues: {statues}")
@@ -608,8 +630,8 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
                     color = COLORS.get(statue, COLORS["dormant"])
                     bri = BRIGHTNESS["active"]
                     fx = EFFECTS["hand"]
-                if "arch" in part:
-                    fx = EFFECTS["arch"]
+                #if "arch" in part:
+                #    fx = EFFECTS["arch"]
 
                 board_payloads[board]["seg"].append(
                     {
@@ -893,11 +915,15 @@ if __name__ == "__main__":
     time.sleep(1)
     leds_dormant(set(segment_map.keys()))
 
-    timer_thread = None
     if bool_env_var("CONSERVE_POWER") and not no_leds:
+        print(f"CONSERVE_POWER is {bool_env_var('CONSERVE_POWER')}. Starting manage_power")
+        now = datetime.datetime.now().time()
+        print(f"Lights turn on at {SUNSET} and off at {SUNRISE}. It is now {now}")
         # Run power management once a minute
-        timer_thread = threading.Timer(60, manage_power)
-        timer_thread.start()
+        power_timer_thread = threading.Timer(10, manage_power)
+        power_timer_thread.start()
+    else:
+        print(f"CONSERVE_POWER is {bool_env_var('CONSERVE_POWER')}. No power management.")
 
     server = HTTPServer(("", DEBUG_PORT), ControllerDebugHandler)
     try:
@@ -916,6 +942,6 @@ if __name__ == "__main__":
         mqttc.loop_stop()
         print("Disconnected from MQTT broker")
 
-        if timer_thread is not None:
-            timer_thread.cancel()
+        if power_timer_thread is not None:
+            power_timer_thread.cancel()
             print("Timer thread stopped")
