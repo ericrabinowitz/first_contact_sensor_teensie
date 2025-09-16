@@ -42,7 +42,7 @@ configure_devices = ui.ultraimport("__dir__/../audio/devices.py", "configure_dev
 
 VERSION = "2.1"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
-STARTUP_DELAY = 60  # Delay to allow MQTT clients to connect, seconds
+STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 
 # Roughly match sunrise/sunset times in SF in August 2025
 SUNRISE = datetime.time(7, 00)  # 7:00 AM
@@ -130,7 +130,7 @@ EFFECTS = {
 # ### Global variables
 
 # Enable debug logging
-debug = False
+debug = True
 
 # Disable all LED/WLED functionality
 no_leds = False
@@ -239,6 +239,10 @@ linked_statues: Dict[Statue, List[Statue]] = {  # pyright: ignore[reportInvalidT
 }
 # Statues that are currently active
 active_statues: Set[Statue] = set()  # pyright: ignore[reportInvalidTypeForm]
+
+# Climax event tracking
+climax_is_active: bool = False
+active_links: Set[tuple[Statue, Statue]] = set()  # pyright: ignore[reportInvalidTypeForm]
 
 music_playback: Any = None
 
@@ -435,6 +439,68 @@ def update_active_statues(
     new_actives = active_statues - old_actives
     new_dormants = old_actives - active_statues
     return new_actives, new_dormants, was_dormant != now_dormant
+
+
+def update_active_links() -> tuple[bool, bool, Set[tuple[Statue, Statue]]]:  # pyright: ignore[reportInvalidTypeForm]
+    """Update the active links between neighboring statues and detect climax events.
+
+    Returns:
+        climax_started: True if climax just began
+        climax_stopped: True if climax just ended
+        active_links: Set of currently connected neighbor pairs (normalized tuples)
+    """
+    global climax_is_active, active_links
+
+    # Get all statues in enum order
+    all_statues = list(Statue)
+    num_statues = len(all_statues)
+
+    # Define neighbor pairs (with wraparound)
+    neighbor_pairs = []
+    for i in range(num_statues):
+        current = all_statues[i]
+        next_statue = all_statues[(i + 1) % num_statues]
+        neighbor_pairs.append((current, next_statue))
+
+    # Check which neighbor pairs have active links (bidirectional)
+    new_active_links = set()
+    for statue1, statue2 in neighbor_pairs:
+        # Check if either statue detects the other
+        has_link = False
+
+        # Check if statue1 detects statue2
+        if statue2 in linked_statues.get(statue1, []):
+            has_link = True
+
+        # Check if statue2 detects statue1
+        if statue1 in linked_statues.get(statue2, []):
+            has_link = True
+
+        if has_link:
+            # Normalize the tuple (smaller statue first) to avoid duplicates
+            if statue1.value < statue2.value:
+                new_active_links.add((statue1, statue2))
+            else:
+                new_active_links.add((statue2, statue1))
+
+    # Determine if climax is active (all 5 neighbor pairs connected)
+    new_climax_active = len(new_active_links) == num_statues
+
+    # Detect state transitions
+    climax_started = new_climax_active and not climax_is_active
+    climax_stopped = not new_climax_active and climax_is_active
+
+    # Update global state
+    climax_is_active = new_climax_active
+    active_links = new_active_links
+
+    # Print state changes
+    if climax_started:
+        print("Climax happening!")
+    elif climax_stopped:
+        print("Climax has stopped.")
+
+    return climax_started, climax_stopped, new_active_links
 
 
 def get_channel(statue: Statue) -> int:  # pyright: ignore[reportInvalidTypeForm]
@@ -723,6 +789,16 @@ def handle_contact_event(payload: dict):
     """Handle a contact event from a statue."""
     new_actives, new_dormants, transitioned = update_active_statues(payload)
 
+    # Check for climax events
+    climax_started, climax_stopped, current_active_links = update_active_links()
+
+    # Future: Handle climax-specific effects here
+    # if climax_started:
+    #     publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
+    #     # Trigger special audio, lights, relays, etc.
+    # elif climax_stopped:
+    #     publish_mqtt("missing_link/climax", {"state": "inactive"})
+
     if transitioned:
         change_playback_state()
 
@@ -795,6 +871,8 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                     ),
                     "linked_statues": linked_statues,
                     "active_statues": list(active_statues),
+                    "climax_is_active": climax_is_active,
+                    "active_links": [list(link) for link in active_links],
                 }
             )
         else:
