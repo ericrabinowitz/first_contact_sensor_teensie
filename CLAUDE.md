@@ -352,3 +352,4 @@ make typecheck-install
 ## Memories
 
 - Don't do attribution to claude code
+- Always use LF line endings rather than CRLF
