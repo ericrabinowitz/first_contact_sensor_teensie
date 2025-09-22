@@ -380,6 +380,12 @@ def initialize_playback():
     # Enable all channels for dormant mode
     music_playback.enable_all_music_channels()
 
+    # Disable climax channel (5) since climax is not active at startup
+    if len(audio_devices) > 5:
+        music_playback.set_music_channel(5, False)
+        if debug:
+            print("Disabled climax channel 5 at startup")
+
     if debug:
         print("Playback initialized with dormant song on all channels")
 
@@ -823,14 +829,6 @@ def handle_contact_event(payload: dict):
     # Check for climax events
     climax_started, climax_stopped, current_active_links = update_active_links()
 
-    # Handle climax-specific effects
-    if climax_started:
-        control_relay(activate=True)
-        # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
-    elif climax_stopped:
-        control_relay(activate=False)
-        # Future: publish_mqtt("missing_link/climax", {"state": "inactive"})
-
     if transitioned:
         change_playback_state()
 
@@ -847,6 +845,24 @@ def handle_contact_event(payload: dict):
     for statue in new_dormants:
         audio_dormant(statue)
     leds_dormant(new_dormants)
+
+    # Handle climax-specific effects
+    if climax_started:
+        control_relay(activate=True)
+        # Enable climax audio on channel 5
+        if music_playback:
+            music_playback.set_music_channel(5, True)
+            if debug:
+                print("Enabled climax audio on channel 5")
+        # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
+    elif climax_stopped:
+        control_relay(activate=False)
+        # Disable climax audio on channel 5
+        if music_playback:
+            music_playback.set_music_channel(5, False)
+            if debug:
+                print("Disabled climax audio on channel 5")
+        # Future: publish_mqtt("missing_link/climax", {"state": "inactive"})
 
 
 # ### Debug server
