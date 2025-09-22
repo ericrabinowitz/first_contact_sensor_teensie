@@ -5,7 +5,6 @@ AudioSense: The contact sensing and audio mixing logic.
 #include <Audio.h>
 
 #include "AudioSense.h"
-#include "Messaging.h"
 #include "StatueConfig.h"
 
 // ------ Audio Contact Defines - Start
@@ -105,7 +104,7 @@ void audioSenseSetup() {
   audioShield.enable();
   // TODO: Can we just set the gain of the mixer instead of the audio shield?
   // Then we can play music at full volume.
-  audioShield.volume(teensyConfig.signalVolume);
+  audioShield.volume(SIGNAL_AUDIO_VOLUME);
 
   const int sample_time_ms = main_period_ms / 2;
 
@@ -192,24 +191,6 @@ void updateDetectionThreshold(float threshold) {
   thresh = threshold;
   Serial.print("Detection threshold updated to: ");
   Serial.println(thresh, 4);
-}
-
-// Update audio volumes dynamically
-void updateAudioVolumes(float signalVolume, float musicVolume) {
-  audioShield.volume(signalVolume);
-  Serial.print("Audio volumes updated - Signal: ");
-  Serial.print(signalVolume);
-  Serial.print(", Music: ");
-  Serial.println(musicVolume);
-  // Music volume will be handled in MusicPlayer.ino
-}
-
-// Update main loop period dynamically
-void updateMainPeriod(uint16_t periodMs) {
-  main_period_ms = periodMs;
-  Serial.print("Main loop period updated to: ");
-  Serial.print(main_period_ms);
-  Serial.println(" ms");
 }
 
 // Get the linked state bitmask, buffering over ~100ms for stable readings.

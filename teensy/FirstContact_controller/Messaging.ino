@@ -45,10 +45,8 @@ void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
   // Check if this is a tone control message for this statue
   if (strcmp(topic, toneTopic) == 0) {
     if (strcmp(payloadStr, "ON") == 0) {
-      teensyConfig.toneEnabled = true;
       setToneEnabled(true);
     } else if (strcmp(payloadStr, "OFF") == 0) {
-      teensyConfig.toneEnabled = false;
       setToneEnabled(false);
     } else {
       Serial.print("Unknown tone command: ");
@@ -182,94 +180,86 @@ void parseConfig(const char* json, unsigned int length) {
     return;
   }
 
-  // Get this statue's configuration
-  String statueName = String(MY_STATUE_NAME);
-  statueName.toLowerCase();
+  // Get this Teensy's current IP address
+  String myIpAddress = getLocalIp();
+  Serial.print("My IP address: ");
+  Serial.println(myIpAddress);
 
-  if (!doc.containsKey(statueName)) {
-    Serial.print("No configuration found for statue: ");
-    Serial.println(statueName);
-    return;
+  // Iterate through all statue configurations to find matching IP
+  bool configFound = false;
+  for (JsonPair kv : doc.as<JsonObject>()) {
+    String statueName = kv.key().c_str();
+    JsonObject statueConfig = kv.value();
+
+    // Check if this config's IP matches our IP
+    if (statueConfig.containsKey("ip_address")) {
+      String configIp = statueConfig["ip_address"].as<String>();
+      if (configIp == myIpAddress) {
+        Serial.print("Found configuration for ");
+        Serial.print(statueName);
+        Serial.println(" (matched by IP)");
+
+        configFound = true;
+
+        // Extract threshold (the main configurable parameter)
+        if (statueConfig.containsKey("threshold")) {
+          float newThreshold = statueConfig["threshold"];
+          teensyConfig.threshold = constrain(newThreshold, 0.001, 1.0);
+          Serial.print("  Threshold: ");
+          Serial.println(teensyConfig.threshold, 4);
+        }
+
+        // Store informational fields
+        if (statueConfig.containsKey("emit")) {
+          teensyConfig.emitFreq = statueConfig["emit"];
+          Serial.print("  Emit frequency: ");
+          Serial.print(teensyConfig.emitFreq);
+          Serial.println(" Hz");
+        }
+
+        if (statueConfig.containsKey("mac_address")) {
+          teensyConfig.macAddress = statueConfig["mac_address"].as<String>();
+          Serial.print("  MAC address: ");
+          Serial.println(teensyConfig.macAddress);
+        }
+
+        teensyConfig.ipAddress = myIpAddress;
+
+        // Store detect array (informational)
+        if (statueConfig.containsKey("detect")) {
+          JsonArray detectArray = statueConfig["detect"];
+          int idx = 0;
+          Serial.print("  Detects: ");
+          for (JsonVariant v : detectArray) {
+            if (idx < 4) {
+              teensyConfig.detectStatues[idx] = v.as<String>();
+              if (idx > 0) Serial.print(", ");
+              Serial.print(teensyConfig.detectStatues[idx]);
+              idx++;
+            }
+          }
+          Serial.println();
+        }
+
+        // Apply the configuration
+        applyConfig();
+        break;
+      }
+    }
   }
 
-  JsonObject statueConfig = doc[statueName];
-
-  // Update configuration with received values (use defaults if not present)
-  if (statueConfig.containsKey("threshold")) {
-    float newThreshold = statueConfig["threshold"];
-    // Clamp to valid range
-    teensyConfig.threshold = constrain(newThreshold, 0.001, 1.0);
-    Serial.print("Updated threshold: ");
-    Serial.println(teensyConfig.threshold, 4);
+  if (!configFound) {
+    Serial.println("No configuration found matching this Teensy's IP address");
+    Serial.println("Using default threshold value");
   }
-
-  if (statueConfig.containsKey("signal_volume")) {
-    teensyConfig.signalVolume = constrain((float)statueConfig["signal_volume"], 0.0, 1.0);
-    Serial.print("Updated signal volume: ");
-    Serial.println(teensyConfig.signalVolume);
-  }
-
-  if (statueConfig.containsKey("music_volume")) {
-    teensyConfig.musicVolume = constrain((float)statueConfig["music_volume"], 0.0, 1.0);
-    Serial.print("Updated music volume: ");
-    Serial.println(teensyConfig.musicVolume);
-  }
-
-  if (statueConfig.containsKey("fade_init_volume")) {
-    teensyConfig.fadeInitVolume = constrain((float)statueConfig["fade_init_volume"], 0.0, 1.0);
-    Serial.print("Updated fade init volume: ");
-    Serial.println(teensyConfig.fadeInitVolume);
-  }
-
-  if (statueConfig.containsKey("pause_timeout_ms")) {
-    teensyConfig.pauseTimeoutMs = constrain((uint16_t)statueConfig["pause_timeout_ms"], 100, 10000);
-    Serial.print("Updated pause timeout: ");
-    Serial.println(teensyConfig.pauseTimeoutMs);
-  }
-
-  if (statueConfig.containsKey("idle_timeout_ms")) {
-    teensyConfig.idleTimeoutMs = constrain((uint16_t)statueConfig["idle_timeout_ms"], 1000, 60000);
-    Serial.print("Updated idle timeout: ");
-    Serial.println(teensyConfig.idleTimeoutMs);
-  }
-
-  if (statueConfig.containsKey("main_period_ms")) {
-    teensyConfig.mainPeriodMs = constrain((uint16_t)statueConfig["main_period_ms"], 50, 1000);
-    Serial.print("Updated main period: ");
-    Serial.println(teensyConfig.mainPeriodMs);
-  }
-
-  if (statueConfig.containsKey("tone_enabled")) {
-    teensyConfig.toneEnabled = statueConfig["tone_enabled"];
-    Serial.print("Updated tone enabled: ");
-    Serial.println(teensyConfig.toneEnabled ? "true" : "false");
-  }
-
-  if (statueConfig.containsKey("debug_mode")) {
-    teensyConfig.debugMode = statueConfig["debug_mode"];
-    Serial.print("Updated debug mode: ");
-    Serial.println(teensyConfig.debugMode ? "true" : "false");
-  }
-
-  // Apply the configuration to the system
-  applyConfig();
 }
 
 // Apply configuration changes to the system
 void applyConfig() {
   Serial.println("Applying configuration...");
 
-  // Update tone generation state
-  setToneEnabled(teensyConfig.toneEnabled);
-
-  // Update detection threshold
+  // Update detection threshold (the only configurable parameter)
   updateDetectionThreshold(teensyConfig.threshold);
-
-  // Update audio volumes
-  updateAudioVolumes(teensyConfig.signalVolume, teensyConfig.musicVolume);
-
-  // Update main loop period
-  updateMainPeriod(teensyConfig.mainPeriodMs);
 
   Serial.println("Configuration applied successfully");
 }

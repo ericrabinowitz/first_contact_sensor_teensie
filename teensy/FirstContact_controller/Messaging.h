@@ -9,36 +9,28 @@ Messaging: MQTT, state publishing, and LED state logic.
 #include <PubSubClient.h>
 #include "AudioSense.h"
 
-// Configuration structure for dynamic parameters
+// Configuration structure matching Pi's teensy_config
 struct TeensyConfig {
-  // Detection parameters
+  // The main configurable parameter
   float threshold;
-  uint16_t mainPeriodMs;
 
-  // Audio parameters
-  float signalVolume;
-  float musicVolume;
-  float fadeInitVolume;
-
-  // Timing parameters
-  uint16_t pauseTimeoutMs;
-  uint16_t idleTimeoutMs;
-
-  // Control parameters
-  bool toneEnabled;
-  bool debugMode;
+  // Informational fields from Pi config
+  int emitFreq;           // Transmit frequency (read-only, for verification)
+  String detectStatues[4]; // List of detectable statues (informational)
+  String ipAddress;        // This Teensy's IP address
+  String macAddress;       // This Teensy's MAC address
 
   // Constructor with defaults
   TeensyConfig() :
     threshold(0.01),
-    mainPeriodMs(150),
-    signalVolume(0.75),
-    musicVolume(1.0),
-    fadeInitVolume(0.15),
-    pauseTimeoutMs(2000),
-    idleTimeoutMs(10000),
-    toneEnabled(true),
-    debugMode(false) {}
+    emitFreq(0),
+    ipAddress(""),
+    macAddress("") {
+      // Initialize detect array as empty
+      for (int i = 0; i < 4; i++) {
+        detectStatues[i] = "";
+      }
+    }
 };
 
 // Global configuration instance

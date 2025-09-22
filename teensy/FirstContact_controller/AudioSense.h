@@ -35,8 +35,6 @@ void printState(const ContactState &state);
 void audioMusicSetup();
 void setToneEnabled(bool enabled);
 void updateDetectionThreshold(float threshold);
-void updateAudioVolumes(float signalVolume, float musicVolume);
-void updateMainPeriod(uint16_t periodMs);
 
 // The audio out shared between the audio sensing and music player.
 extern AudioOutputI2S audioOut;
