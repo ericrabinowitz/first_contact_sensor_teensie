@@ -131,6 +131,7 @@ EFFECTS = {
     "dormant": Effect.NOISE,
     "arch": Effect.LIGHTHOUSE,
     "hand": Effect.SOLID,
+    "climax": Effect.FIREWORKS,
 }
 
 
@@ -737,7 +738,7 @@ def manage_power():
 # ### Actions
 
 
-def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
+def leds_active(statues: Set[Statue]), effect_config_name='active':  # pyright: ignore[reportInvalidTypeForm]
     if no_leds:
         return
     if debug:
@@ -758,9 +759,9 @@ def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
                 board_payloads[board]["seg"].append(
                     {
                         "id": seg_id,
-                        "bri": BRIGHTNESS["active"],
+                        "bri": BRIGHTNESS[effect_config_name],
                         "col": color,
-                        "fx": EFFECTS["active"],
+                        "fx": EFFECTS[effect_config_name],
                         "pal": PALETTE_ID,
                     }
                 )
@@ -904,7 +905,7 @@ def handle_contact_event(payload: dict):
         print(f"Activating the following statues: {new_actives}")
     for statue in new_actives:
         audio_active(statue)
-    leds_active(new_actives)
+    leds_active(new_actives, effect_config_name='active')
 
     # dormant statues
     if debug:
@@ -921,6 +922,7 @@ def handle_contact_event(payload: dict):
             music_playback.set_music_channel(5, True)
             if debug:
                 print("Enabled climax audio on channel 5")
+            leds_active(new_actives, effect_config_name='climax')
         # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
     elif climax_stopped:
         control_relay(activate=False)
