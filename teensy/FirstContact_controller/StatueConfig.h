@@ -26,11 +26,16 @@ extern const char* MY_STATUE_NAME; // This statue's name
 // Arrays populated from configuration
 extern int STATUE_FREQUENCIES[MAX_STATUES];    // All statue frequencies
 extern char STATUE_NAMES[MAX_STATUES][10];     // All statue names
+extern float STATUE_THRESHOLDS[MAX_STATUES];   // All statue thresholds
 
 // Initialize the statue configuration based on IP address
 // Must be called after Ethernet initialization but before audioSenseSetup()
 // Returns true if successful, false if no matching IP found
 bool initStatueConfig();
+
+// Update detector thresholds based on current STATUE_THRESHOLDS array
+// Called after config changes to recalculate per-detector thresholds
+void updateDetectorThresholds();
 
 // Default configuration JSON stored in program memory
 // MAC and IP addresses from dnsmasq.conf static DHCP assignments

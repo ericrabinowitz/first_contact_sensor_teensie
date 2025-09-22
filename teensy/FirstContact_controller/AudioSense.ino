@@ -17,7 +17,11 @@ AudioSense: The contact sensing and audio mixing logic.
 // Note: tx_freq is now dynamically set from StatueConfig at runtime
 
 // This is the tone detection sensitivity. Now configurable via MQTT.
-float thresh = 0.01; // Default value, will be updated via config
+float global_thresh =
+    0.01; // Default global threshold (deprecated, kept for compatibility)
+
+// Per-detector thresholds - each detector uses the threshold of its target statue
+float detectorThresholds[MAX_STATUES - 1];
 
 // The controller for the audio shield.
 AudioControlSGTL5000 audioShield;
@@ -115,8 +119,13 @@ void audioSenseSetup() {
       int cycles = sample_time_ms * freq / 1000;
       leftDetectors[detectorIndex]->frequency(freq, cycles);
       rightDetectors[detectorIndex]->frequency(freq, cycles);
-      Serial.printf("    Detector %d: %s at %dHz\n", detectorIndex,
-                    STATUE_NAMES[statue_idx], freq);
+
+      // Initialize threshold for this detector (will be set from StatueConfig)
+      detectorThresholds[detectorIndex] = 0.01; // Default
+
+      Serial.printf("    Detector %d: %s at %dHz, threshold %.4f\n",
+                    detectorIndex, STATUE_NAMES[statue_idx], freq,
+                    detectorThresholds[detectorIndex]);
       detectorIndex++;
     }
   }
@@ -187,9 +196,19 @@ void printTransition(bool buffering, bool stableIsLinked,
 
 // Update detection threshold dynamically
 void updateDetectionThreshold(float threshold) {
-  thresh = threshold;
-  Serial.print("Detection threshold updated to: ");
-  Serial.println(thresh, 4);
+  // Update the global thresh for compatibility
+  global_thresh = threshold;
+
+  // Update this statue's threshold in the array
+  STATUE_THRESHOLDS[MY_STATUE_INDEX] = threshold;
+
+  // Recalculate all detector thresholds based on updated values
+  updateDetectorThresholds();
+
+  Serial.print("Detection threshold for ");
+  Serial.print(MY_STATUE_NAME);
+  Serial.print(" updated to: ");
+  Serial.println(global_thresh, 4);
 }
 
 // Get the linked state bitmask, buffering over ~100ms for stable readings.
@@ -212,7 +231,9 @@ uint8_t getStableLinkedMask() {
       float left = leftDetectors[detectorIndex]->read();
       float right = rightDetectors[detectorIndex]->read();
 
-      bool isDetected = (left > thresh || right > thresh);
+      // Use detector-specific threshold instead of global thresh
+      float detectorThresh = detectorThresholds[detectorIndex];
+      bool isDetected = (left > detectorThresh || right > detectorThresh);
       if (isDetected) {
         candidateLinkedMask |= (1 << statue_idx);
       }

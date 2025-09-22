@@ -5,6 +5,9 @@
 #include "defines.h"
 #include <ArduinoJson.h>
 
+// External function from StatueConfig.cpp
+extern int getStatueIndex(const char *name);
+
 // Use accessor to get the EthernetClient instance
 PubSubClient client(getEthClient());
 
@@ -13,7 +16,8 @@ TeensyConfig teensyConfig;
 
 // Track last config request time
 unsigned long lastConfigRequestMs = 0;
-const unsigned long CONFIG_REQUEST_INTERVAL_MS = 60000; // Request config every 60 seconds
+const unsigned long CONFIG_REQUEST_INTERVAL_MS =
+    60000; // Request config every 60 seconds
 
 void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
   Serial.print("\nmqttSubCallback() Message arrived [");
@@ -178,7 +182,7 @@ void loadDefaultConfig() {
   size_t len = strlen_P(DEFAULT_CONFIG_JSON);
 
   // Allocate buffer in RAM and copy from PROGMEM
-  char* jsonBuffer = new char[len + 1];
+  char *jsonBuffer = new char[len + 1];
   strcpy_P(jsonBuffer, DEFAULT_CONFIG_JSON);
 
   Serial.println("Loading threshold configuration from program memory...");
@@ -197,7 +201,7 @@ void requestConfig() {
 }
 
 // Parse configuration JSON and update TeensyConfig
-void parseConfig(const char* json, unsigned int length) {
+void parseConfig(const char *json, unsigned int length) {
   // Use static allocation for better memory management
   StaticJsonDocument<2048> doc;
 
@@ -213,7 +217,31 @@ void parseConfig(const char* json, unsigned int length) {
   Serial.print("My IP address: ");
   Serial.println(myIpAddress);
 
-  // Iterate through all statue configurations to find matching IP
+  // First, update all statue thresholds from the full configuration
+  // This allows each detector to use the appropriate target statue's threshold
+  bool thresholdsChanged = false;
+  for (JsonPair kv : doc.as<JsonObject>()) {
+    String statueName = kv.key().c_str();
+    JsonObject statueConfig = kv.value();
+
+    int idx = getStatueIndex(statueName.c_str());
+    if (idx >= 0 && idx < MAX_STATUES &&
+        statueConfig.containsKey("threshold")) {
+      float newThreshold = constrain(statueConfig["threshold"].as<float>(), 0.001, 1.0);
+      if (STATUE_THRESHOLDS[idx] != newThreshold) {
+        Serial.print("  ");
+        Serial.print(STATUE_NAMES[idx]);
+        Serial.print(" threshold: ");
+        Serial.print(STATUE_THRESHOLDS[idx], 4);
+        Serial.print(" -> ");
+        Serial.println(newThreshold, 4);
+        STATUE_THRESHOLDS[idx] = newThreshold;
+        thresholdsChanged = true;
+      }
+    }
+  }
+
+  // Now find our specific configuration by IP
   bool configFound = false;
   for (JsonPair kv : doc.as<JsonObject>()) {
     String statueName = kv.key().c_str();
@@ -229,11 +257,11 @@ void parseConfig(const char* json, unsigned int length) {
 
         configFound = true;
 
-        // Extract threshold (the main configurable parameter)
+        // Extract our threshold (kept for compatibility)
         if (statueConfig.containsKey("threshold")) {
           float newThreshold = statueConfig["threshold"];
           teensyConfig.threshold = constrain(newThreshold, 0.001, 1.0);
-          Serial.print("  Threshold: ");
+          Serial.print("  My threshold: ");
           Serial.println(teensyConfig.threshold, 4);
         }
 
@@ -261,7 +289,8 @@ void parseConfig(const char* json, unsigned int length) {
           for (JsonVariant v : detectArray) {
             if (idx < 4) {
               teensyConfig.detectStatues[idx] = v.as<String>();
-              if (idx > 0) Serial.print(", ");
+              if (idx > 0)
+                Serial.print(", ");
               Serial.print(teensyConfig.detectStatues[idx]);
               idx++;
             }
@@ -278,8 +307,12 @@ void parseConfig(const char* json, unsigned int length) {
 
   if (!configFound) {
     Serial.println("No configuration found matching this Teensy's IP address");
-    Serial.println("Using default threshold value");
+    Serial.println("Using default threshold values");
   }
+
+  // Update detector thresholds based on all parsed statue thresholds
+  // Each detector will use the threshold of its target statue
+  updateDetectorThresholds();
 }
 
 // Apply configuration changes to the system
