@@ -51,8 +51,10 @@ SUNSET = datetime.time(19, 00)  # 7:00 PM
 POWER_CHECK_INTERVAL_SECS = 60
 
 # Relay configuration
-RELAY_GPIO_PIN = 5  # GPIO 5 (Pin 29)
+RELAY_GPIO_PIN = 5  # GPIO 5 (Pin 29) - Main relay
+RELAY2_GPIO_PIN = 6  # GPIO 6 (Pin 31) - Timed relay
 RELAY_ACTIVE_HIGH = True  # True = HIGH activates relay, False = LOW activates relay
+RELAY2_MAX_DURATION = 3.0  # Maximum duration in seconds for relay 2
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -142,6 +144,9 @@ no_leds = False
 
 # Global timer for power
 power_timer_thread = None
+
+# Global timer for relay 2 auto-off
+relay2_timer_thread = None
 
 # MQTT client
 mqttc: Any = None
@@ -544,26 +549,78 @@ def initialize_gpio():
     """Initialize GPIO for relay control."""
     try:
         GPIO.setmode(GPIO.BCM)
+        # Setup both relay pins
         GPIO.setup(RELAY_GPIO_PIN, GPIO.OUT)
-        # Start with relay off
+        GPIO.setup(RELAY2_GPIO_PIN, GPIO.OUT)
+        # Start with both relays off
         GPIO.output(RELAY_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
-        print(f"GPIO initialized: Relay on pin {RELAY_GPIO_PIN} is OFF")
+        GPIO.output(RELAY2_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
+        print(f"GPIO initialized: Relay 1 on pin {RELAY_GPIO_PIN} is OFF")
+        print(f"GPIO initialized: Relay 2 on pin {RELAY2_GPIO_PIN} is OFF")
     except Exception as e:
         print(f"ERROR: Failed to initialize GPIO: {e}")
         print("Relay control will be disabled")
 
 
-def control_relay(activate: bool):
-    """Control the relay state."""
+def control_relay_1(activate: bool):
+    """Control the main relay state."""
     try:
         if activate:
             GPIO.output(RELAY_GPIO_PIN, GPIO.HIGH if RELAY_ACTIVE_HIGH else GPIO.LOW)
-            print(f"Relay on pin {RELAY_GPIO_PIN} is ON")
+            print(f"Relay 1 on pin {RELAY_GPIO_PIN} is ON")
         else:
             GPIO.output(RELAY_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
-            print(f"Relay on pin {RELAY_GPIO_PIN} is OFF")
+            print(f"Relay 1 on pin {RELAY_GPIO_PIN} is OFF")
     except Exception as e:
-        print(f"ERROR: Failed to control relay: {e}")
+        print(f"ERROR: Failed to control relay 1: {e}")
+
+
+def control_relay_2(activate: bool):
+    """Control the timed relay state."""
+    try:
+        if activate:
+            GPIO.output(RELAY2_GPIO_PIN, GPIO.HIGH if RELAY_ACTIVE_HIGH else GPIO.LOW)
+            print(f"Relay 2 on pin {RELAY2_GPIO_PIN} is ON")
+        else:
+            GPIO.output(RELAY2_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
+            print(f"Relay 2 on pin {RELAY2_GPIO_PIN} is OFF")
+    except Exception as e:
+        print(f"ERROR: Failed to control relay 2: {e}")
+
+
+def relay2_timeout():
+    """Callback to turn off relay 2 after timeout."""
+    global relay2_timer_thread
+    print(f"Relay 2 timeout reached ({RELAY2_MAX_DURATION} seconds)")
+    control_relay_2(False)
+    relay2_timer_thread = None
+
+
+def control_relay(activate: bool):
+    """Control both relays for climax events."""
+    global relay2_timer_thread
+
+    if activate:
+        # Turn on both relays
+        control_relay_1(True)
+        control_relay_2(True)
+
+        # Start timer for relay 2
+        if relay2_timer_thread:
+            relay2_timer_thread.cancel()
+        relay2_timer_thread = threading.Timer(RELAY2_MAX_DURATION, relay2_timeout)
+        relay2_timer_thread.start()
+        print(f"Started {RELAY2_MAX_DURATION}s timer for relay 2")
+    else:
+        # Turn off both relays
+        control_relay_1(False)
+        control_relay_2(False)
+
+        # Cancel timer if it's still running
+        if relay2_timer_thread:
+            relay2_timer_thread.cancel()
+            relay2_timer_thread = None
+            print("Cancelled relay 2 timer")
 
 
 def initialize_leds():
@@ -1073,9 +1130,17 @@ if __name__ == "__main__":
             power_timer_thread.cancel()
             print("Timer thread stopped")
 
-        # Cleanup GPIO
+        # Cleanup relays and GPIO
         try:
-            control_relay(False)  # Ensure relay is off
+            # Cancel relay 2 timer if active
+            if relay2_timer_thread:
+                relay2_timer_thread.cancel()
+                print("Cancelled relay 2 timer")
+
+            # Turn off both relays
+            control_relay(False)  # This turns off both relays and cancels timer
+
+            # Cleanup GPIO
             GPIO.cleanup()
             print("GPIO cleaned up")
         except Exception as e:
