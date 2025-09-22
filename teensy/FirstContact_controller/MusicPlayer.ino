@@ -4,6 +4,7 @@ MusicPlayer: Logic for playing songs.
 
 #include "AudioSense.h"
 #include "MusicPlayer.h"
+#include "Messaging.h"
 
 #include <Audio.h>
 #include <SD.h>
@@ -50,6 +51,7 @@ unsigned long fadeStartTime;
 
 #define NUM_CONTACT_SONGS (sizeof(contactSongs) / sizeof(contactSongs[0]))
 #define NUM_IDLE_SONGS (sizeof(idleSongs) / sizeof(idleSongs[0]))
+// These are now configurable via MQTT, but kept as fallback defaults
 #define PLAYING_MUSIC_VOLUME 1.0
 #define FADE_MUSIC_INIT_VOLUME 0.15
 #define PAUSE_TIMEOUT_MS 2000
@@ -92,7 +94,7 @@ void resumeMusic() {
   if (isFading && playSdWav1.isPlaying()) {
     // Restore volume
     // TODO: ramp volume back up?
-    setMusicVolume(PLAYING_MUSIC_VOLUME);
+    setMusicVolume(teensyConfig.musicVolume);
 
     isFading = false;
     Serial.println("Music resumed (volume restored)");
@@ -142,7 +144,7 @@ MusicState getMusicState(ContactState state) {
 
   if (isFading) {
     // still within the fading window?
-    if (millis() - fadeStartTime <= PAUSE_TIMEOUT_MS) {
+    if (millis() - fadeStartTime <= teensyConfig.pauseTimeoutMs) {
       // if playback stopped while fading, treat as finished
       if (!playSdWav1.isPlaying()) {
         return MUSIC_STATE_FADE_FINISHED;
@@ -159,7 +161,7 @@ MusicState getMusicState(ContactState state) {
 
   // once pause-timeout was set, after 30 s of idle play, enter idle-out
   if (idleOutTimerStarted
-      && (millis() - idleOutStartTime >= IDLE_OUT_TIMEOUT_MS)
+      && (millis() - idleOutStartTime >= teensyConfig.idleTimeoutMs)
     ) {
     // Reset the idle out timer, to take action (e.g. queue next song) only once.
     idleOutTimerStarted = false;
@@ -179,10 +181,10 @@ void updateFadedVolume(bool isLinked) {
   // we're in the process of resuming a song.
   if (isFading && !isLinked && playSdWav1.isPlaying()) {
     unsigned long elapsed = millis() - fadeStartTime;
-    float fraction = elapsed / (float)PAUSE_TIMEOUT_MS;
+    float fraction = elapsed / (float)teensyConfig.pauseTimeoutMs;
     if (fraction > 1.0)
       fraction = 1.0;
-    float newVolume = FADE_MUSIC_INIT_VOLUME * (1.0 - fraction);
+    float newVolume = teensyConfig.fadeInitVolume * (1.0 - fraction);
     setMusicVolume(newVolume);
 
     // Print the volume only if it has changed significantly.

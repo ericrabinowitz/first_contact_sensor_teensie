@@ -5,6 +5,7 @@ AudioSense: The contact sensing and audio mixing logic.
 #include <Audio.h>
 
 #include "AudioSense.h"
+#include "Messaging.h"
 #include "StatueConfig.h"
 
 // ------ Audio Contact Defines - Start
@@ -17,9 +18,8 @@ AudioSense: The contact sensing and audio mixing logic.
 // Use configured frequencies from StatueConfig.h
 const int tx_freq = MY_TX_FREQ; // This statue's transmit frequency
 
-// This is the tone dection sensitivity.  Currently set for maximum sensitivity.
-// Edit with caution and experimentation.
-float thresh = 0.01;
+// This is the tone detection sensitivity. Now configurable via MQTT.
+float thresh = 0.01; // Default value, will be updated via config
 
 // The controller for the audio shield.
 AudioControlSGTL5000 audioShield;
@@ -65,7 +65,7 @@ AudioOutputI2S audioOut;
 AudioConnection patchCordMOL(mixerSensingOutput, 0, audioOut, 0);
 
 elapsedMillis since_main = 0;
-uint16_t main_period_ms = 150;
+uint16_t main_period_ms = 150; // Default value, will be updated via config
 // ------ Audio Contact Defines - End
 
 // Contact Sense Start
@@ -105,7 +105,7 @@ void audioSenseSetup() {
   audioShield.enable();
   // TODO: Can we just set the gain of the mixer instead of the audio shield?
   // Then we can play music at full volume.
-  audioShield.volume(SIGNAL_AUDIO_VOLUME);
+  audioShield.volume(teensyConfig.signalVolume);
 
   const int sample_time_ms = main_period_ms / 2;
 
@@ -185,6 +185,31 @@ void printTransition(bool buffering, bool stableIsLinked,
     Serial.print(TRANSITION_BUFFER_MS);
     Serial.println("ms.");
   }
+}
+
+// Update detection threshold dynamically
+void updateDetectionThreshold(float threshold) {
+  thresh = threshold;
+  Serial.print("Detection threshold updated to: ");
+  Serial.println(thresh, 4);
+}
+
+// Update audio volumes dynamically
+void updateAudioVolumes(float signalVolume, float musicVolume) {
+  audioShield.volume(signalVolume);
+  Serial.print("Audio volumes updated - Signal: ");
+  Serial.print(signalVolume);
+  Serial.print(", Music: ");
+  Serial.println(musicVolume);
+  // Music volume will be handled in MusicPlayer.ino
+}
+
+// Update main loop period dynamically
+void updateMainPeriod(uint16_t periodMs) {
+  main_period_ms = periodMs;
+  Serial.print("Main loop period updated to: ");
+  Serial.print(main_period_ms);
+  Serial.println(" ms");
 }
 
 // Get the linked state bitmask, buffering over ~100ms for stable readings.
