@@ -3,6 +3,7 @@
 #include "Networking.h"
 #include "StatueConfig.h"
 #include "defines.h"
+#include "DefaultConfig.h"
 #include <ArduinoJson.h>
 
 // Use accessor to get the EthernetClient instance
@@ -101,6 +102,9 @@ void mqttLoop() {
 }
 
 void initMqtt() {
+  // Load default configuration from program memory first
+  loadDefaultConfig();
+
   client.setServer(getServer(), 1883);
   client.setCallback(mqttSubCallback);
 }
@@ -158,6 +162,22 @@ void publishState(ContactState state) {
   } else {
     Serial.println("Failed to publish detection state");
   }
+}
+
+// Load default configuration from program memory
+void loadDefaultConfig() {
+  // Get the length of the PROGMEM string
+  size_t len = strlen_P(DEFAULT_CONFIG_JSON);
+
+  // Allocate buffer in RAM and copy from PROGMEM
+  char* jsonBuffer = new char[len + 1];
+  strcpy_P(jsonBuffer, DEFAULT_CONFIG_JSON);
+
+  Serial.println("Loading default configuration from program memory...");
+  parseConfig(jsonBuffer, len);
+
+  // Clean up allocated memory
+  delete[] jsonBuffer;
 }
 
 // Request configuration from controller

@@ -37,6 +37,7 @@ struct TeensyConfig {
 extern TeensyConfig teensyConfig;
 
 // Configuration functions
+void loadDefaultConfig();
 void requestConfig();
 void applyConfig();
 void parseConfig(const char* json, unsigned int length);
