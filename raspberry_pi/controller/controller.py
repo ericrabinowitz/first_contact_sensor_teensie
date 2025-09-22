@@ -1,8 +1,8 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # dependencies = [
-#   "backports.strenum", "numpy", "paho-mqtt", "requests",
-#   "RPi.GPIO", "sounddevice", "soundfile", "ultraimport"
+#   "backports.strenum", "gpiozero", "numpy", "paho-mqtt", "requests",
+#   "sounddevice", "soundfile", "ultraimport", "lgpio"
 # ]
 # ///
 """
@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Set, Union
 
 import paho.mqtt.client as mqtt
 import requests
-import RPi.GPIO as GPIO
+from gpiozero import OutputDevice
 import soundfile as sf
 import ultraimport as ui
 
@@ -51,8 +51,8 @@ SUNSET = datetime.time(19, 00)  # 7:00 PM
 POWER_CHECK_INTERVAL_SECS = 60
 
 # Relay configuration
-RELAY_GPIO_PIN = 5  # GPIO 5 (Pin 29) - Main relay
-RELAY2_GPIO_PIN = 6  # GPIO 6 (Pin 31) - Timed relay
+RELAY_GPIO_PIN = 17  # GPIO 17 (Pin 11) - Main relay
+RELAY2_GPIO_PIN = 27  # GPIO 27 (Pin 13) - Timed relay
 RELAY_ACTIVE_HIGH = False  # True = HIGH activates relay, False = LOW activates relay
 RELAY2_MAX_DURATION = 3.0  # Maximum duration in seconds for relay 2
 
@@ -147,6 +147,10 @@ power_timer_thread = None
 
 # Global timer for relay 2 auto-off
 relay2_timer_thread = None
+
+# Relay device objects
+relay1_device = None
+relay2_device = None
 
 # MQTT client
 mqttc: Any = None
@@ -547,14 +551,12 @@ def set_debug(enable: bool):
 
 def initialize_gpio():
     """Initialize GPIO for relay control."""
+    global relay1_device, relay2_device
     try:
-        GPIO.setmode(GPIO.BCM)
-        # Setup both relay pins
-        GPIO.setup(RELAY_GPIO_PIN, GPIO.OUT)
-        GPIO.setup(RELAY2_GPIO_PIN, GPIO.OUT)
-        # Start with both relays off
-        GPIO.output(RELAY_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
-        GPIO.output(RELAY2_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
+        # active_high=False because it's low-level trigger
+        # initial_value=False means relay starts OFF
+        relay1_device = OutputDevice(RELAY_GPIO_PIN, active_high=not RELAY_ACTIVE_HIGH, initial_value=False)
+        relay2_device = OutputDevice(RELAY2_GPIO_PIN, active_high=not RELAY_ACTIVE_HIGH, initial_value=False)
         print(f"GPIO initialized: Relay 1 on pin {RELAY_GPIO_PIN} is OFF")
         print(f"GPIO initialized: Relay 2 on pin {RELAY2_GPIO_PIN} is OFF")
     except Exception as e:
@@ -564,12 +566,16 @@ def initialize_gpio():
 
 def control_relay_1(activate: bool):
     """Control the main relay state."""
+    global relay1_device
+    if not relay1_device:
+        print("WARNING: Relay 1 not initialized")
+        return
     try:
         if activate:
-            GPIO.output(RELAY_GPIO_PIN, GPIO.HIGH if RELAY_ACTIVE_HIGH else GPIO.LOW)
+            relay1_device.on()  # Sends appropriate signal based on active_high setting
             print(f"Relay 1 on pin {RELAY_GPIO_PIN} is ON")
         else:
-            GPIO.output(RELAY_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
+            relay1_device.off()
             print(f"Relay 1 on pin {RELAY_GPIO_PIN} is OFF")
     except Exception as e:
         print(f"ERROR: Failed to control relay 1: {e}")
@@ -577,12 +583,16 @@ def control_relay_1(activate: bool):
 
 def control_relay_2(activate: bool):
     """Control the timed relay state."""
+    global relay2_device
+    if not relay2_device:
+        print("WARNING: Relay 2 not initialized")
+        return
     try:
         if activate:
-            GPIO.output(RELAY2_GPIO_PIN, GPIO.HIGH if RELAY_ACTIVE_HIGH else GPIO.LOW)
+            relay2_device.on()  # Sends appropriate signal based on active_high setting
             print(f"Relay 2 on pin {RELAY2_GPIO_PIN} is ON")
         else:
-            GPIO.output(RELAY2_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
+            relay2_device.off()
             print(f"Relay 2 on pin {RELAY2_GPIO_PIN} is OFF")
     except Exception as e:
         print(f"ERROR: Failed to control relay 2: {e}")
@@ -1140,8 +1150,12 @@ if __name__ == "__main__":
             # Turn off both relays
             control_relay(False)  # This turns off both relays and cancels timer
 
-            # Cleanup GPIO
-            GPIO.cleanup()
-            print("GPIO cleaned up")
+            # Close GPIO devices
+            if relay1_device:
+                relay1_device.close()
+                print("Relay 1 device closed")
+            if relay2_device:
+                relay2_device.close()
+                print("Relay 2 device closed")
         except Exception as e:
             print(f"GPIO cleanup error: {e}")
