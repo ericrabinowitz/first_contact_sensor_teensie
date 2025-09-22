@@ -3,7 +3,6 @@
 #include "Networking.h"
 #include "StatueConfig.h"
 #include "defines.h"
-#include "DefaultConfig.h"
 #include <ArduinoJson.h>
 
 // Use accessor to get the EthernetClient instance
@@ -166,6 +165,15 @@ void publishState(ContactState state) {
 
 // Load default configuration from program memory
 void loadDefaultConfig() {
+  // First initialize the statue configuration based on IP address
+  // This sets MY_STATUE_INDEX, MY_TX_FREQ, etc. based on IP matching
+  bool statueConfigured = initStatueConfig();
+
+  if (!statueConfigured) {
+    Serial.println("WARNING: Failed to identify statue by IP, using defaults");
+  }
+
+  // Now load the threshold configuration using the same JSON
   // Get the length of the PROGMEM string
   size_t len = strlen_P(DEFAULT_CONFIG_JSON);
 
@@ -173,7 +181,7 @@ void loadDefaultConfig() {
   char* jsonBuffer = new char[len + 1];
   strcpy_P(jsonBuffer, DEFAULT_CONFIG_JSON);
 
-  Serial.println("Loading default configuration from program memory...");
+  Serial.println("Loading threshold configuration from program memory...");
   parseConfig(jsonBuffer, len);
 
   // Clean up allocated memory

@@ -14,8 +14,7 @@ AudioSense: The contact sensing and audio mixing logic.
 // This is the volume tuned for the sense signal sensitivity.
 #define SIGNAL_AUDIO_VOLUME 0.75
 
-// Use configured frequencies from StatueConfig.h
-const int tx_freq = MY_TX_FREQ; // This statue's transmit frequency
+// Note: tx_freq is now dynamically set from StatueConfig at runtime
 
 // This is the tone detection sensitivity. Now configurable via MQTT.
 float thresh = 0.01; // Default value, will be updated via config
@@ -75,7 +74,7 @@ void audioSenseSetup() {
 
   // Add debug output for statue identity
   Serial.printf("Configuring Statue %c (%s)\n", THIS_STATUE_ID, MY_STATUE_NAME);
-  Serial.printf("  TX Frequency: %d Hz\n", tx_freq);
+  Serial.printf("  TX Frequency: %d Hz\n", MY_TX_FREQ);
   Serial.println("  RX Frequencies:");
 
   // Initialize detector arrays for all MAX_STATUES-1 pairs
@@ -128,7 +127,7 @@ void audioSenseSetup() {
 
   // Configure sine generator to transmit THIS statue's frequency
   AudioNoInterrupts(); // disable audio library momentarily
-  sine1.frequency(tx_freq);
+  sine1.frequency(MY_TX_FREQ);
   sine1.amplitude(1.0);
   AudioInterrupts(); // enable, tone will start
 }
