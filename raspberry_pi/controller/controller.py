@@ -2,7 +2,7 @@
 # /// script
 # dependencies = [
 #   "backports.strenum", "numpy", "paho-mqtt", "requests",
-#   "sounddevice", "soundfile", "ultraimport"
+#   "RPi.GPIO", "sounddevice", "soundfile", "ultraimport"
 # ]
 # ///
 """
@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Set, Union
 
 import paho.mqtt.client as mqtt
 import requests
+import RPi.GPIO as GPIO
 import soundfile as sf
 import ultraimport as ui
 
@@ -48,6 +49,10 @@ STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 SUNRISE = datetime.time(7, 00)  # 7:00 AM
 SUNSET = datetime.time(19, 00)  # 7:00 PM
 POWER_CHECK_INTERVAL_SECS = 60
+
+# Relay configuration
+RELAY_GPIO_PIN = 5  # GPIO 5 (Pin 29)
+RELAY_ACTIVE_HIGH = True  # True = HIGH activates relay, False = LOW activates relay
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
@@ -529,6 +534,32 @@ def set_debug(enable: bool):
     debug = enable
 
 
+def initialize_gpio():
+    """Initialize GPIO for relay control."""
+    try:
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(RELAY_GPIO_PIN, GPIO.OUT)
+        # Start with relay off
+        GPIO.output(RELAY_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
+        print(f"GPIO initialized: Relay on pin {RELAY_GPIO_PIN} is OFF")
+    except Exception as e:
+        print(f"ERROR: Failed to initialize GPIO: {e}")
+        print("Relay control will be disabled")
+
+
+def control_relay(activate: bool):
+    """Control the relay state."""
+    try:
+        if activate:
+            GPIO.output(RELAY_GPIO_PIN, GPIO.HIGH if RELAY_ACTIVE_HIGH else GPIO.LOW)
+            print(f"Relay on pin {RELAY_GPIO_PIN} is ON")
+        else:
+            GPIO.output(RELAY_GPIO_PIN, GPIO.LOW if RELAY_ACTIVE_HIGH else GPIO.HIGH)
+            print(f"Relay on pin {RELAY_GPIO_PIN} is OFF")
+    except Exception as e:
+        print(f"ERROR: Failed to control relay: {e}")
+
+
 def initialize_leds():
     """Initialize the segment map and turn the LEDs on."""
     if no_leds:
@@ -792,12 +823,13 @@ def handle_contact_event(payload: dict):
     # Check for climax events
     climax_started, climax_stopped, current_active_links = update_active_links()
 
-    # Future: Handle climax-specific effects here
-    # if climax_started:
-    #     publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
-    #     # Trigger special audio, lights, relays, etc.
-    # elif climax_stopped:
-    #     publish_mqtt("missing_link/climax", {"state": "inactive"})
+    # Handle climax-specific effects
+    if climax_started:
+        control_relay(activate=True)
+        # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
+    elif climax_stopped:
+        control_relay(activate=False)
+        # Future: publish_mqtt("missing_link/climax", {"state": "inactive"})
 
     if transitioned:
         change_playback_state()
@@ -976,6 +1008,7 @@ if __name__ == "__main__":
     load_audio_files()
     load_audio_devices()
     initialize_playback()
+    initialize_gpio()  # Initialize GPIO for relay control
 
     connect_to_mqtt()
 
@@ -1023,3 +1056,11 @@ if __name__ == "__main__":
         if power_timer_thread is not None:
             power_timer_thread.cancel()
             print("Timer thread stopped")
+
+        # Cleanup GPIO
+        try:
+            control_relay(False)  # Ensure relay is off
+            GPIO.cleanup()
+            print("GPIO cleaned up")
+        except Exception as e:
+            print(f"GPIO cleanup error: {e}")
