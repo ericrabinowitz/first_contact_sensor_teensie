@@ -53,7 +53,7 @@ POWER_CHECK_INTERVAL_SECS = 60
 # Relay configuration
 RELAY_GPIO_PIN = 5  # GPIO 5 (Pin 29) - Main relay
 RELAY2_GPIO_PIN = 6  # GPIO 6 (Pin 31) - Timed relay
-RELAY_ACTIVE_HIGH = True  # True = HIGH activates relay, False = LOW activates relay
+RELAY_ACTIVE_HIGH = False  # True = HIGH activates relay, False = LOW activates relay
 RELAY2_MAX_DURATION = 3.0  # Maximum duration in seconds for relay 2
 
 # Folder for audio files
