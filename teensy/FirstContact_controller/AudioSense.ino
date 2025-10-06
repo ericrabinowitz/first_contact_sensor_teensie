@@ -16,10 +16,6 @@ AudioSense: The contact sensing and audio mixing logic.
 
 // Note: tx_freq is now dynamically set from StatueConfig at runtime
 
-// This is the tone detection sensitivity. Now configurable via MQTT.
-float global_thresh =
-    0.01; // Default global threshold (deprecated, kept for compatibility)
-
 // Per-detector thresholds - each detector uses the threshold of its target statue
 float detectorThresholds[MAX_STATUES - 1];
 
@@ -192,23 +188,6 @@ void printTransition(bool buffering, bool stableIsLinked,
     Serial.print(TRANSITION_BUFFER_MS);
     Serial.println("ms.");
   }
-}
-
-// Update detection threshold dynamically
-void updateDetectionThreshold(float threshold) {
-  // Update the global thresh for compatibility
-  global_thresh = threshold;
-
-  // Update this statue's threshold in the array
-  STATUE_THRESHOLDS[MY_STATUE_INDEX] = threshold;
-
-  // Recalculate all detector thresholds based on updated values
-  updateDetectorThresholds();
-
-  Serial.print("Detection threshold for ");
-  Serial.print(MY_STATUE_NAME);
-  Serial.print(" updated to: ");
-  Serial.println(global_thresh, 4);
 }
 
 // Get the linked state bitmask, buffering over ~100ms for stable readings.

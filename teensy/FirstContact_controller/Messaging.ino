@@ -227,7 +227,8 @@ void parseConfig(const char *json, unsigned int length) {
     int idx = getStatueIndex(statueName.c_str());
     if (idx >= 0 && idx < MAX_STATUES &&
         statueConfig.containsKey("threshold")) {
-      float newThreshold = constrain(statueConfig["threshold"].as<float>(), 0.001, 1.0);
+      float newThreshold =
+          constrain(statueConfig["threshold"].as<float>(), 0.001, 1.0);
       if (STATUE_THRESHOLDS[idx] != newThreshold) {
         Serial.print("  ");
         Serial.print(STATUE_NAMES[idx]);
@@ -257,7 +258,7 @@ void parseConfig(const char *json, unsigned int length) {
 
         configFound = true;
 
-        // Extract our threshold (kept for compatibility)
+        // Extract our threshold (kept as informational)
         if (statueConfig.containsKey("threshold")) {
           float newThreshold = statueConfig["threshold"];
           teensyConfig.threshold = constrain(newThreshold, 0.001, 1.0);
@@ -319,8 +320,7 @@ void parseConfig(const char *json, unsigned int length) {
 void applyConfig() {
   Serial.println("Applying configuration...");
 
-  // Update detection threshold (the only configurable parameter)
-  updateDetectionThreshold(teensyConfig.threshold);
+  // There are currently no configurable parameters, so this is a no-op.
 
   Serial.println("Configuration applied successfully");
 }
