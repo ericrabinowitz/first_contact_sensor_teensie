@@ -4,12 +4,12 @@
     "on": true,
     "bri": 128,
     "transition": 7,
-    "mainseg": 0,
+    "mainseg": 3,
     "seg": [
       {
         "id": 0,
         "start": 0,
-        "stop": 100,
+        "stop": 50,
         "grp": 1,
         "spc": 0,
         "of": 0,
@@ -22,8 +22,8 @@
         "col": [
           [
             255,
-            255,
-            255
+            0,
+            0
           ],
           [
             0,
@@ -43,7 +43,7 @@
         "c1": 128,
         "c2": 128,
         "c3": 16,
-        "sel": false,
+        "sel": true,
         "rev": false,
         "mi": false,
         "o1": false,
@@ -54,8 +54,8 @@
       },
       {
         "id": 1,
-        "start": 100,
-        "stop": 300,
+        "start": 50,
+        "stop": 200,
         "grp": 1,
         "spc": 0,
         "of": 0,
@@ -68,8 +68,8 @@
         "col": [
           [
             255,
-            255,
-            255
+            0,
+            0
           ],
           [
             0,
@@ -89,7 +89,7 @@
         "c1": 128,
         "c2": 128,
         "c3": 16,
-        "sel": false,
+        "sel": true,
         "rev": false,
         "mi": false,
         "o1": false,
@@ -100,100 +100,8 @@
       },
       {
         "id": 2,
-        "start": 300,
-        "stop": 301,
-        "grp": 1,
-        "spc": 0,
-        "of": 0,
-        "on": true,
-        "frz": false,
-        "bri": 170,
-        "cct": 127,
-        "set": 0,
-        "n": "Elektra ?",
-        "col": [
-          [
-            255,
-            255,
-            255
-          ],
-          [
-            0,
-            0,
-            0
-          ],
-          [
-            0,
-            0,
-            0
-          ]
-        ],
-        "fx": 71,
-        "sx": 128,
-        "ix": 128,
-        "pal": 3,
-        "c1": 128,
-        "c2": 128,
-        "c3": 16,
-        "sel": false,
-        "rev": false,
-        "mi": false,
-        "o1": false,
-        "o2": false,
-        "o3": false,
-        "si": 0,
-        "m12": 0
-      },
-      {
-        "id": 3,
-        "start": 400,
-        "stop": 450,
-        "grp": 1,
-        "spc": 0,
-        "of": 0,
-        "on": true,
-        "frz": false,
-        "bri": 170,
-        "cct": 127,
-        "set": 0,
-        "n": "Elektra Head Heart",
-        "col": [
-          [
-            255,
-            255,
-            255
-          ],
-          [
-            0,
-            0,
-            0
-          ],
-          [
-            0,
-            0,
-            0
-          ]
-        ],
-        "fx": 71,
-        "sx": 128,
-        "ix": 128,
-        "pal": 3,
-        "c1": 128,
-        "c2": 128,
-        "c3": 16,
-        "sel": false,
-        "rev": false,
-        "mi": false,
-        "o1": false,
-        "o2": false,
-        "o3": false,
-        "si": 0,
-        "m12": 0
-      },
-      {
-        "id": 4,
-        "start": 450,
-        "stop": 500,
+        "start": 200,
+        "stop": 250,
         "grp": 1,
         "spc": 0,
         "of": 0,
@@ -207,6 +115,52 @@
           [
             255,
             255,
+            255
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "fx": 71,
+        "sx": 128,
+        "ix": 128,
+        "pal": 3,
+        "c1": 128,
+        "c2": 128,
+        "c3": 16,
+        "sel": true,
+        "rev": false,
+        "mi": false,
+        "o1": false,
+        "o2": false,
+        "o3": false,
+        "si": 0,
+        "m12": 0
+      },
+      {
+        "id": 3,
+        "start": 250,
+        "stop": 350,
+        "grp": 1,
+        "spc": 0,
+        "of": 0,
+        "on": true,
+        "frz": false,
+        "bri": 170,
+        "cct": 127,
+        "set": 0,
+        "n": "Elektra Head Heart",
+        "col": [
+          [
+            0,
+            0,
             255
           ],
           [
@@ -316,9 +270,12 @@
       },
       {
         "stop": 0
+      },
+      {
+        "stop": 0
       }
     ],
-    "n": "Eros-Elektra",
-    "ql": "â ¤ï¸ "
+    "n": "Eros Elektra",
+    "ql": "❤️"
   }
 }
