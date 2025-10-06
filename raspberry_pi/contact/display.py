@@ -39,9 +39,16 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any, Optional
 
-from audio.devices import Statue, dynConfig
+import ultraimport as ui
 
-from .config import TONE_FREQUENCIES
+Statue = ui.ultraimport("__dir__/../audio/devices.py", "Statue")
+TONE_FREQUENCIES = ui.ultraimport("__dir__/config.py", "TONE_FREQUENCIES")
+
+try:
+    from audio.devices import dynConfig
+except ImportError:
+    # dynConfig not available - use default threshold for MQTT mode
+    dynConfig = {"touch_threshold": 0.1}
 
 if TYPE_CHECKING:
     from .link_state import LinkStateTracker
