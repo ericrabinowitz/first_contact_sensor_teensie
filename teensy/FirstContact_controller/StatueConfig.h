@@ -77,4 +77,13 @@ const char STATUE_NAMES[MAX_STATUES][10] = {"EROS", "ELEKTRA", "ARIEL",
 #define MY_TX_FREQ STATUE_FREQUENCIES[MY_STATUE_INDEX]
 #define MY_STATUE_NAME STATUE_NAMES[MY_STATUE_INDEX]
 
+// Mister relay control configuration
+// Only enable on one Teensy to avoid conflicts
+// Set to 1 for the designated mister control Teensy, 0 for all others
+#if THIS_STATUE_ID == 'E'  // ULTIMO is designated for mister control
+#define MISTER_ENABLED 1
+#else
+#define MISTER_ENABLED 0
+#endif
+
 #endif // STATUE_CONFIG_H
