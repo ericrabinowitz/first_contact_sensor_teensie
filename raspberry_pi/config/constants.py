@@ -34,3 +34,4 @@ class Effect(IntEnum):
     FIREWORKS = 42
     NOISE = 71
     LIGHTHOUSE = 41  # consider scanner
+    # Add some effect for climax and use that.
