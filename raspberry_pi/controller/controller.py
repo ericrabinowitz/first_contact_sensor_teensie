@@ -557,8 +557,8 @@ def initialize_gpio():
     try:
         # active_high=False because it's low-level trigger
         # initial_value=False means relay starts OFF
-        relay1_device = OutputDevice(RELAY_GPIO_PIN, active_high=not RELAY_ACTIVE_HIGH, initial_value=False)
-        relay2_device = OutputDevice(RELAY2_GPIO_PIN, active_high=not RELAY_ACTIVE_HIGH, initial_value=False)
+        relay1_device = OutputDevice(RELAY_GPIO_PIN, active_high=RELAY_ACTIVE_HIGH, initial_value=False)
+        relay2_device = OutputDevice(RELAY2_GPIO_PIN, active_high=RELAY_ACTIVE_HIGH, initial_value=False)
         print(f"GPIO initialized: Relay 1 on pin {RELAY_GPIO_PIN} is OFF")
         print(f"GPIO initialized: Relay 2 on pin {RELAY2_GPIO_PIN} is OFF")
     except Exception as e:
