@@ -124,6 +124,7 @@ COLORS = {
 BRIGHTNESS = {
     "active": 255,  # Max
     "dormant": 127,  # 1/2 max
+    "climax": 255,  # Max
 }
 
 EFFECTS = {
@@ -738,7 +739,7 @@ def manage_power():
 # ### Actions
 
 
-def leds_active(statues: Set[Statue]), effect_config_name='active':  # pyright: ignore[reportInvalidTypeForm]
+def leds_active(statues: Set[Statue], effect_key='active'):
     if no_leds:
         return
     if debug:
@@ -759,9 +760,9 @@ def leds_active(statues: Set[Statue]), effect_config_name='active':  # pyright: 
                 board_payloads[board]["seg"].append(
                     {
                         "id": seg_id,
-                        "bri": BRIGHTNESS[effect_config_name],
+                        "bri": BRIGHTNESS[effect_key],
                         "col": color,
-                        "fx": EFFECTS[effect_config_name],
+                        "fx": EFFECTS[effect_key],
                         "pal": PALETTE_ID,
                     }
                 )
@@ -905,7 +906,7 @@ def handle_contact_event(payload: dict):
         print(f"Activating the following statues: {new_actives}")
     for statue in new_actives:
         audio_active(statue)
-    leds_active(new_actives, effect_config_name='active')
+    leds_active(new_actives, effect_key='active')
 
     # dormant statues
     if debug:
@@ -922,7 +923,7 @@ def handle_contact_event(payload: dict):
             music_playback.set_music_channel(5, True)
             if debug:
                 print("Enabled climax audio on channel 5")
-            leds_active(new_actives, effect_config_name='climax')
+            leds_active(new_actives, effect_key='climax')
         # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
     elif climax_stopped:
         control_relay(activate=False)
