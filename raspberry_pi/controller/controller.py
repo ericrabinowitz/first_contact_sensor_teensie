@@ -125,6 +125,10 @@ BRIGHTNESS = {
     "active": 255,  # Max
     "dormant": 127,  # 1/2 max
     "climax": 255,  # Max
+    "hand-dormant": 255,
+    "heart-dormant": 90,
+    "hand-active": 255,
+    "heart-active": 255,
 }
 
 EFFECTS = {
@@ -133,6 +137,10 @@ EFFECTS = {
     "arch": Effect.LIGHTHOUSE,
     "hand": Effect.SOLID,
     "climax": Effect.FIREWORKS,
+    "hand-dormant": Effect.NOISE,
+    "heart-dormant": Effect.SOLID,
+    "hand-active": Effect.SOLID,
+    "heart-active": Effect.HEARTBEAT,
 }
 
 
@@ -756,16 +764,25 @@ def leds_active(statues: Set[Statue], effect_key='active'):
     for statue in statues:
         color = COLORS.get(statue, COLORS["dormant"])
         for board, seg_map in segment_map[statue].items():
-            for part, seg_id in seg_map.items():
+            for segment_name, seg_id in seg_map.items():
+                # Segment name is either 'hands' or contains 'heart'.
+                if "hand" in segment_name:
+                    effect_key = "hand-active"
+                elif "heart" in segment_name:
+                    effect_key = "heart-active"
+                bri = BRIGHTNESS[effect_key]
+                fx = EFFECTS[effect_key]
                 board_payloads[board]["seg"].append(
                     {
                         "id": seg_id,
-                        "bri": BRIGHTNESS[effect_key],
+                        "bri": bri,
                         "col": color,
-                        "fx": EFFECTS[effect_key],
+                        "fx": fx,
                         "pal": PALETTE_ID,
                     }
                 )
+                if debug:
+                    print(f"[active] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
 
     for board, payload in board_payloads.items():
         if len(payload["seg"]) == 0:
@@ -778,6 +795,7 @@ def leds_active(statues: Set[Statue], effect_key='active'):
 
 
 def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
+    effect_key = 'dormant'
     if no_leds:
         print("No leds: skipping dormant")
         return
@@ -794,16 +812,21 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
 
     for statue in statues:
         for board, seg_map in segment_map[statue].items():
-            for part, seg_id in seg_map.items():
-                fx = EFFECTS["dormant"]
-                color = COLORS["dormant"]
-                bri = BRIGHTNESS["dormant"]
-                if "hand" in part:
-                    color = COLORS.get(statue, COLORS["dormant"])
-                    bri = BRIGHTNESS["active"]
-                    fx = EFFECTS["hand"]
-                #if "arch" in part:
-                #    fx = EFFECTS["arch"]
+            for segment_name, seg_id in seg_map.items():
+                # Segment name is either 'hands' or contains 'heart'.
+                color_key = "dormant"
+                if "hand" in segment_name:
+                    effect_key = "hand-dormant"
+                    color_key = statue
+                elif "heart" in segment_name:
+                    effect_key = "heart-dormant"
+
+                fx = EFFECTS[effect_key]
+                color = COLORS[color_key]
+                bri = BRIGHTNESS[effect_key]
+
+                if debug:
+                    print(f"[dormant] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
 
                 board_payloads[board]["seg"].append(
                     {
@@ -1103,6 +1126,7 @@ if __name__ == "__main__":
 
     # Initialize Teensy config and WLED segments
     initialize_leds()
+    print(f"Segment Map: {segment_map}")
     send_config()
 
     # Start in the dormant state
