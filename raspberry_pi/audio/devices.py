@@ -64,16 +64,17 @@ STATUES = [
 
 
 def configure_hifiberry(device: dict[str, Any]) -> list[dict[str, Any]]:
-    """Configure HiFiBerry DAC8x for all 5 statues.
+    """Configure HiFiBerry DAC8x for all 5 statues plus climax channel.
 
     The HiFiBerry DAC8x has 8 output channels, allowing us to assign
-    one channel per statue for music playback.
+    one channel per statue for music playback, plus a dedicated channel
+    for climax events.
 
     Args:
         device: The HiFiBerry device dictionary from sounddevice
 
     Returns:
-        list: Configured devices for all 5 statues
+        list: Configured devices for all 5 statues plus climax channel
     """
     configured_devices = []
     sample_rate = int(device["default_samplerate"])
@@ -83,6 +84,7 @@ def configure_hifiberry(device: dict[str, Any]) -> list[dict[str, Any]]:
     print(f"Sample rate: {sample_rate} Hz")
     print("Channel assignments:")
 
+    # Configure channels 0-4 for statues
     for i, statue in enumerate(STATUES):
         print(f"  Channel {i}: {statue.upper()}")
 
@@ -96,6 +98,19 @@ def configure_hifiberry(device: dict[str, Any]) -> list[dict[str, Any]]:
                 "device_type": "multi_channel",
             }
         )
+
+    # Configure channel 5 for climax events
+    print(f"  Channel 5: CLIMAX (special events)")
+    configured_devices.append(
+        {
+            "statue": "CLIMAX",  # Special marker, not a Statue enum
+            "device_index": device["index"],
+            "sample_rate": sample_rate,
+            "channel_index": 5,  # Audio file channel 5
+            "output_channel": 5,  # HiFiBerry output channel 5
+            "device_type": "multi_channel",
+        }
+    )
 
     return configured_devices
 

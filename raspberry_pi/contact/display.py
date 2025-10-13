@@ -39,9 +39,16 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any, Optional
 
-from audio.devices import Statue, dynConfig
+import ultraimport as ui
 
-from .config import TONE_FREQUENCIES
+Statue = ui.ultraimport("__dir__/../audio/devices.py", "Statue")
+TONE_FREQUENCIES = ui.ultraimport("__dir__/config.py", "TONE_FREQUENCIES")
+
+try:
+    from audio.devices import dynConfig
+except ImportError:
+    # dynConfig not available - use default threshold for MQTT mode
+    dynConfig = {"touch_threshold": 0.1}
 
 if TYPE_CHECKING:
     from .link_state import LinkStateTracker
@@ -66,20 +73,24 @@ class StatusDisplay:
         running (bool): Controls the display update loop
     """
 
-    def __init__(self, link_tracker: 'LinkStateTracker', devices: list[dict[str, Any]], freq_controller=None) -> None:
+    def __init__(self, link_tracker: 'LinkStateTracker', devices: list[dict[str, Any]], freq_controller=None, mqtt_mode: bool = False) -> None:
         """Initialize the status display.
 
         Args:
             link_tracker (LinkStateTracker): Connection state tracker
             devices (list): List of device configurations with statue info
             freq_controller (FrequencyController, optional): Frequency controller for interactive mode
+            mqtt_mode (bool): If True, use MQTT-optimized display instead of detection matrix
         """
         self.link_tracker = link_tracker
         self.devices = devices
         self.freq_controller = freq_controller
+        self.mqtt_mode = mqtt_mode
         self.running = True
         # 2D metrics: {detector_statue: {target_statue: {'level': float, 'snr': float}}}
         self.detection_metrics = {}
+        # Track last update timestamp per detector
+        self.last_update: dict[Statue, float] = {}
         self.lock = threading.Lock()
         self.first_draw = True
 
@@ -87,6 +98,7 @@ class StatusDisplay:
         for detector_device in devices:
             detector = detector_device['statue']
             self.detection_metrics[detector] = {}
+            self.last_update[detector] = 0.0
             for target_device in devices:
                 target = target_device['statue']
                 if detector != target:  # Can't detect self
@@ -114,6 +126,18 @@ class StatusDisplay:
                 metrics['level'] = level
                 if snr is not None:
                     metrics['snr'] = snr
+
+    def update_detector_timestamp(self, detector: Statue) -> None:
+        """Update the last update timestamp for a detector.
+
+        Called when receiving MQTT messages to track when each detector
+        last reported its state.
+
+        Args:
+            detector (Statue): The detector statue that sent an update
+        """
+        with self.lock:
+            self.last_update[detector] = time.time()
 
     def format_cell(self, level: float, is_self: bool = False) -> str:
         """Format a single cell with level and box indicators."""
@@ -266,12 +290,81 @@ class StatusDisplay:
         # Add some blank lines to ensure we overwrite any previous content
         print("\r\n" * 3, end='', flush=True)
 
+    def draw_mqtt_interface(self) -> None:
+        """Draw the MQTT-optimized status interface.
+
+        Shows detector → emitters in a simple table format with timestamps
+        and placeholders for future level/SNR data.
+        """
+        if self.first_draw:
+            self.clear_screen()
+            self.first_draw = False
+        else:
+            self.move_cursor_home()
+
+        # Header
+        print("=== Missing Link MQTT Status Monitor ===\r\n\r", flush=True)
+
+        # Get current detector→emitters mapping from link tracker
+        detector_emitters = self.link_tracker.get_detector_emitters()
+
+        # Table header
+        print(f"{'DETECTOR':<12} {'EMITTERS':<30} {'LAST UPDATE':<15} {'LEVEL':<8} {'SNR':<8}\r", flush=True)
+        print("─" * 80 + "\r", flush=True)
+
+        current_time = time.time()
+        with self.lock:
+            # Display each detector's state
+            for device in self.devices:
+                detector = device['statue']
+                emitters = detector_emitters.get(detector, [])
+
+                # Format emitters list
+                if emitters:
+                    emitters_str = ", ".join([e.value for e in emitters])
+                    status_indicator = "●"  # Filled circle for linked
+                else:
+                    emitters_str = "(none)"
+                    status_indicator = "○"  # Empty circle for unlinked
+
+                # Format last update time
+                last_update_time = self.last_update.get(detector, 0.0)
+                if last_update_time == 0.0:
+                    update_str = "Never"
+                else:
+                    elapsed = current_time - last_update_time
+                    if elapsed < 60:
+                        update_str = f"{elapsed:.1f}s ago"
+                    elif elapsed < 3600:
+                        update_str = f"{elapsed/60:.1f}m ago"
+                    else:
+                        update_str = f"{elapsed/3600:.1f}h ago"
+
+                # Placeholders for level and SNR
+                level_str = "[TBD]"
+                snr_str = "[TBD]"
+
+                # Print row with padding
+                line = f"{status_indicator} {detector.value:<10} {emitters_str:<30} {update_str:<15} {level_str:<8} {snr_str:<8}"
+                print(f"{line:<100}\r", flush=True)
+
+        # Legend
+        print("\r\nLegend: ● = Linked  ○ = Unlinked\r", flush=True)
+        print("Note: LEVEL and SNR will be populated when available in MQTT messages\r", flush=True)
+        print("\r\nPress Ctrl+C to stop\r", flush=True)
+
+        # Add blank lines to ensure clean overwrites
+        print("\r\n" * 3, end='', flush=True)
+
     def run(self) -> None:
         """Run the display update loop."""
         self.hide_cursor()
         while self.running:
             try:
-                self.draw_interface()
+                if self.mqtt_mode:
+                    self.draw_mqtt_interface()
+                else:
+                    self.draw_interface()
                 time.sleep(0.25)  # Update every 250ms (4Hz)
             except Exception:
                 # Don't crash the display thread

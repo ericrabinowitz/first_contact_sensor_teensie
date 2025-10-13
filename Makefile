@@ -34,11 +34,14 @@ sync: ## Sync project files to Raspberry Pi
 	@echo "✓ Sync complete"
 
 controller: sync ## Run multi-channel audio playback test (syncs files first)
-	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && $(PYTHON_WITH_PATH) ./controller.py'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && DEBUG=1 $(PYTHON_WITH_PATH) ./controller.py'"
 
 controller-test: sync ## Run controller with LED/WLED disabled for audio testing (syncs files first)
 	@echo "Starting controller in TEST MODE (no LED control)..."
 	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && TEST_MODE_NO_LEDS=1 $(PYTHON_WITH_PATH) ./controller.py'"
+
+monitor: sync ## Run MQTT status monitor to display statue connections (syncs files first)
+	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && $(PYTHON_WITH_PATH) ./status_monitor.py'"
 
 ## Audio Device Management (runs on rpi5)
 audio-list: ## List all audio devices on the Raspberry Pi
@@ -123,7 +126,7 @@ wled-test: sync ## Run WLED test
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
 	@echo "Stopping running test scripts on $(SSH_TARGET)..."
-	@ssh $(SSH_TARGET) "pkill -f 'tone_demo.py|tone_detect_demo.py|controller.py' || true"
+	@ssh $(SSH_TARGET) "pkill -f 'tone_demo.py|tone_detect_demo.py|controller.py|status_monitor.py' || true"
 	@echo "✓ Scripts stopped"
 
 kill-all: ## Force kill all Python scripts on Raspberry Pi
@@ -167,4 +170,4 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test monitor

@@ -1,8 +1,8 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # dependencies = [
-#   "backports.strenum", "numpy", "paho-mqtt", "requests",
-#   "sounddevice", "soundfile", "ultraimport"
+#   "backports.strenum", "gpiozero", "numpy", "paho-mqtt", "requests",
+#   "sounddevice", "soundfile", "ultraimport", "lgpio"
 # ]
 # ///
 """
@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Set, Union
 
 import paho.mqtt.client as mqtt
 import requests
+from gpiozero import OutputDevice
 import soundfile as sf
 import ultraimport as ui
 
@@ -42,19 +43,25 @@ configure_devices = ui.ultraimport("__dir__/../audio/devices.py", "configure_dev
 
 VERSION = "2.1"  # Version of the script
 DEBUG_PORT = 8080  # Port for the debug server
-STARTUP_DELAY = 60  # Delay to allow MQTT clients to connect, seconds
+STARTUP_DELAY = 5  # Delay to allow MQTT clients to connect, seconds
 
 # Roughly match sunrise/sunset times in SF in August 2025
 SUNRISE = datetime.time(7, 00)  # 7:00 AM
 SUNSET = datetime.time(19, 00)  # 7:00 PM
 POWER_CHECK_INTERVAL_SECS = 60
 
+# Relay configuration
+RELAY_GPIO_PIN = 17  # GPIO 17 (Pin 11) - Main relay
+RELAY2_GPIO_PIN = 27  # GPIO 27 (Pin 13) - Timed relay
+RELAY_ACTIVE_HIGH = False  # True = HIGH activates relay, False = LOW activates relay
+RELAY2_MAX_DURATION = 3.0  # Maximum duration in seconds for relay 2
+
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONGS = [
-    "Missing Link Playa 1 - 5 channel.wav",
-    "Missing Link Playa 2 - 5 Channel.wav",
-    "Missing Link Playa 3 - 5 Channel.wav",
+    "Missing Link Playa 1 - 6 channel.wav",
+    "Missing Link Playa 2 - 6 Channel.wav",
+    "Missing Link Playa 3 - 6 Channel.wav",
     #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
     #    "Missing Link Playa 3 - Five Channel.wav",
 ]
@@ -117,6 +124,11 @@ COLORS = {
 BRIGHTNESS = {
     "active": 255,  # Max
     "dormant": 127,  # 1/2 max
+    "climax": 255,  # Max
+    "hand-dormant": 255,
+    "heart-dormant": 90,
+    "hand-active": 255,
+    "heart-active": 255,
 }
 
 EFFECTS = {
@@ -124,19 +136,31 @@ EFFECTS = {
     "dormant": Effect.NOISE,
     "arch": Effect.LIGHTHOUSE,
     "hand": Effect.SOLID,
+    "climax": Effect.FIREWORKS,
+    "hand-dormant": Effect.NOISE,
+    "heart-dormant": Effect.SOLID,
+    "hand-active": Effect.SOLID,
+    "heart-active": Effect.HEARTBEAT,
 }
 
 
 # ### Global variables
 
 # Enable debug logging
-debug = False
+debug = True
 
 # Disable all LED/WLED functionality
 no_leds = False
 
 # Global timer for power
 power_timer_thread = None
+
+# Global timer for relay 2 auto-off
+relay2_timer_thread = None
+
+# Relay device objects
+relay1_device = None
+relay2_device = None
 
 # MQTT client
 mqttc: Any = None
@@ -239,6 +263,10 @@ linked_statues: Dict[Statue, List[Statue]] = {  # pyright: ignore[reportInvalidT
 }
 # Statues that are currently active
 active_statues: Set[Statue] = set()  # pyright: ignore[reportInvalidTypeForm]
+
+# Climax event tracking
+climax_is_active: bool = False
+active_links: Set[tuple[Statue, Statue]] = set()  # pyright: ignore[reportInvalidTypeForm]
 
 music_playback: Any = None
 
@@ -371,6 +399,12 @@ def initialize_playback():
     # Enable all channels for dormant mode
     music_playback.enable_all_music_channels()
 
+    # Disable climax channel (5) since climax is not active at startup
+    if len(audio_devices) > 5:
+        music_playback.set_music_channel(5, False)
+        if debug:
+            print("Disabled climax channel 5 at startup")
+
     if debug:
         print("Playback initialized with dormant song on all channels")
 
@@ -437,6 +471,68 @@ def update_active_statues(
     return new_actives, new_dormants, was_dormant != now_dormant
 
 
+def update_active_links() -> tuple[bool, bool, Set[tuple[Statue, Statue]]]:  # pyright: ignore[reportInvalidTypeForm]
+    """Update the active links between neighboring statues and detect climax events.
+
+    Returns:
+        climax_started: True if climax just began
+        climax_stopped: True if climax just ended
+        active_links: Set of currently connected neighbor pairs (normalized tuples)
+    """
+    global climax_is_active, active_links
+
+    # Get all statues in enum order
+    all_statues = list(Statue)
+    num_statues = len(all_statues)
+
+    # Define neighbor pairs (with wraparound)
+    neighbor_pairs = []
+    for i in range(num_statues):
+        current = all_statues[i]
+        next_statue = all_statues[(i + 1) % num_statues]
+        neighbor_pairs.append((current, next_statue))
+
+    # Check which neighbor pairs have active links (bidirectional)
+    new_active_links = set()
+    for statue1, statue2 in neighbor_pairs:
+        # Check if either statue detects the other
+        has_link = False
+
+        # Check if statue1 detects statue2
+        if statue2 in linked_statues.get(statue1, []):
+            has_link = True
+
+        # Check if statue2 detects statue1
+        if statue1 in linked_statues.get(statue2, []):
+            has_link = True
+
+        if has_link:
+            # Normalize the tuple (smaller statue first) to avoid duplicates
+            if statue1.value < statue2.value:
+                new_active_links.add((statue1, statue2))
+            else:
+                new_active_links.add((statue2, statue1))
+
+    # Determine if climax is active (all 5 neighbor pairs connected)
+    new_climax_active = len(new_active_links) == num_statues
+
+    # Detect state transitions
+    climax_started = new_climax_active and not climax_is_active
+    climax_stopped = not new_climax_active and climax_is_active
+
+    # Update global state
+    climax_is_active = new_climax_active
+    active_links = new_active_links
+
+    # Print state changes
+    if climax_started:
+        print("Climax happening!")
+    elif climax_stopped:
+        print("Climax has stopped.")
+
+    return climax_started, climax_stopped, new_active_links
+
+
 def get_channel(statue: Statue) -> int:  # pyright: ignore[reportInvalidTypeForm]
     """Get the audio channel index for a statue."""
     for device in audio_devices:
@@ -461,6 +557,90 @@ def set_debug(enable: bool):
     """Enable or disable debug mode."""
     global debug
     debug = enable
+
+
+def initialize_gpio():
+    """Initialize GPIO for relay control."""
+    global relay1_device, relay2_device
+    try:
+        # active_high=False because it's low-level trigger
+        # initial_value=False means relay starts OFF
+        relay1_device = OutputDevice(RELAY_GPIO_PIN, active_high=RELAY_ACTIVE_HIGH, initial_value=False)
+        relay2_device = OutputDevice(RELAY2_GPIO_PIN, active_high=RELAY_ACTIVE_HIGH, initial_value=False)
+        print(f"GPIO initialized: Relay 1 on pin {RELAY_GPIO_PIN} is OFF")
+        print(f"GPIO initialized: Relay 2 on pin {RELAY2_GPIO_PIN} is OFF")
+    except Exception as e:
+        print(f"ERROR: Failed to initialize GPIO: {e}")
+        print("Relay control will be disabled")
+
+
+def control_relay_1(activate: bool):
+    """Control the main relay state."""
+    global relay1_device
+    if not relay1_device:
+        print("WARNING: Relay 1 not initialized")
+        return
+    try:
+        if activate:
+            relay1_device.on()  # Sends appropriate signal based on active_high setting
+            print(f"Relay 1 on pin {RELAY_GPIO_PIN} is ON")
+        else:
+            relay1_device.off()
+            print(f"Relay 1 on pin {RELAY_GPIO_PIN} is OFF")
+    except Exception as e:
+        print(f"ERROR: Failed to control relay 1: {e}")
+
+
+def control_relay_2(activate: bool):
+    """Control the timed relay state."""
+    global relay2_device
+    if not relay2_device:
+        print("WARNING: Relay 2 not initialized")
+        return
+    try:
+        if activate:
+            relay2_device.on()  # Sends appropriate signal based on active_high setting
+            print(f"Relay 2 on pin {RELAY2_GPIO_PIN} is ON")
+        else:
+            relay2_device.off()
+            print(f"Relay 2 on pin {RELAY2_GPIO_PIN} is OFF")
+    except Exception as e:
+        print(f"ERROR: Failed to control relay 2: {e}")
+
+
+def relay2_timeout():
+    """Callback to turn off relay 2 after timeout."""
+    global relay2_timer_thread
+    print(f"Relay 2 timeout reached ({RELAY2_MAX_DURATION} seconds)")
+    control_relay_2(False)
+    relay2_timer_thread = None
+
+
+def control_relay(activate: bool):
+    """Control both relays for climax events."""
+    global relay2_timer_thread
+
+    if activate:
+        # Turn on both relays
+        control_relay_1(True)
+        control_relay_2(True)
+
+        # Start timer for relay 2
+        if relay2_timer_thread:
+            relay2_timer_thread.cancel()
+        relay2_timer_thread = threading.Timer(RELAY2_MAX_DURATION, relay2_timeout)
+        relay2_timer_thread.start()
+        print(f"Started {RELAY2_MAX_DURATION}s timer for relay 2")
+    else:
+        # Turn off both relays
+        control_relay_1(False)
+        control_relay_2(False)
+
+        # Cancel timer if it's still running
+        if relay2_timer_thread:
+            relay2_timer_thread.cancel()
+            relay2_timer_thread = None
+            print("Cancelled relay 2 timer")
 
 
 def initialize_leds():
@@ -567,7 +747,7 @@ def manage_power():
 # ### Actions
 
 
-def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
+def leds_active(statues: Set[Statue], effect_key='active'):
     if no_leds:
         return
     if debug:
@@ -584,16 +764,25 @@ def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
     for statue in statues:
         color = COLORS.get(statue, COLORS["dormant"])
         for board, seg_map in segment_map[statue].items():
-            for part, seg_id in seg_map.items():
+            for segment_name, seg_id in seg_map.items():
+                # Segment name is either 'hands' or contains 'heart'.
+                if "hand" in segment_name:
+                    effect_key = "hand-active"
+                elif "heart" in segment_name:
+                    effect_key = "heart-active"
+                bri = BRIGHTNESS[effect_key]
+                fx = EFFECTS[effect_key]
                 board_payloads[board]["seg"].append(
                     {
                         "id": seg_id,
-                        "bri": BRIGHTNESS["active"],
+                        "bri": bri,
                         "col": color,
-                        "fx": EFFECTS["active"],
+                        "fx": fx,
                         "pal": PALETTE_ID,
                     }
                 )
+                if debug:
+                    print(f"[active] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
 
     for board, payload in board_payloads.items():
         if len(payload["seg"]) == 0:
@@ -606,6 +795,7 @@ def leds_active(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
 
 
 def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
+    effect_key = 'dormant'
     if no_leds:
         print("No leds: skipping dormant")
         return
@@ -622,16 +812,21 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
 
     for statue in statues:
         for board, seg_map in segment_map[statue].items():
-            for part, seg_id in seg_map.items():
-                fx = EFFECTS["dormant"]
-                color = COLORS["dormant"]
-                bri = BRIGHTNESS["dormant"]
-                if "hand" in part:
-                    color = COLORS.get(statue, COLORS["dormant"])
-                    bri = BRIGHTNESS["active"]
-                    fx = EFFECTS["hand"]
-                #if "arch" in part:
-                #    fx = EFFECTS["arch"]
+            for segment_name, seg_id in seg_map.items():
+                # Segment name is either 'hands' or contains 'heart'.
+                color_key = "dormant"
+                if "hand" in segment_name:
+                    effect_key = "hand-dormant"
+                    color_key = statue
+                elif "heart" in segment_name:
+                    effect_key = "heart-dormant"
+
+                fx = EFFECTS[effect_key]
+                color = COLORS[color_key]
+                bri = BRIGHTNESS[effect_key]
+
+                if debug:
+                    print(f"[dormant] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
 
                 board_payloads[board]["seg"].append(
                     {
@@ -723,6 +918,9 @@ def handle_contact_event(payload: dict):
     """Handle a contact event from a statue."""
     new_actives, new_dormants, transitioned = update_active_statues(payload)
 
+    # Check for climax events
+    climax_started, climax_stopped, current_active_links = update_active_links()
+
     if transitioned:
         change_playback_state()
 
@@ -731,7 +929,7 @@ def handle_contact_event(payload: dict):
         print(f"Activating the following statues: {new_actives}")
     for statue in new_actives:
         audio_active(statue)
-    leds_active(new_actives)
+    leds_active(new_actives, effect_key='active')
 
     # dormant statues
     if debug:
@@ -739,6 +937,25 @@ def handle_contact_event(payload: dict):
     for statue in new_dormants:
         audio_dormant(statue)
     leds_dormant(new_dormants)
+
+    # Handle climax-specific effects
+    if climax_started:
+        control_relay(activate=True)
+        # Enable climax audio on channel 5
+        if music_playback:
+            music_playback.set_music_channel(5, True)
+            if debug:
+                print("Enabled climax audio on channel 5")
+            leds_active(new_actives, effect_key='climax')
+        # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
+    elif climax_stopped:
+        control_relay(activate=False)
+        # Disable climax audio on channel 5
+        if music_playback:
+            music_playback.set_music_channel(5, False)
+            if debug:
+                print("Disabled climax audio on channel 5")
+        # Future: publish_mqtt("missing_link/climax", {"state": "inactive"})
 
 
 # ### Debug server
@@ -795,6 +1012,8 @@ class ControllerDebugHandler(BaseHTTPRequestHandler):
                     ),
                     "linked_statues": linked_statues,
                     "active_statues": list(active_statues),
+                    "climax_is_active": climax_is_active,
+                    "active_links": [list(link) for link in active_links],
                 }
             )
         else:
@@ -898,6 +1117,7 @@ if __name__ == "__main__":
     load_audio_files()
     load_audio_devices()
     initialize_playback()
+    initialize_gpio()  # Initialize GPIO for relay control
 
     connect_to_mqtt()
 
@@ -906,6 +1126,7 @@ if __name__ == "__main__":
 
     # Initialize Teensy config and WLED segments
     initialize_leds()
+    print(f"Segment Map: {segment_map}")
     send_config()
 
     # Start in the dormant state
@@ -945,3 +1166,23 @@ if __name__ == "__main__":
         if power_timer_thread is not None:
             power_timer_thread.cancel()
             print("Timer thread stopped")
+
+        # Cleanup relays and GPIO
+        try:
+            # Cancel relay 2 timer if active
+            if relay2_timer_thread:
+                relay2_timer_thread.cancel()
+                print("Cancelled relay 2 timer")
+
+            # Turn off both relays
+            control_relay(False)  # This turns off both relays and cancels timer
+
+            # Close GPIO devices
+            if relay1_device:
+                relay1_device.close()
+                print("Relay 1 device closed")
+            if relay2_device:
+                relay2_device.close()
+                print("Relay 2 device closed")
+        except Exception as e:
+            print(f"GPIO cleanup error: {e}")

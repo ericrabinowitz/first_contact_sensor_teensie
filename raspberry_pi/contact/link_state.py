@@ -160,6 +160,78 @@ class LinkStateTracker:
 
         return changed
 
+    def update_detector_emitters(self, detector: Statue, emitters: list[Statue]) -> bool:
+        """Update all links for a detector based on MQTT emitters list.
+
+        This method is designed for MQTT message format where each detector reports
+        its complete list of current emitters. It replaces all existing links for
+        the detector with the new emitters list, maintaining bidirectional consistency.
+
+        Args:
+            detector (Statue): The detector statue reporting its state
+            emitters (list[Statue]): Complete list of statues currently linked to detector
+
+        Returns:
+            bool: True if any state changed, False if no change
+
+        Example:
+            >>> # MQTT message: {"detector": "eros", "emitters": ["elektra", "sophia"]}
+            >>> tracker.update_detector_emitters(Statue.EROS, [Statue.ELEKTRA, Statue.SOPHIA])
+        """
+        changed = False
+        new_emitters = set(emitters)
+        old_emitters = self.links[detector].copy()
+
+        # Find emitters that were added or removed
+        added_emitters = new_emitters - old_emitters
+        removed_emitters = old_emitters - new_emitters
+
+        # Process removed emitters
+        for emitter in removed_emitters:
+            self.links[detector].discard(emitter)
+            self.links[emitter].discard(detector)
+            changed = True
+            if not self.quiet:
+                print(f"🔌 Link broken: {detector.value} ↔ {emitter.value}")
+
+        # Process added emitters
+        for emitter in added_emitters:
+            self.links[detector].add(emitter)
+            self.links[emitter].add(detector)
+            changed = True
+            if not self.quiet:
+                print(f"🔗 Link established: {detector.value} ↔ {emitter.value}")
+
+        # Update has_links status and audio channels for all affected statues
+        affected_statues = {detector} | added_emitters | removed_emitters
+        for statue in affected_statues:
+            old_has_links = self.has_links[statue]
+            self.has_links[statue] = len(self.links[statue]) > 0
+
+            if old_has_links != self.has_links[statue]:
+                status = "linked" if self.has_links[statue] else "unlinked"
+                if not self.quiet:
+                    print(f"  → {statue.value} is now {status}")
+                changed = True
+                self._update_audio_channel(statue, self.has_links[statue])
+
+        return changed
+
+    def get_detector_emitters(self) -> dict[Statue, list[Statue]]:
+        """Return current state in detector→emitters format.
+
+        Returns a dictionary mapping each statue to its list of linked emitters.
+        This format matches the MQTT message structure.
+
+        Returns:
+            dict: Maps each statue to list of statues it's linked to
+
+        Example:
+            >>> tracker.get_detector_emitters()
+            {Statue.EROS: [Statue.ELEKTRA], Statue.ELEKTRA: [Statue.EROS], ...}
+        """
+        return {statue: list(linked_set) for statue, linked_set in self.links.items()}
+
     def get_link_summary(self) -> str:
         """Return human-readable link summary."""
         summary = []
