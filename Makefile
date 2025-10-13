@@ -40,7 +40,7 @@ controller-test: sync ## Run controller with LED/WLED disabled for audio testing
 	@echo "Starting controller in TEST MODE (no LED control)..."
 	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && TEST_MODE_NO_LEDS=1 $(PYTHON_WITH_PATH) ./controller.py'"
 
-status-monitor: sync ## Run MQTT status monitor to display statue connections (syncs files first)
+monitor: sync ## Run MQTT status monitor to display statue connections (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && $(PYTHON_WITH_PATH) ./status_monitor.py'"
 
 ## Audio Device Management (runs on rpi5)
@@ -170,4 +170,4 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test status-monitor
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test monitor
