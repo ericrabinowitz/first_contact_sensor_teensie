@@ -944,20 +944,20 @@ def handle_contact_event(payload: dict):
     # Handle climax-specific effects
     if climax_started:
         control_relay(activate=True)
-        # Enable climax audio on channel 5
+        # Enable climax mode: mix all channels and broadcast to all outputs
         if music_playback:
-            music_playback.set_music_channel(5, True)
+            music_playback.set_climax_mode(True)
             if debug:
-                print("Enabled climax audio on channel 5")
+                print("Enabled climax mode: mixing all channels to all outputs")
             leds_active(new_actives, effect_key='climax')
         # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
     elif climax_stopped:
         control_relay(activate=False)
-        # Disable climax audio on channel 5
+        # Disable climax mode: return to normal per-channel routing
         if music_playback:
-            music_playback.set_music_channel(5, False)
+            music_playback.set_climax_mode(False)
             if debug:
-                print("Disabled climax audio on channel 5")
+                print("Disabled climax mode: returning to normal routing")
         # Future: publish_mqtt("missing_link/climax", {"state": "inactive"})
 
 
