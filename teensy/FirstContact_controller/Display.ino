@@ -148,11 +148,28 @@ void displayThresholds(void) {
   for (int i = 0; i < NUM_STATUES - 1; i++) {
     if (i > 0)
       display.print(F("/"));
-    // Format as .XX (no leading zero) to save space
-    int value_int = (int)(detectorThresholds[i] * 100 + 0.5); // Round to nearest
+
+    // Determine precision for this value (2 or 3 decimal places)
+    // Use 0.00995 threshold to account for floating point precision
+    int precision = (detectorThresholds[i] < 0.00995) ? 3 : 2;
+    int multiplier = (precision == 2) ? 100 : 1000;
+
+    // Format as .XX or .XXX (no leading zero) to save space
+    int value_int = (int)(detectorThresholds[i] * multiplier + 0.5); // Round to nearest
     display.print(F("."));
-    if (value_int < 10) {
-      display.print(F("0"));
+
+    // Print leading zeros based on precision
+    if (precision == 2) {
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
+    } else { // 3 decimals
+      if (value_int < 100) {
+        display.print(F("0"));
+      }
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
     }
     display.print(value_int);
   }
@@ -180,11 +197,28 @@ void displaySignals(void) {
   for (int i = 0; i < NUM_STATUES - 1; i++) {
     if (i > 0)
       display.print(F("/"));
-    // Format as .XX (no leading zero) to save space
-    int value_int = (int)(detectorSignals[i] * 100 + 0.5); // Round to nearest
+
+    // Determine precision based on threshold (not signal) to keep display stable
+    // Use 0.00995 threshold to account for floating point precision
+    int precision = (detectorThresholds[i] < 0.00995) ? 3 : 2;
+    int multiplier = (precision == 2) ? 100 : 1000;
+
+    // Format as .XX or .XXX (no leading zero) to save space
+    int value_int = (int)(detectorSignals[i] * multiplier + 0.5); // Round to nearest
     display.print(F("."));
-    if (value_int < 10) {
-      display.print(F("0"));
+
+    // Print leading zeros based on precision
+    if (precision == 2) {
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
+    } else { // 3 decimals
+      if (value_int < 100) {
+        display.print(F("0"));
+      }
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
     }
     display.print(value_int);
   }
