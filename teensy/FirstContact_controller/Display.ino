@@ -111,13 +111,13 @@ void displayHostname(char *hostname) {
 }
 
 void displayFrequencies(void) {
-  // Display RX frequencies on line 3 (y=20) in kHz
-  display.fillRect(0, 20, 128, 10, SSD1306_BLACK); // Clear line 3
-  display.setCursor(0, 20);
+  // Display RX frequencies on line 2 (y=10) in kHz
+  display.fillRect(0, 10, 128, 10, SSD1306_BLACK); // Clear line 2
+  display.setCursor(0, 10);
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
 
-  // Show RX frequencies in kHz on line 3
+  // Show RX frequencies in kHz
   display.print(F("RX:"));
   bool first = true;
   for (int i = 0; i < NUM_STATUES; i++) {
@@ -134,9 +134,9 @@ void displayFrequencies(void) {
 }
 
 void displayThresholds(void) {
-  // Display detector thresholds on line 4 (y=30)
-  display.fillRect(0, 30, 128, 10, SSD1306_BLACK); // Clear line 4
-  display.setCursor(0, 30);
+  // Display detector thresholds on line 3 (y=20)
+  display.fillRect(0, 20, 128, 10, SSD1306_BLACK); // Clear line 3
+  display.setCursor(0, 20);
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
 
@@ -265,10 +265,7 @@ void displaySplashScreen(void) {
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);             // Start at top-left corner
-  display.print(F("STATUE "));
-  display.print("?");
-  display.print(F(": "));
-  display.print("?");
+  display.print(F("?: ?"));
 
   display.setCursor(0, 25);
   //display.setTextSize(2);             // Draw 2X-scale text
@@ -290,17 +287,17 @@ void displaySplashScreen(void) {
 }
 
 void displayUpdateStatueInfo(char *hostname) {
-  // Update only the statue ID and name on line 0 without clearing the entire display
-  display.fillRect(
-      0, 0, 70, 10,
-      SSD1306_BLACK); // Clear just the statue info area (before hostname)
+  // Display compact format: "B: elektra TX:12k" on line 0
+  display.fillRect(0, 0, 128, 10, SSD1306_BLACK); // Clear entire line 0
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
-  display.print(F("STATUE "));
   display.print(THIS_STATUE_ID);
   display.print(F(": "));
   display.print(hostname);
+  display.print(F(" TX:"));
+  display.print(MY_TX_FREQ / 1000.0, 1);
+  display.print(F("k"));
   display.display();
 }
 

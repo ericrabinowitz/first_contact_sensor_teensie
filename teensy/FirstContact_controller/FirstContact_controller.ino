@@ -125,15 +125,8 @@ void setup() {
 
 #if !STANDALONE_MODE
   // Update display with correct statue identity after config is loaded.
-  // Refresh all network-related display lines with the correct statue config.
+  // displayUpdateStatueInfo now shows: "B: elektra TX:12k" (compact format)
   displayUpdateStatueInfo(getHostname());
-
-  // Update network status line with IP and TX frequency (now with correct MY_TX_FREQ)
-  char ipString[128];
-  IPAddress ipAddress = Ethernet.localIP();
-  sprintf(ipString, "%d.%d.%d.%d", ipAddress[0], ipAddress[1], ipAddress[2],
-          ipAddress[3]);
-  displayNetworkStatus(ipString);
 
   displayFrequencies();
   displayThresholds();
