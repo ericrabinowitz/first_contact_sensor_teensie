@@ -18,15 +18,15 @@ configuration, eliminating the need for compile-time statue identification.
 
 // These are now dynamic variables, not compile-time constants
 // They are set at runtime based on IP address matching
-extern char THIS_STATUE_ID;      // 'A' through 'E' based on statue index
-extern int MY_STATUE_INDEX;      // 0-4 based on which statue we are
-extern int MY_TX_FREQ;           // This statue's transmit frequency
-extern const char* MY_STATUE_NAME; // This statue's name
+extern char THIS_STATUE_ID;        // 'A' through 'E' based on statue index
+extern int MY_STATUE_INDEX;        // 0-4 based on which statue we are
+extern int MY_TX_FREQ;             // This statue's transmit frequency
+extern const char *MY_STATUE_NAME; // This statue's name
 
 // Arrays populated from configuration
-extern int STATUE_FREQUENCIES[MAX_STATUES];    // All statue frequencies
-extern char STATUE_NAMES[MAX_STATUES][10];     // All statue names
-extern float STATUE_THRESHOLDS[MAX_STATUES];   // All statue thresholds
+extern int STATUE_FREQUENCIES[MAX_STATUES];  // All statue frequencies
+extern char STATUE_NAMES[MAX_STATUES][10];   // All statue names
+extern float STATUE_THRESHOLDS[MAX_STATUES]; // All statue thresholds
 
 // Initialize the statue configuration based on IP address
 // Must be called after Ethernet initialization but before audioSenseSetup()
@@ -45,14 +45,14 @@ const char DEFAULT_CONFIG_JSON[] PROGMEM = R"({
     "detect": ["elektra", "sophia", "ultimo", "ariel"],
     "threshold": 0.01,
     "mac_address": "04:e9:e5:19:06:4c",
-    "ip_address": "192.168.4.26"
+    "ip_address": "192.168.4.21"
   },
   "elektra": {
     "emit": 12274,
     "detect": ["eros", "sophia", "ultimo", "ariel"],
     "threshold": 0.01,
     "mac_address": "04:e9:e5:19:06:2f",
-    "ip_address": "192.168.4.23"
+    "ip_address": "192.168.4.22"
   },
   "ariel": {
     "emit": 14643,

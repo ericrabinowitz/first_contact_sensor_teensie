@@ -238,10 +238,10 @@ void displaySplashScreen(void) {
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);             // Start at top-left corner
-  display.print(F("ST "));
-  display.print(THIS_STATUE_ID);
+  display.print(F("STATUE "));
+  display.print("?");
   display.print(F(": "));
-  display.print(MY_STATUE_NAME);
+  display.print("?");
 
   display.setCursor(0, 25);
   //display.setTextSize(2);             // Draw 2X-scale text
@@ -260,6 +260,21 @@ void displaySplashScreen(void) {
 
   display.display();
   //delay(2000); XXX
+}
+
+void displayUpdateStatueInfo(char *hostname) {
+  // Update only the statue ID and name on line 0 without clearing the entire display
+  display.fillRect(
+      0, 0, 70, 10,
+      SSD1306_BLACK); // Clear just the statue info area (before hostname)
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.print(F("STATUE "));
+  display.print(THIS_STATUE_ID);
+  display.print(F(": "));
+  display.print(hostname);
+  display.display();
 }
 
 void displaySetup() {

@@ -229,7 +229,7 @@ networkErrorRetry: // Entry point if we fail to initialize network
 
   hostname = stringToCharArray(Hostname);
 
-  displayHostname(hostname);
+  //displayHostname(hostname);
 
   // Display TX/RX frequencies on line 2
   displayFrequencies();
