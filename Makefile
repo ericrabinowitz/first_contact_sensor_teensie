@@ -123,6 +123,33 @@ tone-detect-tx-sim: sync ## Run tone detection demo with TX control in simulatio
 wled-test: sync ## Run WLED test
 	@$(SSH_EXEC) "bash -l -c 'cd $(WLED_DIR) && $(PYTHON_WITH_PATH) ./wled.py'"
 
+## Climax Simulation
+climax-on: ## Simulate full climax mode (all statues connected in circular topology)
+	@echo "Triggering climax mode on $(SSH_TARGET) - connecting all adjacent statue pairs..."
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"eros\", \"emitters\":[\"elektra\", \"ultimo\"]}'" && echo "✓ eros ↔ elektra, ultimo"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"elektra\", \"emitters\":[\"eros\", \"ariel\"]}'" && echo "✓ elektra ↔ eros, ariel"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ariel\", \"emitters\":[\"elektra\", \"sophia\"]}'" && echo "✓ ariel ↔ elektra, sophia"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"sophia\", \"emitters\":[\"ariel\", \"ultimo\"]}'" && echo "✓ sophia ↔ ariel, ultimo"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ultimo\", \"emitters\":[\"sophia\", \"eros\"]}'" && echo "✓ ultimo ↔ sophia, eros"
+	@echo "✓ Climax mode activated"
+
+climax-off: ## Simulate turning off climax mode (disconnect all statues)
+	@echo "Deactivating climax mode on $(SSH_TARGET) - disconnecting all statues..."
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"eros\", \"emitters\":[]}'" && echo "✓ eros disconnected"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"elektra\", \"emitters\":[]}'" && echo "✓ elektra disconnected"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ariel\", \"emitters\":[]}'" && echo "✓ ariel disconnected"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"sophia\", \"emitters\":[]}'" && echo "✓ sophia disconnected"
+	@sleep 0.5
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ultimo\", \"emitters\":[]}'" && echo "✓ ultimo disconnected"
+	@echo "✓ Climax mode deactivated"
+
 ## Process Management
 stop: ## Stop all running test scripts on Raspberry Pi
 	@echo "Stopping running test scripts on $(SSH_TARGET)..."
@@ -170,4 +197,4 @@ lint-install: ## Install ruff linter
 	@echo "Installing ruff..."
 	@pip3 install ruff
 
-.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test monitor
+.PHONY: sync audio-list audio-status audio-deps tone-test tone-detect-test freq-sweep audio-test audio-demo 8ch-test 8ch-generate-tones 8ch-generate-sweep 8ch-generate-mixed 8ch-list tx-test tx-test-sim tone-detect-tx tone-detect-tx-sim climax-on climax-off stop kill-all help typecheck typecheck-install lint lint-install print-devices controller controller-test monitor
