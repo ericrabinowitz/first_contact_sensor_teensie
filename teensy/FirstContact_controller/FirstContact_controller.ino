@@ -136,6 +136,7 @@ void setup() {
   displayNetworkStatus(ipString);
 
   displayFrequencies();
+  displayThresholds();
 #endif
 }
 

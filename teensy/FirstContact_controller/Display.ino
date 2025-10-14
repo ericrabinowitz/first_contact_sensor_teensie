@@ -5,6 +5,9 @@ Display: Printing to the small OLED display on the teensy.
 #include "Display.h"
 #include "StatueConfig.h"
 
+// External reference to detector thresholds array from AudioSense.ino
+extern float detectorThresholds[MAX_STATUES - 1];
+
 // Create the OLED display object using Wire2 (as in original code).
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
 
@@ -72,14 +75,14 @@ void displayState(ContactState state) {
     return;
   }
 
-  // Clear the connection display area
-  display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
+  // Clear the connection display area (moved down to y=40)
+  display.fillRect(0, 40, 128, 15, SSD1306_BLACK);
 
   if (state.isLinked()) {
     ++contactCount;
     display.setTextSize(1);              // Normal text size for full names
     display.setTextColor(SSD1306_WHITE); // Draw white text
-    display.setCursor(0, 30);
+    display.setCursor(0, 40);
 
     // Display connected statue names
     display.print(F("LINK:"));
@@ -125,6 +128,30 @@ void displayFrequencies(void) {
       //display.print(F("k"));
       first = false;
     }
+  }
+
+  display.display();
+}
+
+void displayThresholds(void) {
+  // Display detector thresholds on line 4 (y=30)
+  display.fillRect(0, 30, 128, 10, SSD1306_BLACK); // Clear line 4
+  display.setCursor(0, 30);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  // Show detector thresholds
+  display.print(F("TH:"));
+  for (int i = 0; i < NUM_STATUES - 1; i++) {
+    if (i > 0)
+      display.print(F("/"));
+    // Format as .XX (no leading zero) to save space
+    int value_int = (int)(detectorThresholds[i] * 100 + 0.5); // Round to nearest
+    display.print(F("."));
+    if (value_int < 10) {
+      display.print(F("0"));
+    }
+    display.print(value_int);
   }
 
   display.display();
@@ -192,13 +219,13 @@ void displayActivityStatus(bool isLinked) {
   */
   display.setTextColor(SSD1306_WHITE);
 
-  display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);
+  display.fillRect(Xposition_last, 40, 10, 10, SSD1306_BLACK);
 
   /*
     Draw a small box on the line position it based on the fraction of a second
   */
 
-  display.fillRect(Xposition, 30, 10, 10, SSD1306_WHITE); // New Block
+  display.fillRect(Xposition, 40, 10, 10, SSD1306_WHITE); // New Block
   display.display();
 
   /* Flip the direction */

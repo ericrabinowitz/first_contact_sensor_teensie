@@ -32,6 +32,7 @@ void displayUpdateStatueInfo();
 void displayHostname(char *hostname);
 void displayNetworkStatus(const char *status);
 void displayFrequencies();
+void displayThresholds();
 void displayTimeCount();
 void displayState(ContactState state);
 void displayActivityStatus(bool isLinked);

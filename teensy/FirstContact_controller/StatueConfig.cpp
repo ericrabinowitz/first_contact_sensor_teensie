@@ -4,6 +4,7 @@ StatueConfig.cpp - Implementation of dynamic statue configuration
 
 #include "StatueConfig.h"
 #include "Networking.h"
+#include "Display.h"
 #include <ArduinoJson.h>
 
 // Variable definitions - these replace the former #define constants
@@ -208,4 +209,7 @@ void updateDetectorThresholds() {
   if (!anyChanged) {
     Serial.println("Detector thresholds unchanged");
   }
+
+  // Update the display to show the new threshold values
+  displayThresholds();
 }
