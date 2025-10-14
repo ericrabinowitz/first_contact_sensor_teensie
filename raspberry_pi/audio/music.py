@@ -29,6 +29,7 @@ import sounddevice as sd
 
 
 BLOCK_SIZE = 1024  # Default block size for audio processing
+CLIMAX_MIX_GAIN = 0.5  # Gain factor for mixing all channels in climax mode
 
 
 class ToggleableMultiChannelPlayback:
@@ -81,6 +82,9 @@ class ToggleableMultiChannelPlayback:
         self.loop = loop
         self.debug = debug
 
+        # Climax mode: mix all channels and broadcast to all outputs
+        self.climax_mode = False
+
         # Group devices by device_index to identify shared devices
         self.device_groups = {}
         for device in devices:
@@ -122,22 +126,41 @@ class ToggleableMultiChannelPlayback:
             # Create multi-channel output
             multi_channel_data = np.zeros((frames, num_channels))
 
-            # Map each input channel to its output channel
-            for device in device_list:
-                input_ch = device.get("channel_index", 0)
-                output_ch = device.get("output_channel", input_ch)
+            if self.climax_mode:
+                # Climax mode: Mix all 6 channels and broadcast to all outputs
+                mixed_signal = np.zeros(frames_to_play)
+                num_channels_to_mix = min(6, self.audio_data.shape[1])
 
-                if (
-                    self.channel_enabled[input_ch]
-                    and input_ch < self.audio_data.shape[1]
-                ):
-                    # Copy audio data to the appropriate output channel
-                    channel_data = self.audio_data[
-                        self.frame_index : self.frame_index  # noqa: E203
-                        + frames_to_play,
-                        input_ch,
+                # Sum all channels
+                for ch in range(num_channels_to_mix):
+                    mixed_signal += self.audio_data[
+                        self.frame_index : self.frame_index + frames_to_play,  # noqa: E203
+                        ch,
                     ]
-                    multi_channel_data[:frames_to_play, output_ch] = channel_data
+
+                # Apply gain normalization
+                mixed_signal *= CLIMAX_MIX_GAIN
+
+                # Broadcast to all output channels (0-5)
+                for output_ch in range(min(6, num_channels)):
+                    multi_channel_data[:frames_to_play, output_ch] = mixed_signal
+            else:
+                # Normal mode: Map each input channel to its output channel
+                for device in device_list:
+                    input_ch = device.get("channel_index", 0)
+                    output_ch = device.get("output_channel", input_ch)
+
+                    if (
+                        self.channel_enabled[input_ch]
+                        and input_ch < self.audio_data.shape[1]
+                    ):
+                        # Copy audio data to the appropriate output channel
+                        channel_data = self.audio_data[
+                            self.frame_index : self.frame_index  # noqa: E203
+                            + frames_to_play,
+                            input_ch,
+                        ]
+                        multi_channel_data[:frames_to_play, output_ch] = channel_data
 
             outdata[:] = multi_channel_data
             self.frame_index += frames_to_play
@@ -172,7 +195,21 @@ class ToggleableMultiChannelPlayback:
             frames_to_play = min(frames, remaining_frames)
 
             # Extract channel data
-            if self.audio_data.ndim == 1 or channel_index >= self.audio_data.shape[1]:
+            if self.climax_mode:
+                # Climax mode: Mix all 6 channels
+                channel_data = np.zeros(frames_to_play)
+                num_channels_to_mix = min(6, self.audio_data.shape[1])
+
+                # Sum all channels
+                for ch in range(num_channels_to_mix):
+                    channel_data += self.audio_data[
+                        self.frame_index : self.frame_index + frames_to_play,  # noqa: E203
+                        ch,
+                    ]
+
+                # Apply gain normalization
+                channel_data *= CLIMAX_MIX_GAIN
+            elif self.audio_data.ndim == 1 or channel_index >= self.audio_data.shape[1]:
                 # Mono or channel doesn't exist - use silence
                 channel_data = np.zeros(frames_to_play)
             elif not self.channel_enabled[channel_index]:
@@ -380,6 +417,23 @@ class ToggleableMultiChannelPlayback:
             if self.frame_index >= len(self.audio_data):
                 self.frame_index = 0  # Reset if at end
         return True
+
+    def set_broadcast_mode(self, enabled: bool):
+        """Enable or disable broadcast mode.
+
+        In broadcast mode, all 6 audio channels are mixed together and broadcast
+        to all output channels simultaneously, creating a fuller, more immersive
+        sound experience.
+
+        Args:
+            enabled (bool): True to enable broadcast mode, False for normal mode
+        """
+        if self.debug:
+            print(
+                f"{'Enabling' if enabled else 'Disabling'} broadcast mode "
+                f"(mix all channels to all outputs)"
+            )
+        self.climax_mode = enabled
 
     def get_channel_states(self):
         """Return current music channel enabled states."""
