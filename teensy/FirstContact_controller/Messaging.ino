@@ -3,9 +3,21 @@
 #include "Networking.h"
 #include "StatueConfig.h"
 #include "defines.h"
+#include <ArduinoJson.h>
+
+// External function from StatueConfig.cpp
+extern int getStatueIndex(const char *name);
 
 // Use accessor to get the EthernetClient instance
 PubSubClient client(getEthClient());
+
+// Global configuration instance
+TeensyConfig teensyConfig;
+
+// Track last config request time
+unsigned long lastConfigRequestMs = 0;
+const unsigned long CONFIG_REQUEST_INTERVAL_MS =
+    60000; // Request config every 60 seconds
 
 void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
   Serial.print("\nmqttSubCallback() Message arrived [");
@@ -20,6 +32,13 @@ void mqttSubCallback(char *topic, byte *payload, unsigned int length) {
   }
   payloadStr[length] = '\0';
   Serial.println();
+
+  // Check if this is a configuration response
+  if (strcmp(topic, "missing_link/config/response") == 0) {
+    Serial.println("Received configuration from controller");
+    parseConfig(payloadStr, length);
+    return;
+  }
 
   // Build expected tone control topic for this statue
   char toneTopic[32];
@@ -45,8 +64,10 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     if (client.connect(getHostname())) {
       Serial.println("connected");
-      // LED control now handled by Pi controller
-      // client.subscribe("wled/all/api"); // No longer needed
+
+      // Subscribe to configuration response topic
+      client.subscribe("missing_link/config/response");
+      Serial.println("Subscribed to: missing_link/config/response");
 
       // Subscribe to statue-specific tone control topic
       char toneTopic[32];
@@ -57,6 +78,9 @@ void reconnect() {
       client.subscribe(toneTopic);
       Serial.print("Subscribed to: ");
       Serial.println(toneTopic);
+
+      // Request configuration after connecting
+      requestConfig();
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -71,9 +95,19 @@ void mqttLoop() {
     reconnect();
   }
   client.loop();
+
+  // Periodically request configuration
+  unsigned long currentMs = millis();
+  if (currentMs - lastConfigRequestMs > CONFIG_REQUEST_INTERVAL_MS) {
+    requestConfig();
+    lastConfigRequestMs = currentMs;
+  }
 }
 
 void initMqtt() {
+  // Load default configuration from program memory first
+  loadDefaultConfig();
+
   client.setServer(getServer(), 1883);
   client.setCallback(mqttSubCallback);
 }
@@ -131,6 +165,154 @@ void publishState(ContactState state) {
   } else {
     Serial.println("Failed to publish detection state");
   }
+}
+
+// Load default configuration from program memory
+void loadDefaultConfig() {
+  // First initialize the statue configuration based on hostname
+  // This sets MY_STATUE_INDEX, MY_TX_FREQ, etc. based on hostname matching
+  bool statueConfigured = initStatueConfig();
+
+  if (!statueConfigured) {
+    Serial.println(
+        "WARNING: Failed to identify statue by hostname, using defaults");
+  }
+
+  // Now load the threshold configuration using the same JSON
+  // Get the length of the PROGMEM string
+  size_t len = strlen_P(DEFAULT_CONFIG_JSON);
+
+  // Allocate buffer in RAM and copy from PROGMEM
+  char *jsonBuffer = new char[len + 1];
+  strcpy_P(jsonBuffer, DEFAULT_CONFIG_JSON);
+
+  Serial.println("Loading threshold configuration from program memory...");
+  parseConfig(jsonBuffer, len);
+
+  // Clean up allocated memory
+  delete[] jsonBuffer;
+}
+
+// Request configuration from controller
+void requestConfig() {
+  if (client.connected()) {
+    Serial.println("Requesting configuration from controller...");
+    client.publish("missing_link/config/request", "true");
+  }
+}
+
+// Parse configuration JSON and update TeensyConfig
+void parseConfig(const char *json, unsigned int length) {
+  // Use static allocation for better memory management
+  StaticJsonDocument<2048> doc;
+
+  DeserializationError error = deserializeJson(doc, json, length);
+  if (error) {
+    Serial.print("Failed to parse config JSON: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  // Get this Teensy's hostname from reverse DNS
+  String myHostname = String(getHostname());
+  Serial.print("My hostname: ");
+  Serial.println(myHostname);
+
+  // First, update all statue thresholds from the full configuration
+  // This allows each detector to use the appropriate target statue's threshold
+  bool thresholdsChanged = false;
+  for (JsonPair kv : doc.as<JsonObject>()) {
+    String statueName = kv.key().c_str();
+    JsonObject statueConfig = kv.value();
+
+    int idx = getStatueIndex(statueName.c_str());
+    if (idx >= 0 && idx < MAX_STATUES &&
+        statueConfig.containsKey("threshold")) {
+      float newThreshold =
+          constrain(statueConfig["threshold"].as<float>(), 0.001, 1.0);
+      if (STATUE_THRESHOLDS[idx] != newThreshold) {
+        Serial.print("  ");
+        Serial.print(STATUE_NAMES[idx]);
+        Serial.print(" threshold: ");
+        Serial.print(STATUE_THRESHOLDS[idx], 4);
+        Serial.print(" -> ");
+        Serial.println(newThreshold, 4);
+        STATUE_THRESHOLDS[idx] = newThreshold;
+        thresholdsChanged = true;
+      }
+    }
+  }
+
+  // Now find our specific configuration by hostname
+  bool configFound = false;
+  for (JsonPair kv : doc.as<JsonObject>()) {
+    String statueName = kv.key().c_str();
+    JsonObject statueConfig = kv.value();
+
+    // Match statue name (JSON key) against hostname (case-insensitive)
+    if (statueName.equalsIgnoreCase(myHostname)) {
+      Serial.print("Found configuration for ");
+      Serial.print(statueName);
+      Serial.println(" (matched by hostname)");
+
+      configFound = true;
+
+      // Extract our threshold (kept as informational)
+      if (statueConfig.containsKey("threshold")) {
+        float newThreshold = statueConfig["threshold"];
+        teensyConfig.threshold = constrain(newThreshold, 0.001, 1.0);
+        Serial.print("  My threshold: ");
+        Serial.println(teensyConfig.threshold, 4);
+      }
+
+      // Store informational fields
+      if (statueConfig.containsKey("emit")) {
+        teensyConfig.emitFreq = statueConfig["emit"];
+        Serial.print("  Emit frequency: ");
+        Serial.print(teensyConfig.emitFreq);
+        Serial.println(" Hz");
+      }
+
+      // Store detect array (informational)
+      if (statueConfig.containsKey("detect")) {
+        JsonArray detectArray = statueConfig["detect"];
+        int idx = 0;
+        Serial.print("  Detects: ");
+        for (JsonVariant v : detectArray) {
+          if (idx < 4) {
+            teensyConfig.detectStatues[idx] = v.as<String>();
+            if (idx > 0)
+              Serial.print(", ");
+            Serial.print(teensyConfig.detectStatues[idx]);
+            idx++;
+          }
+        }
+        Serial.println();
+      }
+
+      // Apply the configuration
+      applyConfig();
+      break;
+    }
+  }
+
+  if (!configFound) {
+    Serial.println("No configuration found matching this Teensy's hostname");
+    Serial.println("Using default threshold values");
+  }
+
+  // Update detector thresholds based on all parsed statue thresholds
+  // Each detector will use the threshold of its target statue
+  updateDetectorThresholds();
+}
+
+// Apply configuration changes to the system
+void applyConfig() {
+  Serial.println("Applying configuration...");
+
+  // There are currently no configurable parameters, so this is a no-op.
+
+  Serial.println("Configuration applied successfully");
 }
 
 // LED state functions removed - now handled by Raspberry Pi controller

@@ -317,6 +317,9 @@ def extract_addresses():
                     "mac_address": mac_address,
                     "ip_address": ip_address,
                 }
+    if debug:
+        print(f"Teensy config: {teensy_config}")
+        print(f"Board config: {board_config}")
 
 
 def load_audio_files():

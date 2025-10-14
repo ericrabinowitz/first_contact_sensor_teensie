@@ -14,12 +14,13 @@ AudioSense: The contact sensing and audio mixing logic.
 // This is the volume tuned for the sense signal sensitivity.
 #define SIGNAL_AUDIO_VOLUME 0.75
 
-// Use configured frequencies from StatueConfig.h
-const int tx_freq = MY_TX_FREQ; // This statue's transmit frequency
+// Note: tx_freq is now dynamically set from StatueConfig at runtime
 
-// This is the tone dection sensitivity.  Currently set for maximum sensitivity.
-// Edit with caution and experimentation.
-float thresh = 0.01;
+// Per-detector thresholds - each detector uses the threshold of its target statue
+float detectorThresholds[MAX_STATUES - 1];
+
+// Current signal strength for each detector (max of left and right channels)
+float detectorSignals[MAX_STATUES - 1] = {0.0};
 
 // The controller for the audio shield.
 AudioControlSGTL5000 audioShield;
@@ -65,7 +66,7 @@ AudioOutputI2S audioOut;
 AudioConnection patchCordMOL(mixerSensingOutput, 0, audioOut, 0);
 
 elapsedMillis since_main = 0;
-uint16_t main_period_ms = 150;
+uint16_t main_period_ms = 150; // Default value, will be updated via config
 // ------ Audio Contact Defines - End
 
 // Contact Sense Start
@@ -76,7 +77,7 @@ void audioSenseSetup() {
 
   // Add debug output for statue identity
   Serial.printf("Configuring Statue %c (%s)\n", THIS_STATUE_ID, MY_STATUE_NAME);
-  Serial.printf("  TX Frequency: %d Hz\n", tx_freq);
+  Serial.printf("  TX Frequency: %d Hz\n", MY_TX_FREQ);
   Serial.println("  RX Frequencies:");
 
   // Initialize detector arrays for all MAX_STATUES-1 pairs
@@ -117,8 +118,13 @@ void audioSenseSetup() {
       int cycles = sample_time_ms * freq / 1000;
       leftDetectors[detectorIndex]->frequency(freq, cycles);
       rightDetectors[detectorIndex]->frequency(freq, cycles);
-      Serial.printf("    Detector %d: %s at %dHz\n", detectorIndex,
-                    STATUE_NAMES[statue_idx], freq);
+
+      // Initialize threshold for this detector (will be set from StatueConfig)
+      detectorThresholds[detectorIndex] = 0.01; // Default
+
+      Serial.printf("    Detector %d: %s at %dHz, threshold %.4f\n",
+                    detectorIndex, STATUE_NAMES[statue_idx], freq,
+                    detectorThresholds[detectorIndex]);
       detectorIndex++;
     }
   }
@@ -129,7 +135,7 @@ void audioSenseSetup() {
 
   // Configure sine generator to transmit THIS statue's frequency
   AudioNoInterrupts(); // disable audio library momentarily
-  sine1.frequency(tx_freq);
+  sine1.frequency(MY_TX_FREQ);
   sine1.amplitude(1.0);
   AudioInterrupts(); // enable, tone will start
 }
@@ -207,7 +213,12 @@ uint8_t getStableLinkedMask() {
       float left = leftDetectors[detectorIndex]->read();
       float right = rightDetectors[detectorIndex]->read();
 
-      bool isDetected = (left > thresh || right > thresh);
+      // Store the maximum signal strength for display
+      detectorSignals[detectorIndex] = max(left, right);
+
+      // Use detector-specific threshold instead of global thresh
+      float detectorThresh = detectorThresholds[detectorIndex];
+      bool isDetected = detectorSignals[detectorIndex] > detectorThresh;
       if (isDetected) {
         candidateLinkedMask |= (1 << statue_idx);
       }

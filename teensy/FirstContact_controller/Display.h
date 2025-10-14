@@ -28,9 +28,12 @@ extern Adafruit_SSD1306 display;
 // Display function prototypes
 void displaySetup();
 void displaySplashScreen();
+void displayUpdateStatueInfo(char *hostname);
 void displayHostname(char *hostname);
 void displayNetworkStatus(const char *status);
 void displayFrequencies();
+void displayThresholds();
+void displaySignals();
 void displayTimeCount();
 void displayState(ContactState state);
 void displayActivityStatus(bool isLinked);

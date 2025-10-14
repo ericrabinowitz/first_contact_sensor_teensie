@@ -5,9 +5,36 @@ Messaging: MQTT, state publishing, and LED state logic.
 #ifndef MESSAGING_H
 #define MESSAGING_H
 
+#include "AudioSense.h"
 #include <Arduino.h>
 #include <PubSubClient.h>
-#include "AudioSense.h"
+
+// Configuration structure matching Pi's teensy_config
+struct TeensyConfig {
+  // The main configurable parameter
+  float threshold;
+
+  // Informational fields from Pi config
+  int emitFreq;            // Transmit frequency (read-only, for verification)
+  String detectStatues[4]; // List of detectable statues (informational)
+
+  // Constructor with defaults
+  TeensyConfig() : threshold(0.01), emitFreq(0) {
+    // Initialize detect array as empty
+    for (int i = 0; i < 4; i++) {
+      detectStatues[i] = "";
+    }
+  }
+};
+
+// Global configuration instance
+extern TeensyConfig teensyConfig;
+
+// Configuration functions
+void loadDefaultConfig();
+void requestConfig();
+void applyConfig();
+void parseConfig(const char *json, unsigned int length);
 
 // MQTT callbacks and helper functions
 void mqttSubCallback(char *topic, byte *payload, unsigned int length);

@@ -5,6 +5,12 @@ Display: Printing to the small OLED display on the teensy.
 #include "Display.h"
 #include "StatueConfig.h"
 
+// External reference to detector thresholds array from AudioSense.ino
+extern float detectorThresholds[MAX_STATUES - 1];
+
+// External reference to detector signal strengths from AudioSense.ino
+extern float detectorSignals[MAX_STATUES - 1];
+
 // Create the OLED display object using Wire2 (as in original code).
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
 
@@ -72,14 +78,14 @@ void displayState(ContactState state) {
     return;
   }
 
-  // Clear the connection display area
-  display.fillRect(0, 30, 128, 25, SSD1306_BLACK);
+  // Clear the connection display area (moved down to y=40)
+  display.fillRect(0, 40, 128, 15, SSD1306_BLACK);
 
   if (state.isLinked()) {
     ++contactCount;
     display.setTextSize(1);              // Normal text size for full names
     display.setTextColor(SSD1306_WHITE); // Draw white text
-    display.setCursor(0, 30);
+    display.setCursor(0, 40);
 
     // Display connected statue names
     display.print(F("LINK:"));
@@ -108,13 +114,13 @@ void displayHostname(char *hostname) {
 }
 
 void displayFrequencies(void) {
-  // Display RX frequencies on line 3 (y=20) in kHz
-  display.fillRect(0, 20, 128, 10, SSD1306_BLACK); // Clear line 3
-  display.setCursor(0, 20);
+  // Display RX frequencies on line 2 (y=10) in kHz
+  display.fillRect(0, 10, 128, 10, SSD1306_BLACK); // Clear line 2
+  display.setCursor(0, 10);
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
 
-  // Show RX frequencies in kHz on line 3
+  // Show RX frequencies in kHz
   display.print(F("RX:"));
   bool first = true;
   for (int i = 0; i < NUM_STATUES; i++) {
@@ -125,6 +131,96 @@ void displayFrequencies(void) {
       //display.print(F("k"));
       first = false;
     }
+  }
+
+  display.display();
+}
+
+void displayThresholds(void) {
+  // Display detector thresholds on line 3 (y=20)
+  display.fillRect(0, 20, 128, 10, SSD1306_BLACK); // Clear line 3
+  display.setCursor(0, 20);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  // Show detector thresholds
+  display.print(F("THR:"));
+  for (int i = 0; i < NUM_STATUES - 1; i++) {
+    if (i > 0)
+      display.print(F("/"));
+
+    // Determine precision for this value (2 or 3 decimal places)
+    // Use 0.00995 threshold to account for floating point precision
+    int precision = (detectorThresholds[i] < 0.00995) ? 3 : 2;
+    int multiplier = (precision == 2) ? 100 : 1000;
+
+    // Format as .XX or .XXX (no leading zero) to save space
+    int value_int = (int)(detectorThresholds[i] * multiplier + 0.5); // Round to nearest
+    display.print(F("."));
+
+    // Print leading zeros based on precision
+    if (precision == 2) {
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
+    } else { // 3 decimals
+      if (value_int < 100) {
+        display.print(F("0"));
+      }
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
+    }
+    display.print(value_int);
+  }
+
+  display.display();
+}
+
+void displaySignals(void) {
+  // Throttle updates to ~100ms to avoid flicker
+  static unsigned long lastUpdateMs = 0;
+  unsigned long currentMs = millis();
+  if (currentMs - lastUpdateMs < 100) {
+    return;
+  }
+  lastUpdateMs = currentMs;
+
+  // Display detector signal strengths on line 4 (y=30)
+  display.fillRect(0, 30, 128, 10, SSD1306_BLACK); // Clear line 4
+  display.setCursor(0, 30);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  // Show detector signals
+  display.print(F("SIG:"));
+  for (int i = 0; i < NUM_STATUES - 1; i++) {
+    if (i > 0)
+      display.print(F("/"));
+
+    // Determine precision based on threshold (not signal) to keep display stable
+    // Use 0.00995 threshold to account for floating point precision
+    int precision = (detectorThresholds[i] < 0.00995) ? 3 : 2;
+    int multiplier = (precision == 2) ? 100 : 1000;
+
+    // Format as .XX or .XXX (no leading zero) to save space
+    int value_int = (int)(detectorSignals[i] * multiplier + 0.5); // Round to nearest
+    display.print(F("."));
+
+    // Print leading zeros based on precision
+    if (precision == 2) {
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
+    } else { // 3 decimals
+      if (value_int < 100) {
+        display.print(F("0"));
+      }
+      if (value_int < 10) {
+        display.print(F("0"));
+      }
+    }
+    display.print(value_int);
   }
 
   display.display();
@@ -192,13 +288,13 @@ void displayActivityStatus(bool isLinked) {
   */
   display.setTextColor(SSD1306_WHITE);
 
-  display.fillRect(Xposition_last, 30, 10, 10, SSD1306_BLACK);
+  display.fillRect(Xposition_last, 40, 10, 10, SSD1306_BLACK);
 
   /*
     Draw a small box on the line position it based on the fraction of a second
   */
 
-  display.fillRect(Xposition, 30, 10, 10, SSD1306_WHITE); // New Block
+  display.fillRect(Xposition, 40, 10, 10, SSD1306_WHITE); // New Block
   display.display();
 
   /* Flip the direction */
@@ -238,10 +334,7 @@ void displaySplashScreen(void) {
   display.setTextSize(1);              // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.setCursor(0, 0);             // Start at top-left corner
-  display.print(F("ST "));
-  display.print(THIS_STATUE_ID);
-  display.print(F(": "));
-  display.print(MY_STATUE_NAME);
+  display.print(F("?: ?"));
 
   display.setCursor(0, 25);
   //display.setTextSize(2);             // Draw 2X-scale text
@@ -260,6 +353,21 @@ void displaySplashScreen(void) {
 
   display.display();
   //delay(2000); XXX
+}
+
+void displayUpdateStatueInfo(char *hostname) {
+  // Display compact format: "B: elektra TX:12k" on line 0
+  display.fillRect(0, 0, 128, 10, SSD1306_BLACK); // Clear entire line 0
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.print(THIS_STATUE_ID);
+  display.print(F(": "));
+  display.print(hostname);
+  display.print(F(" TX:"));
+  display.print(MY_TX_FREQ / 1000.0, 1);
+  display.print(F("k"));
+  display.display();
 }
 
 void displaySetup() {

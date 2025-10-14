@@ -1,7 +1,7 @@
 /*
 
 2/1/2025
-FIRST CONTACT ART PROJECT 
+FIRST CONTACT ART PROJECT
 Contact Sensor and Music Player
 - Eric Linn Rabinowitz. 415-336-6938
 - Alex Degtiar. 510-859-3058
@@ -38,7 +38,7 @@ Networking
   This software acts as both a MQTT publisher and subscriber for events.
   The MQTT Broker (databasde server) is running on a Raspberry PI on the network.
 
-Hardware:  
+Hardware:
 ---------
           Teensy 4.1 + Teensy Audio Shield (DAC)
           Ethernet adapter and cable
@@ -51,7 +51,7 @@ Software Requirements:
 
 Boards Support:
           Teensy (for Arduino IDE 2.0.4 or later). v.1.59.0
-            Instructions to install: https://www.pjrc.com/teensy/td_download.html 
+            Instructions to install: https://www.pjrc.com/teensy/td_download.html
             Installer For IDE: https://www.pjrc.com/teensy/package_teensy_index.json
             NOTE: I think this also installs the Audio library
 Libraries:
@@ -62,12 +62,12 @@ Libraries:
           Using library QNEthernet at version 0.31.0 in folder: /Users/eric/work/FirstContact/libraries/QNEthernet
           Using library PubSubClient at version 2.8 in folder: /Users/eric/work/FirstContact/libraries/PubSubClient
         - These should already be installed alongsuide teensyduino. Do not install these libraries:
-          Using library SPI at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SPI 
-          Using library Wire at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Wire 
-          Using library Audio at version 1.3 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Audio 
-          Using library SD at version 2.0.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SD 
-          Using library SdFat at version 2.1.2 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SdFat 
-          Using library SerialFlash at version 0.5 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SerialFlash 
+          Using library SPI at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SPI
+          Using library Wire at version 1.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Wire
+          Using library Audio at version 1.3 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/Audio
+          Using library SD at version 2.0.0 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SD
+          Using library SdFat at version 2.1.2 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SdFat
+          Using library SerialFlash at version 0.5 in folder: /Users/eric/Library/Arduino15/packages/teensy/hardware/avr/1.59.0/libraries/SerialFlash
 
 Testing:
 ---------
@@ -82,13 +82,13 @@ If you don't have the real hands handy, you can short the corresponding pins on 
 I found it helpful to wire one of the buttons to the two pin contacts for convenience.
 */
 
-#include "defines.h"
 #include "AudioSense.h"
 #include "Display.h"
-#include "MusicPlayer.h"
-#include "Networking.h"
 #include "Haptics.h"
 #include "Messaging.h"
+#include "MusicPlayer.h"
+#include "Networking.h"
+#include "defines.h"
 
 void setup() {
   // Display Setup
@@ -97,17 +97,17 @@ void setup() {
   Serial.printf("_______FIRST CONTACT_______ ");
   Serial.printf("%s %sd \n", __DATE__, __TIME__);
 
-  #if !STANDALONE_MODE
-    // TCP/IP Setup
-    Serial.printf("_______Init Ethernet_______\n");
-    initEthernet();
+#if !STANDALONE_MODE
+  // TCP/IP Setup
+  Serial.printf("_______Init Ethernet_______\n");
+  initEthernet();
 
-    // MQTT Setup
-    Serial.printf("_______Init MQTT Publisher_______\n");
-    initMqtt();
-  #else
-    Serial.println("*** STANDALONE MODE - Network/MQTT Disabled ***");
-  #endif
+  // MQTT Setup
+  Serial.printf("_______Init MQTT Publisher_______\n");
+  initMqtt();
+#else
+  Serial.println("*** STANDALONE MODE - Network/MQTT Disabled ***");
+#endif
 
   // Allow the hardware to sort itself out
   // delay(1500); XXX
@@ -122,21 +122,31 @@ void setup() {
 
   // Haptic Setup
   initHaptics();
+
+#if !STANDALONE_MODE
+  // Update display with correct statue identity after config is loaded.
+  // displayUpdateStatueInfo now shows: "B: elektra TX:12k" (compact format)
+  displayUpdateStatueInfo(getHostname());
+
+  displayFrequencies();
+  displayThresholds();
+  displaySignals();
+#endif
 }
 
 void loop() {
-  #if !STANDALONE_MODE
-    // Make sure we're connected to MQTT broker.
-    mqttLoop();
-  #endif
+#if !STANDALONE_MODE
+  // Make sure we're connected to MQTT broker.
+  mqttLoop();
+#endif
 
   // Retrieve the current contact state.
   ContactState state = getContactState();
 
-  #if !STANDALONE_MODE
-    // Publish the state to the MQTT broker to update LEDs.
-    publishState(state);
-  #endif
+#if !STANDALONE_MODE
+  // Publish the state to the MQTT broker to update LEDs.
+  publishState(state);
+#endif
   // Update the music if the state changed or current song has ended.
   playMusic(state);
   // Print any changed state to the serial console for debugging.
@@ -148,6 +158,8 @@ void loop() {
   displayActivityStatus(state.isLinked());
   // Update the count and time at the bottom of the display.
   displayTimeCount();
+  // Update signal strength display (throttled internally to ~100ms)
+  displaySignals();
 
   // Drive haptics based on state
   driveHaptics(state);

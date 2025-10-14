@@ -100,6 +100,54 @@ mosquitto_sub -t "missing_link/contact"
 mosquitto_pub -t "missing_link/contact" -m '{"detector":"eros", "emitters":["elektra"]}'
 ```
 
+### Manually Configure Teensy Thresholds
+
+You can update detection thresholds for individual statues by sending a minimal config via MQTT. Only specify the statue(s) and threshold(s) you want to change:
+
+```bash
+# Update sophia's threshold (more sensitive)
+mosquitto_pub -h 192.168.4.1 -t "missing_link/config/response" -m '{
+  "sophia": {
+    "threshold": 0.005
+  }
+}'
+
+# Update multiple statues at once
+mosquitto_pub -h 192.168.4.1 -t "missing_link/config/response" -m '{
+  "sophia": {"threshold": 0.005},
+  "ultimo": {"threshold": 0.015}
+}'
+
+# Or use a config file
+cat > /tmp/sophia_threshold.json << 'EOF'
+{
+  "sophia": {
+    "threshold": 0.005
+  }
+}
+EOF
+mosquitto_pub -h 192.168.4.1 -t "missing_link/config/response" -f /tmp/sophia_threshold.json
+```
+
+**How it works:**
+- All Teensy boards receive the config message
+- Each board updates its `STATUE_THRESHOLDS` array for the specified statue(s)
+- Detectors targeting that statue automatically use the new threshold
+- Only the `threshold` field is required - no need to specify `emit`, `detect`, `mac_address`, or `ip_address`
+
+**Threshold values:**
+- Lower = more sensitive (e.g., `0.005` detects weaker signals)
+- Higher = less sensitive (e.g., `0.015` requires stronger signals)
+- Default: `0.01`
+- Valid range: `0.001` to `1.0`
+
+**Example saved configs:**
+```bash
+# Pre-configured files in raspberry_pi/config/
+~/first_contact_sensor_teensie/raspberry_pi/config/sophia_lower_threshold.json
+~/first_contact_sensor_teensie/raspberry_pi/config/sophia_threshold_minimal.json
+```
+
 ## Reference docs
 
 - https://docs.google.com/document/d/107ZdOsc81E29lZZVTtqirHpqJKrvnqui0-EGSTGGslk/edit?tab=t.0
