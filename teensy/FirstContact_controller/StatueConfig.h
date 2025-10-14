@@ -44,36 +44,26 @@ const char DEFAULT_CONFIG_JSON[] PROGMEM = R"({
     "emit": 10077,
     "detect": ["elektra", "sophia", "ultimo", "ariel"],
     "threshold": 0.01,
-    "mac_address": "04:e9:e5:19:06:4c",
-    "ip_address": "192.168.4.21"
   },
   "elektra": {
     "emit": 12274,
     "detect": ["eros", "sophia", "ultimo", "ariel"],
     "threshold": 0.01,
-    "mac_address": "04:e9:e5:19:06:2f",
-    "ip_address": "192.168.4.22"
   },
   "ariel": {
     "emit": 14643,
     "detect": ["eros", "elektra", "sophia", "ultimo"],
     "threshold": 0.01,
-    "mac_address": "04:e9:e5:17:c4:51",
-    "ip_address": "192.168.4.24"
   },
   "sophia": {
     "emit": 17227,
     "detect": ["eros", "elektra", "ultimo", "ariel"],
     "threshold": 0.01,
-    "mac_address": "04:e9:e5:12:93:6b",
-    "ip_address": "192.168.4.25"
   },
   "ultimo": {
     "emit": 19467,
     "detect": ["eros", "elektra", "sophia", "ariel"],
     "threshold": 0.01,
-    "mac_address": "04:e9:e5:12:93:68",
-    "ip_address": "192.168.4.27"
   }
 })";
 

@@ -17,11 +17,9 @@ struct TeensyConfig {
   // Informational fields from Pi config
   int emitFreq;            // Transmit frequency (read-only, for verification)
   String detectStatues[4]; // List of detectable statues (informational)
-  String ipAddress;        // This Teensy's IP address
-  String macAddress;       // This Teensy's MAC address
 
   // Constructor with defaults
-  TeensyConfig() : threshold(0.01), emitFreq(0), ipAddress(""), macAddress("") {
+  TeensyConfig() : threshold(0.01), emitFreq(0) {
     // Initialize detect array as empty
     for (int i = 0; i < 4; i++) {
       detectStatues[i] = "";

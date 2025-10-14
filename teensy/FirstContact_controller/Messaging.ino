@@ -273,12 +273,6 @@ void parseConfig(const char *json, unsigned int length) {
         Serial.println(" Hz");
       }
 
-      if (statueConfig.containsKey("mac_address")) {
-        teensyConfig.macAddress = statueConfig["mac_address"].as<String>();
-        Serial.print("  MAC address: ");
-        Serial.println(teensyConfig.macAddress);
-      }
-
       // Store detect array (informational)
       if (statueConfig.containsKey("detect")) {
         JsonArray detectArray = statueConfig["detect"];
