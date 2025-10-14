@@ -169,12 +169,13 @@ void publishState(ContactState state) {
 
 // Load default configuration from program memory
 void loadDefaultConfig() {
-  // First initialize the statue configuration based on IP address
-  // This sets MY_STATUE_INDEX, MY_TX_FREQ, etc. based on IP matching
+  // First initialize the statue configuration based on hostname
+  // This sets MY_STATUE_INDEX, MY_TX_FREQ, etc. based on hostname matching
   bool statueConfigured = initStatueConfig();
 
   if (!statueConfigured) {
-    Serial.println("WARNING: Failed to identify statue by IP, using defaults");
+    Serial.println(
+        "WARNING: Failed to identify statue by hostname, using defaults");
   }
 
   // Now load the threshold configuration using the same JSON
@@ -212,10 +213,10 @@ void parseConfig(const char *json, unsigned int length) {
     return;
   }
 
-  // Get this Teensy's current IP address
-  String myIpAddress = getLocalIp();
-  Serial.print("My IP address: ");
-  Serial.println(myIpAddress);
+  // Get this Teensy's hostname from reverse DNS
+  String myHostname = String(getHostname());
+  Serial.print("My hostname: ");
+  Serial.println(myHostname);
 
   // First, update all statue thresholds from the full configuration
   // This allows each detector to use the appropriate target statue's threshold
@@ -242,72 +243,67 @@ void parseConfig(const char *json, unsigned int length) {
     }
   }
 
-  // Now find our specific configuration by IP
+  // Now find our specific configuration by hostname
   bool configFound = false;
   for (JsonPair kv : doc.as<JsonObject>()) {
     String statueName = kv.key().c_str();
     JsonObject statueConfig = kv.value();
 
-    // Check if this config's IP matches our IP
-    if (statueConfig.containsKey("ip_address")) {
-      String configIp = statueConfig["ip_address"].as<String>();
-      if (configIp == myIpAddress) {
-        Serial.print("Found configuration for ");
-        Serial.print(statueName);
-        Serial.println(" (matched by IP)");
+    // Match statue name (JSON key) against hostname (case-insensitive)
+    if (statueName.equalsIgnoreCase(myHostname)) {
+      Serial.print("Found configuration for ");
+      Serial.print(statueName);
+      Serial.println(" (matched by hostname)");
 
-        configFound = true;
+      configFound = true;
 
-        // Extract our threshold (kept as informational)
-        if (statueConfig.containsKey("threshold")) {
-          float newThreshold = statueConfig["threshold"];
-          teensyConfig.threshold = constrain(newThreshold, 0.001, 1.0);
-          Serial.print("  My threshold: ");
-          Serial.println(teensyConfig.threshold, 4);
-        }
-
-        // Store informational fields
-        if (statueConfig.containsKey("emit")) {
-          teensyConfig.emitFreq = statueConfig["emit"];
-          Serial.print("  Emit frequency: ");
-          Serial.print(teensyConfig.emitFreq);
-          Serial.println(" Hz");
-        }
-
-        if (statueConfig.containsKey("mac_address")) {
-          teensyConfig.macAddress = statueConfig["mac_address"].as<String>();
-          Serial.print("  MAC address: ");
-          Serial.println(teensyConfig.macAddress);
-        }
-
-        teensyConfig.ipAddress = myIpAddress;
-
-        // Store detect array (informational)
-        if (statueConfig.containsKey("detect")) {
-          JsonArray detectArray = statueConfig["detect"];
-          int idx = 0;
-          Serial.print("  Detects: ");
-          for (JsonVariant v : detectArray) {
-            if (idx < 4) {
-              teensyConfig.detectStatues[idx] = v.as<String>();
-              if (idx > 0)
-                Serial.print(", ");
-              Serial.print(teensyConfig.detectStatues[idx]);
-              idx++;
-            }
-          }
-          Serial.println();
-        }
-
-        // Apply the configuration
-        applyConfig();
-        break;
+      // Extract our threshold (kept as informational)
+      if (statueConfig.containsKey("threshold")) {
+        float newThreshold = statueConfig["threshold"];
+        teensyConfig.threshold = constrain(newThreshold, 0.001, 1.0);
+        Serial.print("  My threshold: ");
+        Serial.println(teensyConfig.threshold, 4);
       }
+
+      // Store informational fields
+      if (statueConfig.containsKey("emit")) {
+        teensyConfig.emitFreq = statueConfig["emit"];
+        Serial.print("  Emit frequency: ");
+        Serial.print(teensyConfig.emitFreq);
+        Serial.println(" Hz");
+      }
+
+      if (statueConfig.containsKey("mac_address")) {
+        teensyConfig.macAddress = statueConfig["mac_address"].as<String>();
+        Serial.print("  MAC address: ");
+        Serial.println(teensyConfig.macAddress);
+      }
+
+      // Store detect array (informational)
+      if (statueConfig.containsKey("detect")) {
+        JsonArray detectArray = statueConfig["detect"];
+        int idx = 0;
+        Serial.print("  Detects: ");
+        for (JsonVariant v : detectArray) {
+          if (idx < 4) {
+            teensyConfig.detectStatues[idx] = v.as<String>();
+            if (idx > 0)
+              Serial.print(", ");
+            Serial.print(teensyConfig.detectStatues[idx]);
+            idx++;
+          }
+        }
+        Serial.println();
+      }
+
+      // Apply the configuration
+      applyConfig();
+      break;
     }
   }
 
   if (!configFound) {
-    Serial.println("No configuration found matching this Teensy's IP address");
+    Serial.println("No configuration found matching this Teensy's hostname");
     Serial.println("Using default threshold values");
   }
 

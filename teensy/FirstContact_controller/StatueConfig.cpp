@@ -3,8 +3,8 @@ StatueConfig.cpp - Implementation of dynamic statue configuration
 */
 
 #include "StatueConfig.h"
-#include "Networking.h"
 #include "Display.h"
+#include "Networking.h"
 #include <ArduinoJson.h>
 
 // Variable definitions - these replace the former #define constants
@@ -43,13 +43,13 @@ int getStatueIndex(const char *name) {
     return -1; // Unknown statue
 }
 
-// Initialize the statue configuration based on IP address
+// Initialize the statue configuration based on hostname
 bool initStatueConfig() {
-  // Get the current IP address
-  String myIpAddress = getLocalIp();
+  // Get the hostname from reverse DNS
+  String myHostname = String(getHostname());
   Serial.println("=== Initializing Statue Configuration ===");
-  Serial.print("My IP address: ");
-  Serial.println(myIpAddress);
+  Serial.print("My hostname: ");
+  Serial.println(myHostname);
 
   // Copy JSON from PROGMEM to RAM for parsing
   size_t len = strlen_P(DEFAULT_CONFIG_JSON);
@@ -73,43 +73,41 @@ bool initStatueConfig() {
   bool configFound = false;
   String matchedStatueName = "";
 
-  // First pass: Find which statue we are based on IP address
+  // First pass: Find which statue we are based on hostname
   for (JsonPair kv : doc.as<JsonObject>()) {
     String statueName = kv.key().c_str();
     JsonObject statueConfig = kv.value();
 
-    if (statueConfig.containsKey("ip_address")) {
-      String configIp = statueConfig["ip_address"].as<String>();
-      if (configIp == myIpAddress) {
-        matchedStatueName = statueName;
-        configFound = true;
+    // Match statue name (JSON key) against hostname (case-insensitive)
+    if (statueName.equalsIgnoreCase(myHostname)) {
+      matchedStatueName = statueName;
+      configFound = true;
 
-        // Set our identity
-        MY_STATUE_INDEX = getStatueIndex(statueName.c_str());
-        THIS_STATUE_ID = 'A' + MY_STATUE_INDEX; // A=0, B=1, C=2, D=3, E=4
+      // Set our identity
+      MY_STATUE_INDEX = getStatueIndex(statueName.c_str());
+      THIS_STATUE_ID = 'A' + MY_STATUE_INDEX; // A=0, B=1, C=2, D=3, E=4
 
-        if (statueConfig.containsKey("emit")) {
-          MY_TX_FREQ = statueConfig["emit"].as<int>();
-        }
-
-        // Store the name in uppercase
-        matchedStatueName.toUpperCase();
-        MY_STATUE_NAME =
-            STATUE_NAMES[MY_STATUE_INDEX]; // Will be set properly below
-
-        Serial.print("Identified as: ");
-        Serial.print(matchedStatueName);
-        Serial.print(" (Statue ");
-        Serial.print(THIS_STATUE_ID);
-        Serial.print(", Index ");
-        Serial.print(MY_STATUE_INDEX);
-        Serial.println(")");
-        Serial.print("Transmit frequency: ");
-        Serial.print(MY_TX_FREQ);
-        Serial.println(" Hz");
-
-        break;
+      if (statueConfig.containsKey("emit")) {
+        MY_TX_FREQ = statueConfig["emit"].as<int>();
       }
+
+      // Store the name in uppercase
+      matchedStatueName.toUpperCase();
+      MY_STATUE_NAME =
+          STATUE_NAMES[MY_STATUE_INDEX]; // Will be set properly below
+
+      Serial.print("Identified as: ");
+      Serial.print(matchedStatueName);
+      Serial.print(" (Statue ");
+      Serial.print(THIS_STATUE_ID);
+      Serial.print(", Index ");
+      Serial.print(MY_STATUE_INDEX);
+      Serial.println(")");
+      Serial.print("Transmit frequency: ");
+      Serial.print(MY_TX_FREQ);
+      Serial.println(" Hz");
+
+      break;
     }
   }
 
@@ -164,7 +162,7 @@ bool initStatueConfig() {
 
   if (!configFound) {
     Serial.println(
-        "\nWARNING: No configuration found matching this Teensy's IP address!");
+        "\nWARNING: No configuration found matching this Teensy's hostname!");
     Serial.println("Using default configuration (EROS, Statue A)");
     return false;
   }
