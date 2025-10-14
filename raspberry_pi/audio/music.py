@@ -418,19 +418,19 @@ class ToggleableMultiChannelPlayback:
                 self.frame_index = 0  # Reset if at end
         return True
 
-    def set_climax_mode(self, enabled: bool):
-        """Enable or disable climax mode.
+    def set_broadcast_mode(self, enabled: bool):
+        """Enable or disable broadcast mode.
 
-        In climax mode, all 6 audio channels are mixed together and broadcast
+        In broadcast mode, all 6 audio channels are mixed together and broadcast
         to all output channels simultaneously, creating a fuller, more immersive
         sound experience.
 
         Args:
-            enabled (bool): True to enable climax mode, False for normal mode
+            enabled (bool): True to enable broadcast mode, False for normal mode
         """
         if self.debug:
             print(
-                f"{'Enabling' if enabled else 'Disabling'} climax mode "
+                f"{'Enabling' if enabled else 'Disabling'} broadcast mode "
                 f"(mix all channels to all outputs)"
             )
         self.climax_mode = enabled

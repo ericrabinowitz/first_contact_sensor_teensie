@@ -61,7 +61,8 @@ SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONGS = [
     "Missing Link Playa 1 - 6 channel.wav",
     "Missing Link Playa 2 - 6 Channel.wav",
-    "Missing Link Playa 3 - 6 Channel.wav",
+#    "Missing Link Playa 3 - 6 Channel.wav",
+    "Dusty Hands 6 channel.wav",
     #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
     #    "Missing Link Playa 3 - Five Channel.wav",
 ]
@@ -946,7 +947,7 @@ def handle_contact_event(payload: dict):
         control_relay(activate=True)
         # Enable climax mode: mix all channels and broadcast to all outputs
         if music_playback:
-            music_playback.set_climax_mode(True)
+            music_playback.set_broadcast_mode(True)
             if debug:
                 print("Enabled climax mode: mixing all channels to all outputs")
             leds_active(new_actives, effect_key='climax')
@@ -955,7 +956,7 @@ def handle_contact_event(payload: dict):
         control_relay(activate=False)
         # Disable climax mode: return to normal per-channel routing
         if music_playback:
-            music_playback.set_climax_mode(False)
+            music_playback.set_broadcast_mode(False)
             if debug:
                 print("Disabled climax mode: returning to normal routing")
         # Future: publish_mqtt("missing_link/climax", {"state": "inactive"})
