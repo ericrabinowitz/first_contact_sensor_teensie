@@ -19,22 +19,18 @@ The Raspberry Pi sends the entire `teensy_config` dictionary:
     "emit": 10077,
     "detect": ["elektra", "sophia", "ultimo", "ariel"],
     "threshold": 0.01,
-    "mac_address": "xx:xx:xx:xx:xx:xx",
-    "ip_address": "192.168.4.101"
   },
   "elektra": {
     "emit": 12274,
     "detect": ["eros", "sophia", "ultimo", "ariel"],
     "threshold": 0.01,
-    "mac_address": "xx:xx:xx:xx:xx:xx",
-    "ip_address": "192.168.4.102"
   },
   // Additional statue configurations...
 }
 ```
 
 ## Teensy Identification
-The Teensy identifies its configuration by matching its current IP address with the `ip_address` field in each statue's configuration. This eliminates the need for hardcoded statue identification beyond what's already in StatueConfig.h.
+The Teensy identifies its configuration by matching its current hostname with the name field in each statue's configuration. This eliminates the need for hardcoded statue identification beyond what's already in StatueConfig.h.
 
 ## Configurable Parameters
 
@@ -48,8 +44,6 @@ The Teensy identifies its configuration by matching its current IP address with 
 |-----------|------|-------------|
 | `emit` | int | Transmit frequency in Hz (for verification) |
 | `detect` | array | List of detectable statue names |
-| `mac_address` | string | MAC address assigned by DHCP |
-| `ip_address` | string | IP address assigned by DHCP |
 
 ## Implementation Details
 
@@ -62,8 +56,6 @@ struct TeensyConfig {
   // Informational fields from Pi config
   int emitFreq;           // Transmit frequency (read-only)
   String detectStatues[4]; // List of detectable statues
-  String ipAddress;        // This Teensy's IP address
-  String macAddress;       // This Teensy's MAC address
 };
 ```
 
@@ -75,9 +67,9 @@ struct TeensyConfig {
    - Waits for configuration on `missing_link/config/response`
 
 2. **Configuration Matching**
-   - Teensy gets its IP address via `Ethernet.localIP()`
+   - Teensy gets its hostname via reverse DNS lookup
    - Iterates through all statue configs in received JSON
-   - Matches `ip_address` field to find its configuration
+   - Matches `hostname` field to find its configuration
    - Extracts threshold and informational fields
 
 3. **Runtime Updates**
@@ -87,8 +79,8 @@ struct TeensyConfig {
 
 ### Error Handling
 
-1. **No Matching IP**
-   - Uses default threshold (0.01) if no config matches IP
+1. **No Matching Hostname**
+   - Uses default threshold (0.01) if no config matches hostname
    - Logs warning message
    - System remains operational
 
@@ -128,10 +120,10 @@ These parameters remain as compile-time constants in the firmware:
 
 ## Testing Requirements
 
-1. **IP Matching**
-   - Verify correct config selected based on IP address
+1. **Hostname Matching**
+   - Verify correct config selected based on hostname
    - Test with multiple Teensys on same network
-   - Verify fallback when IP not found
+   - Verify fallback when hostname not found
 
 2. **Threshold Updates**
    - Confirm threshold applied correctly
@@ -145,11 +137,10 @@ These parameters remain as compile-time constants in the firmware:
 
 ## Example Serial Output
 ```
-My IP address: 192.168.4.101
-Found configuration for eros (matched by IP)
+My hostname: eros
+Found configuration for eros (matched by hostname)
   Threshold: 0.0100
   Emit frequency: 10077 Hz
-  MAC address: DE:AD:BE:EF:FE:01
   Detects: elektra, sophia, ultimo, ariel
 Applying configuration...
 Detection threshold updated to: 0.0100
