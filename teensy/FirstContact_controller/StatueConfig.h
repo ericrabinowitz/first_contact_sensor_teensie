@@ -43,27 +43,27 @@ const char DEFAULT_CONFIG_JSON[] PROGMEM = R"({
   "eros": {
     "emit": 10077,
     "detect": ["elektra", "sophia", "ultimo", "ariel"],
-    "threshold": 0.01,
+    "threshold": 0.01
   },
   "elektra": {
     "emit": 12274,
     "detect": ["eros", "sophia", "ultimo", "ariel"],
-    "threshold": 0.01,
+    "threshold": 0.01
   },
   "ariel": {
     "emit": 14643,
     "detect": ["eros", "elektra", "sophia", "ultimo"],
-    "threshold": 0.01,
+    "threshold": 0.01
   },
   "sophia": {
     "emit": 17227,
     "detect": ["eros", "elektra", "ultimo", "ariel"],
-    "threshold": 0.01,
+    "threshold": 0.01
   },
   "ultimo": {
     "emit": 19467,
     "detect": ["eros", "elektra", "sophia", "ariel"],
-    "threshold": 0.01,
+    "threshold": 0.01
   }
 })";
 
