@@ -130,6 +130,7 @@ void setup() {
 
   displayFrequencies();
   displayThresholds();
+  displaySignals();
 #endif
 }
 
@@ -157,6 +158,8 @@ void loop() {
   displayActivityStatus(state.isLinked());
   // Update the count and time at the bottom of the display.
   displayTimeCount();
+  // Update signal strength display (throttled internally to ~100ms)
+  displaySignals();
 
   // Drive haptics based on state
   driveHaptics(state);

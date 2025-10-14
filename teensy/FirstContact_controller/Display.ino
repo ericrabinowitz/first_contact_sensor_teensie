@@ -8,6 +8,9 @@ Display: Printing to the small OLED display on the teensy.
 // External reference to detector thresholds array from AudioSense.ino
 extern float detectorThresholds[MAX_STATUES - 1];
 
+// External reference to detector signal strengths from AudioSense.ino
+extern float detectorSignals[MAX_STATUES - 1];
+
 // Create the OLED display object using Wire2 (as in original code).
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire2, OLED_RESET);
 
@@ -141,12 +144,44 @@ void displayThresholds(void) {
   display.setTextColor(SSD1306_WHITE);
 
   // Show detector thresholds
-  display.print(F("TH:"));
+  display.print(F("THR:"));
   for (int i = 0; i < NUM_STATUES - 1; i++) {
     if (i > 0)
       display.print(F("/"));
     // Format as .XX (no leading zero) to save space
     int value_int = (int)(detectorThresholds[i] * 100 + 0.5); // Round to nearest
+    display.print(F("."));
+    if (value_int < 10) {
+      display.print(F("0"));
+    }
+    display.print(value_int);
+  }
+
+  display.display();
+}
+
+void displaySignals(void) {
+  // Throttle updates to ~100ms to avoid flicker
+  static unsigned long lastUpdateMs = 0;
+  unsigned long currentMs = millis();
+  if (currentMs - lastUpdateMs < 100) {
+    return;
+  }
+  lastUpdateMs = currentMs;
+
+  // Display detector signal strengths on line 4 (y=30)
+  display.fillRect(0, 30, 128, 10, SSD1306_BLACK); // Clear line 4
+  display.setCursor(0, 30);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  // Show detector signals
+  display.print(F("SIG:"));
+  for (int i = 0; i < NUM_STATUES - 1; i++) {
+    if (i > 0)
+      display.print(F("/"));
+    // Format as .XX (no leading zero) to save space
+    int value_int = (int)(detectorSignals[i] * 100 + 0.5); // Round to nearest
     display.print(F("."));
     if (value_int < 10) {
       display.print(F("0"));

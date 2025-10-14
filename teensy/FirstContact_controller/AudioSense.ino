@@ -19,6 +19,9 @@ AudioSense: The contact sensing and audio mixing logic.
 // Per-detector thresholds - each detector uses the threshold of its target statue
 float detectorThresholds[MAX_STATUES - 1];
 
+// Current signal strength for each detector (max of left and right channels)
+float detectorSignals[MAX_STATUES - 1] = {0.0};
+
 // The controller for the audio shield.
 AudioControlSGTL5000 audioShield;
 
@@ -210,9 +213,12 @@ uint8_t getStableLinkedMask() {
       float left = leftDetectors[detectorIndex]->read();
       float right = rightDetectors[detectorIndex]->read();
 
+      // Store the maximum signal strength for display
+      detectorSignals[detectorIndex] = max(left, right);
+
       // Use detector-specific threshold instead of global thresh
       float detectorThresh = detectorThresholds[detectorIndex];
-      bool isDetected = (left > detectorThresh || right > detectorThresh);
+      bool isDetected = detectorSignals[detectorIndex] > detectorThresh;
       if (isDetected) {
         candidateLinkedMask |= (1 << statue_idx);
       }

@@ -33,6 +33,7 @@ void displayHostname(char *hostname);
 void displayNetworkStatus(const char *status);
 void displayFrequencies();
 void displayThresholds();
+void displaySignals();
 void displayTimeCount();
 void displayState(ContactState state);
 void displayActivityStatus(bool isLinked);
