@@ -221,36 +221,26 @@ teensy_config = {
         "emit": 10077,
         "detect": [Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",  # derived from the dnsmasq.conf file
-        "ip_address": "",  # derived from the dnsmasq.conf file
     },
     Statue.ELEKTRA: {
         "emit": 12274,
         "detect": [Statue.EROS, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
     Statue.ARIEL: {
         "emit": 14643,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
     Statue.SOPHIA: {
         "emit": 17227,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.ULTIMO, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
     Statue.ULTIMO: {
         "emit": 19467,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
 }
 
@@ -304,14 +294,16 @@ def extract_addresses():
             mac_address = parts[0].strip()
             ip_address = parts[1].strip()
             hostname = parts[2].strip() if len(parts) >= 3 else ""
-            if hostname in statues:
-                statue = Statue(hostname)
-                teensy_config[statue].update(
-                    {
-                        "mac_address": mac_address,
-                        "ip_address": ip_address,
-                    }
-                )
+            # Remove the mac_address and ip_address from the teensy config.
+            # It uses hostname <-> statue name identification instead.
+            # if hostname in statues:
+            #     statue = Statue(hostname)
+            #     teensy_config[statue].update(
+            #         {
+            #             "mac_address": mac_address,
+            #             "ip_address": ip_address,
+            #         }
+            #     )
             if hostname in boards:
                 board = Board(hostname)
                 board_config[board] = {
@@ -554,7 +546,16 @@ def publish_mqtt(topic: str, payload: dict):
 
 def send_config():
     """Send the Teensy configuration via MQTT."""
-    publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
+    try:
+        if debug:
+            print(f"Sending Teensy configuration to {CONFIG_RESP_MQTT_TOPIC}")
+        publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
+        if debug:
+            print("Configuration sent successfully")
+    except Exception as e:
+        print(f"ERROR: Failed to send config: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def set_debug(enable: bool):
@@ -1097,7 +1098,10 @@ def on_message(mqttc, userdata, msg):
         print(f"Received message on topic {msg.topic}: {msg.payload}")
 
     if msg.topic == CONFIG_REQ_MQTT_TOPIC:
-        send_config()
+        try:
+            send_config()
+        except Exception as e:
+            print(f"ERROR: Config request handler failed: {e}")
 
     if msg.topic == LINK_MQTT_TOPIC:
         try:
