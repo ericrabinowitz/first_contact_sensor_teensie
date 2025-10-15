@@ -342,7 +342,7 @@ class StatusDisplay:
         detector_emitters = self.link_tracker.get_detector_emitters()
 
         # Build table header with column for each statue
-        header = f"{'DETECTOR':<10} {'EMITTERS':<12} {'UPDATE':<10}"
+        header = f"{'DETECTOR':<10} {'EMITTERS':<20} {'UPDATE':<10}"
         for device in self.devices:
             statue = device['statue']
             header += f" {statue.value.upper():<7}"
@@ -357,9 +357,9 @@ class StatusDisplay:
                 detector = device['statue']
                 emitters = detector_emitters.get(detector, [])
 
-                # Format emitters list (shortened to fit)
+                # Format emitters list
                 if emitters:
-                    emitters_str = ",".join([e.value[:3] for e in emitters])  # Abbreviated names
+                    emitters_str = ",".join([e.value for e in emitters])
                     status_indicator = "●"  # Filled circle for linked
                 else:
                     emitters_str = "(none)"
@@ -379,7 +379,7 @@ class StatusDisplay:
                         update_str = f"{elapsed/3600:.1f}h"
 
                 # Build row starting with detector, emitters, update
-                line = f"{status_indicator} {detector.value:<8} {emitters_str:<12} {update_str:<10}"
+                line = f"{status_indicator} {detector.value:<8} {emitters_str:<20} {update_str:<10}"
 
                 # Add level column for each emitter statue
                 for emitter_device in self.devices:
