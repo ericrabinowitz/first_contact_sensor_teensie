@@ -218,9 +218,13 @@ void publishSignals() {
   String detectorName = String(MY_STATUE_NAME);
   detectorName.toLowerCase();
 
-  // Format complete JSON message
-  snprintf(jsonMsg, sizeof(jsonMsg), "{\"detector\":\"%s\",\"signals\":%s}",
-           detectorName.c_str(), signalsJson);
+  // Get this statue's threshold from the global array
+  float myThreshold = STATUE_THRESHOLDS[MY_STATUE_INDEX];
+
+  // Format complete JSON message with threshold
+  snprintf(jsonMsg, sizeof(jsonMsg),
+           "{\"detector\":\"%s\",\"signals\":%s,\"threshold\":%.3f}",
+           detectorName.c_str(), signalsJson, myThreshold);
 
   // Publish to missing_link/signals topic (no debug output - too verbose at
   // 2Hz)
