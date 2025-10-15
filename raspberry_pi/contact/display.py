@@ -322,9 +322,14 @@ class StatusDisplay:
         # Get current detector→emitters mapping from link tracker
         detector_emitters = self.link_tracker.get_detector_emitters()
 
-        # Table header
-        print(f"{'DETECTOR':<12} {'EMITTERS':<30} {'LAST UPDATE':<15} {'LEVEL':<8} {'THRESHOLD':<10}\r", flush=True)
-        print("─" * 80 + "\r", flush=True)
+        # Build table header with column for each statue
+        header = f"{'DETECTOR':<10} {'EMITTERS':<12} {'UPDATE':<10}"
+        for device in self.devices:
+            statue = device['statue']
+            header += f" {statue.value.upper():<7}"
+        header += f" {'THRESHOLD':<9}"
+        print(header + "\r", flush=True)
+        print("─" * len(header) + "\r", flush=True)
 
         current_time = time.time()
         with self.lock:
@@ -333,43 +338,59 @@ class StatusDisplay:
                 detector = device['statue']
                 emitters = detector_emitters.get(detector, [])
 
-                # Format emitters list
+                # Format emitters list (shortened to fit)
                 if emitters:
-                    emitters_str = ", ".join([e.value for e in emitters])
+                    emitters_str = ",".join([e.value[:3] for e in emitters])  # Abbreviated names
                     status_indicator = "●"  # Filled circle for linked
                 else:
                     emitters_str = "(none)"
                     status_indicator = "○"  # Empty circle for unlinked
 
-                # Format last update time
+                # Format last update time (shortened)
                 last_update_time = self.last_update.get(detector, 0.0)
                 if last_update_time == 0.0:
                     update_str = "Never"
                 else:
                     elapsed = current_time - last_update_time
                     if elapsed < 60:
-                        update_str = f"{elapsed:.1f}s ago"
+                        update_str = f"{elapsed:.1f}s"
                     elif elapsed < 3600:
-                        update_str = f"{elapsed/60:.1f}m ago"
+                        update_str = f"{elapsed/60:.1f}m"
                     else:
-                        update_str = f"{elapsed/3600:.1f}h ago"
+                        update_str = f"{elapsed/3600:.1f}h"
 
-                # Placeholders for level and threshold
-                level_str = "[TBD]"
+                # Build row starting with detector, emitters, update
+                line = f"{status_indicator} {detector.value:<8} {emitters_str:<12} {update_str:<10}"
 
-                # Get threshold if available
+                # Add level column for each emitter statue
+                for emitter_device in self.devices:
+                    emitter = emitter_device['statue']
+
+                    if detector == emitter:
+                        # Can't detect self
+                        level_str = "[N/A]"
+                    else:
+                        # Get level from detection metrics
+                        level = 0.0
+                        if detector in self.detection_metrics and emitter in self.detection_metrics[detector]:
+                            level = self.detection_metrics[detector][emitter]['level']
+                        level_str = f"{level:.3f}"
+
+                    line += f" {level_str:<7}"
+
+                # Add threshold column
                 if detector in self.thresholds:
                     threshold_str = f"{self.thresholds[detector]:.3f}"
                 else:
                     threshold_str = "[N/A]"
+                line += f" {threshold_str:<9}"
 
                 # Print row with padding
-                line = f"{status_indicator} {detector.value:<10} {emitters_str:<30} {update_str:<15} {level_str:<8} {threshold_str:<10}"
-                print(f"{line:<100}\r", flush=True)
+                print(f"{line:<120}\r", flush=True)
 
         # Legend
-        print("\r\nLegend: ● = Linked  ○ = Unlinked\r", flush=True)
-        print("Note: LEVEL will be populated when available in MQTT messages\r", flush=True)
+        print("\r\nLegend: ● = Linked  ○ = Unlinked  [N/A] = Self-detection\r", flush=True)
+        print("Signal levels updated from missing_link/signals MQTT topic (published every 500ms)\r", flush=True)
         print("\r\nPress Ctrl+C to stop\r", flush=True)
 
         # Add blank lines to ensure clean overwrites

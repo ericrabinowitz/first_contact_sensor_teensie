@@ -53,6 +53,18 @@ CONFIG_RESP_MQTT_TOPIC = "missing_link/config/response"
 #     ...
 # }
 
+# Topic for signal level reports
+SIGNALS_MQTT_TOPIC = "missing_link/signals"
+# {
+#     "detector": "eros",
+#     "signals": {
+#         "elektra": 0.123,
+#         "sophia": 0.045,
+#         "ultimo": 0.001,
+#         "ariel": 0.000
+#     }
+# }
+
 # MQTT broker settings - matches controller.py
 MQTT_BROKER = "127.0.0.1"  # Default: localhost
 MQTT_PORT = 1883  # Default MQTT port
@@ -95,6 +107,10 @@ def on_connect(client, userdata, flags, reason_code, properties):
     # Subscribe to config response topic
     client.subscribe(CONFIG_RESP_MQTT_TOPIC, qos=MQTT_QOS)
     print(f"Subscribed to topic: {CONFIG_RESP_MQTT_TOPIC}")
+
+    # Subscribe to signals topic
+    client.subscribe(SIGNALS_MQTT_TOPIC, qos=MQTT_QOS)
+    print(f"Subscribed to topic: {SIGNALS_MQTT_TOPIC}")
 
     print("\nWaiting for MQTT messages...\n")
 
@@ -146,6 +162,31 @@ def on_message(client, userdata, msg):
                     print(f"Warning: Unknown statue in config: {statue_name}")
                 except (KeyError, TypeError) as e:
                     print(f"Warning: Invalid config format for {statue_name}: {e}")
+
+        # Handle signals events
+        elif msg.topic == SIGNALS_MQTT_TOPIC:
+            payload = json.loads(msg.payload)
+
+            # Extract detector and signals dict
+            detector_name = payload.get("detector", "")
+            signals = payload.get("signals", {})
+
+            try:
+                detector = Statue(detector_name)
+            except ValueError:
+                print(f"Warning: Unknown detector statue: {detector_name}")
+                return
+
+            # Update detection metrics for each emitter
+            for emitter_name, level in signals.items():
+                try:
+                    emitter = Statue(emitter_name)
+                    # Update display with signal level
+                    status_display.update_metrics(detector, emitter, level)
+                except ValueError:
+                    print(f"Warning: Unknown emitter statue: {emitter_name}")
+                except (TypeError, ValueError) as e:
+                    print(f"Warning: Invalid signal level for {emitter_name}: {e}")
 
     except json.JSONDecodeError:
         print(f"Warning: Failed to parse JSON message: {msg.payload}")
