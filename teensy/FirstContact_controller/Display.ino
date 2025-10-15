@@ -149,9 +149,9 @@ void displayThresholds(void) {
     if (i > 0)
       display.print(F("/"));
 
-    // Determine precision for this value (2 or 3 decimal places)
-    // Use 0.00995 threshold to account for floating point precision
-    int precision = (detectorThresholds[i] < 0.00995) ? 3 : 2;
+    // Determine precision dynamically: use 3 decimals if third decimal is non-zero
+    int value_3dec = (int)(detectorThresholds[i] * 1000 + 0.5);
+    int precision = (value_3dec % 10 != 0) ? 3 : 2;
     int multiplier = (precision == 2) ? 100 : 1000;
 
     // Format as .XX or .XXX (no leading zero) to save space
@@ -198,9 +198,9 @@ void displaySignals(void) {
     if (i > 0)
       display.print(F("/"));
 
-    // Determine precision based on threshold (not signal) to keep display stable
-    // Use 0.00995 threshold to account for floating point precision
-    int precision = (detectorThresholds[i] < 0.00995) ? 3 : 2;
+    // Determine precision dynamically based on threshold: use 3 decimals if third decimal is non-zero
+    int value_3dec = (int)(detectorThresholds[i] * 1000 + 0.5);
+    int precision = (value_3dec % 10 != 0) ? 3 : 2;
     int multiplier = (precision == 2) ? 100 : 1000;
 
     // Format as .XX or .XXX (no leading zero) to save space

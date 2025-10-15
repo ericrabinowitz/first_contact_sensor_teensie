@@ -106,11 +106,7 @@ You can update detection thresholds for individual statues by sending a minimal 
 
 ```bash
 # Update sophia's threshold (more sensitive)
-mosquitto_pub -h 192.168.4.1 -t "missing_link/config/response" -m '{
-  "sophia": {
-    "threshold": 0.005
-  }
-}'
+mosquitto_pub -h 192.168.4.1 -t "missing_link/config/response" -m '{"sophia": {"threshold": 0.005}}'
 
 # Update multiple statues at once
 mosquitto_pub -h 192.168.4.1 -t "missing_link/config/response" -m '{
