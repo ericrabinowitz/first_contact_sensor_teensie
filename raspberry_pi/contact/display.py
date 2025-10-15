@@ -182,6 +182,14 @@ class StatusDisplay:
         """Show terminal cursor."""
         print("\033[?25h", end='', flush=True)
 
+    def enter_alt_screen(self):
+        """Enter alternate screen buffer."""
+        print("\033[?1049h", end='', flush=True)
+
+    def exit_alt_screen(self):
+        """Exit alternate screen buffer."""
+        print("\033[?1049l", end='', flush=True)
+
     def move_cursor_home(self):
         """Move cursor to home position without clearing."""
         print("\033[H", end='', flush=True)
@@ -310,14 +318,12 @@ class StatusDisplay:
         Shows detector → emitters in a simple table format with timestamps
         and placeholders for future level/SNR data.
         """
-        if self.first_draw:
-            self.clear_screen()
-            self.first_draw = False
-        else:
-            self.move_cursor_home()
+        # Always clear screen to prevent smearing
+        self.clear_screen()
 
         # Header
-        print("=== Missing Link MQTT Status Monitor ===\r\n\r", flush=True)
+        print("=== Missing Link MQTT Status Monitor ===\n", end='', flush=True)
+        print("\n", end='', flush=True)  # Blank line
 
         # Get current detector→emitters mapping from link tracker
         detector_emitters = self.link_tracker.get_detector_emitters()
@@ -328,8 +334,8 @@ class StatusDisplay:
             statue = device['statue']
             header += f" {statue.value.upper():<7}"
         header += f" {'THRESHOLD':<9}"
-        print(header + "\r", flush=True)
-        print("─" * len(header) + "\r", flush=True)
+        print(header + "\n", end='', flush=True)
+        print("─" * len(header) + "\n", end='', flush=True)
 
         current_time = time.time()
         with self.lock:
@@ -386,33 +392,37 @@ class StatusDisplay:
                 line += f" {threshold_str:<9}"
 
                 # Print row with padding
-                print(f"{line:<120}\r", flush=True)
+                print(f"{line:<120}\n", end='', flush=True)
 
         # Legend
-        print("\r\nLegend: ● = Linked  ○ = Unlinked  [N/A] = Self-detection\r", flush=True)
-        print("Signal levels updated from missing_link/signals MQTT topic (published every 500ms)\r", flush=True)
-        print("\r\nPress Ctrl+C to stop\r", flush=True)
-
-        # Add blank lines to ensure clean overwrites
-        print("\r\n" * 3, end='', flush=True)
+        print("\n", end='', flush=True)  # Blank line
+        print("Legend: ● = Linked  ○ = Unlinked  [N/A] = Self-detection\n", end='', flush=True)
+        print("Signal levels updated from missing_link/signals MQTT topic (published every 500ms)\n", end='', flush=True)
+        print("\n", end='', flush=True)  # Blank line
+        print("Press Ctrl+C to stop\n", end='', flush=True)
 
     def run(self) -> None:
         """Run the display update loop."""
+        self.enter_alt_screen()
         self.hide_cursor()
-        while self.running:
-            try:
-                if self.mqtt_mode:
-                    self.draw_mqtt_interface()
-                else:
-                    self.draw_interface()
-                time.sleep(0.25)  # Update every 250ms (4Hz)
-            except Exception:
-                # Don't crash the display thread
-                pass
+        try:
+            while self.running:
+                try:
+                    if self.mqtt_mode:
+                        self.draw_mqtt_interface()
+                    else:
+                        self.draw_interface()
+                    time.sleep(0.25)  # Update every 250ms (4Hz)
+                except Exception:
+                    # Don't crash the display thread
+                    pass
+        finally:
+            # Always clean up, even on exception
+            self.show_cursor()
+            self.exit_alt_screen()
 
     def stop(self) -> None:
         """Stop the display."""
         self.running = False
         time.sleep(0.2)  # Give display thread time to exit
-        self.show_cursor()
-        self.clear_screen()
+        # Cleanup is now handled in run() finally block
