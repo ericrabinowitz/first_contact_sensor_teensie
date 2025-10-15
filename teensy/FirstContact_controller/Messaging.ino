@@ -111,6 +111,10 @@ void initMqtt() {
 
   client.setServer(getServer(), 1883);
   client.setCallback(mqttSubCallback);
+
+  // Increase buffer size to handle config messages (~650 bytes)
+  // Default is 256 bytes which is too small
+  client.setBufferSize(1024);
 }
 
 /*
