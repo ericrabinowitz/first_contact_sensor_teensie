@@ -41,6 +41,18 @@ LINK_MQTT_TOPIC = "missing_link/contact"
 #     "emitters": ["elektra"], # Statues currently linked to the detector
 # }
 
+# Topic for config responses
+CONFIG_RESP_MQTT_TOPIC = "missing_link/config/response"
+# {
+#     "eros": {
+#         "emit": 10000,
+#         "detect": ["elektra", ...],
+#         "threshold": 0.01,
+#         ...
+#     },
+#     ...
+# }
+
 # MQTT broker settings - matches controller.py
 MQTT_BROKER = "127.0.0.1"  # Default: localhost
 MQTT_PORT = 1883  # Default MQTT port
@@ -79,38 +91,61 @@ def on_connect(client, userdata, flags, reason_code, properties):
     # Subscribe to contact topic
     client.subscribe(LINK_MQTT_TOPIC, qos=MQTT_QOS)
     print(f"Subscribed to topic: {LINK_MQTT_TOPIC}")
+
+    # Subscribe to config response topic
+    client.subscribe(CONFIG_RESP_MQTT_TOPIC, qos=MQTT_QOS)
+    print(f"Subscribed to topic: {CONFIG_RESP_MQTT_TOPIC}")
+
     print("\nWaiting for MQTT messages...\n")
 
 
 def on_message(client, userdata, msg):
-    """MQTT message callback - handles incoming contact events."""
+    """MQTT message callback - handles incoming contact and config events."""
     try:
-        payload = json.loads(msg.payload)
+        # Handle contact events
+        if msg.topic == LINK_MQTT_TOPIC:
+            payload = json.loads(msg.payload)
 
-        # Extract detector and emitters from payload
-        detector_name = payload.get("detector", "")
-        emitters_names = payload.get("emitters", [])
+            # Extract detector and emitters from payload
+            detector_name = payload.get("detector", "")
+            emitters_names = payload.get("emitters", [])
 
-        # Convert to Statue enums
-        try:
-            detector = Statue(detector_name)
-        except ValueError:
-            print(f"Warning: Unknown detector statue: {detector_name}")
-            return
-
-        emitters = []
-        for emitter_name in emitters_names:
+            # Convert to Statue enums
             try:
-                emitter = Statue(emitter_name)
-                emitters.append(emitter)
+                detector = Statue(detector_name)
             except ValueError:
-                print(f"Warning: Unknown emitter statue: {emitter_name}")
+                print(f"Warning: Unknown detector statue: {detector_name}")
+                return
 
-        # Update link tracker with new state
-        link_tracker.update_detector_emitters(detector, emitters)
+            emitters = []
+            for emitter_name in emitters_names:
+                try:
+                    emitter = Statue(emitter_name)
+                    emitters.append(emitter)
+                except ValueError:
+                    print(f"Warning: Unknown emitter statue: {emitter_name}")
 
-        # Update timestamp in display
-        status_display.update_detector_timestamp(detector)
+            # Update link tracker with new state
+            link_tracker.update_detector_emitters(detector, emitters)
+
+            # Update timestamp in display
+            status_display.update_detector_timestamp(detector)
+
+        # Handle config response events
+        elif msg.topic == CONFIG_RESP_MQTT_TOPIC:
+            payload = json.loads(msg.payload)
+
+            # Parse config for each statue and extract threshold
+            for statue_name, config in payload.items():
+                try:
+                    statue = Statue(statue_name)
+                    threshold = config.get("threshold", 0.0)
+                    # Update display with threshold
+                    status_display.update_threshold(statue, threshold)
+                except ValueError:
+                    print(f"Warning: Unknown statue in config: {statue_name}")
+                except (KeyError, TypeError) as e:
+                    print(f"Warning: Invalid config format for {statue_name}: {e}")
 
     except json.JSONDecodeError:
         print(f"Warning: Failed to parse JSON message: {msg.payload}")

@@ -91,6 +91,8 @@ class StatusDisplay:
         self.detection_metrics = {}
         # Track last update timestamp per detector
         self.last_update: dict[Statue, float] = {}
+        # Track threshold per statue (from MQTT config messages)
+        self.thresholds: dict[Statue, float] = {}
         self.lock = threading.Lock()
         self.first_draw = True
 
@@ -138,6 +140,18 @@ class StatusDisplay:
         """
         with self.lock:
             self.last_update[detector] = time.time()
+
+    def update_threshold(self, statue: Statue, threshold: float) -> None:
+        """Update the detection threshold for a statue.
+
+        Called when receiving MQTT config messages with threshold values.
+
+        Args:
+            statue (Statue): The statue whose threshold is being updated
+            threshold (float): The detection threshold value
+        """
+        with self.lock:
+            self.thresholds[statue] = threshold
 
     def format_cell(self, level: float, is_self: bool = False) -> str:
         """Format a single cell with level and box indicators."""
@@ -309,7 +323,7 @@ class StatusDisplay:
         detector_emitters = self.link_tracker.get_detector_emitters()
 
         # Table header
-        print(f"{'DETECTOR':<12} {'EMITTERS':<30} {'LAST UPDATE':<15} {'LEVEL':<8} {'SNR':<8}\r", flush=True)
+        print(f"{'DETECTOR':<12} {'EMITTERS':<30} {'LAST UPDATE':<15} {'LEVEL':<8} {'THRESHOLD':<10}\r", flush=True)
         print("─" * 80 + "\r", flush=True)
 
         current_time = time.time()
@@ -340,17 +354,22 @@ class StatusDisplay:
                     else:
                         update_str = f"{elapsed/3600:.1f}h ago"
 
-                # Placeholders for level and SNR
+                # Placeholders for level and threshold
                 level_str = "[TBD]"
-                snr_str = "[TBD]"
+
+                # Get threshold if available
+                if detector in self.thresholds:
+                    threshold_str = f"{self.thresholds[detector]:.3f}"
+                else:
+                    threshold_str = "[N/A]"
 
                 # Print row with padding
-                line = f"{status_indicator} {detector.value:<10} {emitters_str:<30} {update_str:<15} {level_str:<8} {snr_str:<8}"
+                line = f"{status_indicator} {detector.value:<10} {emitters_str:<30} {update_str:<15} {level_str:<8} {threshold_str:<10}"
                 print(f"{line:<100}\r", flush=True)
 
         # Legend
         print("\r\nLegend: ● = Linked  ○ = Unlinked\r", flush=True)
-        print("Note: LEVEL and SNR will be populated when available in MQTT messages\r", flush=True)
+        print("Note: LEVEL will be populated when available in MQTT messages\r", flush=True)
         print("\r\nPress Ctrl+C to stop\r", flush=True)
 
         # Add blank lines to ensure clean overwrites
