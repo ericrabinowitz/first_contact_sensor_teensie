@@ -20,6 +20,7 @@ Execute: ./status_monitor.py
 """
 
 import json
+import re
 import signal
 import sys
 import threading
@@ -41,18 +42,6 @@ LINK_MQTT_TOPIC = "missing_link/contact"
 #     "emitters": ["elektra"], # Statues currently linked to the detector
 # }
 
-# Topic for config responses
-CONFIG_RESP_MQTT_TOPIC = "missing_link/config/response"
-# {
-#     "eros": {
-#         "emit": 10000,
-#         "detect": ["elektra", ...],
-#         "threshold": 0.01,
-#         ...
-#     },
-#     ...
-# }
-
 # Topic for signal level reports
 SIGNALS_MQTT_TOPIC = "missing_link/signals"
 # {
@@ -62,7 +51,8 @@ SIGNALS_MQTT_TOPIC = "missing_link/signals"
 #         "sophia": 0.045,
 #         "ultimo": 0.001,
 #         "ariel": 0.000
-#     }
+#     },
+#     "threshold": 0.010
 # }
 
 # MQTT broker settings - matches controller.py
@@ -104,11 +94,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
     client.subscribe(LINK_MQTT_TOPIC, qos=MQTT_QOS)
     print(f"Subscribed to topic: {LINK_MQTT_TOPIC}")
 
-    # Subscribe to config response topic
-    client.subscribe(CONFIG_RESP_MQTT_TOPIC, qos=MQTT_QOS)
-    print(f"Subscribed to topic: {CONFIG_RESP_MQTT_TOPIC}")
-
-    # Subscribe to signals topic
+    # Subscribe to signals topic (includes threshold data)
     client.subscribe(SIGNALS_MQTT_TOPIC, qos=MQTT_QOS)
     print(f"Subscribed to topic: {SIGNALS_MQTT_TOPIC}")
 
@@ -116,7 +102,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 
 def on_message(client, userdata, msg):
-    """MQTT message callback - handles incoming contact and config events."""
+    """MQTT message callback - handles incoming contact and signals events."""
     try:
         # Handle contact events
         if msg.topic == LINK_MQTT_TOPIC:
@@ -147,35 +133,28 @@ def on_message(client, userdata, msg):
             # Update timestamp in display
             status_display.update_detector_timestamp(detector)
 
-        # Handle config response events
-        elif msg.topic == CONFIG_RESP_MQTT_TOPIC:
-            payload = json.loads(msg.payload)
-
-            # Parse config for each statue and extract threshold
-            for statue_name, config in payload.items():
-                try:
-                    statue = Statue(statue_name)
-                    threshold = config.get("threshold", 0.0)
-                    # Update display with threshold
-                    status_display.update_threshold(statue, threshold)
-                except ValueError:
-                    print(f"Warning: Unknown statue in config: {statue_name}")
-                except (KeyError, TypeError) as e:
-                    print(f"Warning: Invalid config format for {statue_name}: {e}")
-
-        # Handle signals events
+        # Handle signals events (includes threshold data)
         elif msg.topic == SIGNALS_MQTT_TOPIC:
-            payload = json.loads(msg.payload)
+            # Preprocess payload to handle NaN values from Teensy
+            payload_str = msg.payload.decode('utf-8')
+            # Replace nan/NaN with 0.0 (treat as no signal)
+            #payload_str = re.sub(r'\bnan\b', '0.0', payload_str, flags=re.IGNORECASE)
+            payload = json.loads(payload_str)
 
-            # Extract detector and signals dict
+            # Extract detector, signals dict, and threshold
             detector_name = payload.get("detector", "")
             signals = payload.get("signals", {})
+            threshold = payload.get("threshold", 0.0)
 
             try:
                 detector = Statue(detector_name)
             except ValueError:
                 print(f"Warning: Unknown detector statue: {detector_name}")
                 return
+
+            # Update threshold for this detector
+            if threshold > 0:
+                status_display.update_threshold(detector, threshold)
 
             # Update detection metrics for each emitter
             for emitter_name, level in signals.items():
