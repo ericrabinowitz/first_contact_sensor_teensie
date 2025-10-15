@@ -38,7 +38,7 @@ controller: sync ## Run multi-channel audio playback test (syncs files first)
 
 controller-test: sync ## Run controller with LED/WLED disabled for audio testing (syncs files first)
 	@echo "Starting controller in TEST MODE (no LED control)..."
-	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && TEST_MODE_NO_LEDS=1 $(PYTHON_WITH_PATH) ./controller.py'"
+	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && DEBUG=1 TEST_MODE_NO_LEDS=1 $(PYTHON_WITH_PATH) ./controller.py'"
 
 monitor: sync ## Run MQTT status monitor to display statue connections (syncs files first)
 	@$(SSH_EXEC) "bash -l -c 'cd $(CONTROLLER_DIR) && $(PYTHON_WITH_PATH) ./status_monitor.py'"
