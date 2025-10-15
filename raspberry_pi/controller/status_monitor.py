@@ -173,7 +173,7 @@ def on_message(client, userdata, msg):
         print(f"Error processing message: {e}")
 
 
-def on_disconnect(client, userdata, reason_code, properties):
+def on_disconnect(client, userdata, disconnect_flags, reason_code, properties):
     """MQTT disconnection callback."""
     print(f"\nDisconnected from MQTT broker: {reason_code}")
 
