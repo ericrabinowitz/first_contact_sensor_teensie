@@ -218,7 +218,7 @@ uint8_t getStableLinkedMask() {
 
       // Use detector-specific threshold instead of global thresh
       float detectorThresh = detectorThresholds[detectorIndex];
-      bool isDetected = detectorSignals[detectorIndex] > detectorThresh;
+      bool isDetected = left > detectorThresh || right > detectorThresh;
       if (isDetected) {
         candidateLinkedMask |= (1 << statue_idx);
       }

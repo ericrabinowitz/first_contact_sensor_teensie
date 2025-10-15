@@ -42,6 +42,7 @@ void reconnect();
 void mqttLoop();
 void initMqtt();
 void publishState(ContactState state);
+void publishSignals();
 // LED functions removed - now handled by Pi controller
 // bool setInactiveLedState();
 // bool setActiveLedState();
