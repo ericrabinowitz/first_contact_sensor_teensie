@@ -93,6 +93,10 @@ class StatusDisplay:
         self.last_update: dict[Statue, float] = {}
         # Track threshold per statue (from MQTT config messages)
         self.thresholds: dict[Statue, float] = {}
+        # Track climax state (for MQTT mode)
+        self.climax_state: str = "inactive"
+        self.climax_connected_pairs: list = []
+        self.climax_missing_pairs: list = []
         self.lock = threading.Lock()
         self.first_draw = True
 
@@ -152,6 +156,21 @@ class StatusDisplay:
         """
         with self.lock:
             self.thresholds[statue] = threshold
+
+    def update_climax_state(self, state: str, connected_pairs: list, missing_pairs: list) -> None:
+        """Update the climax state.
+
+        Called when receiving MQTT climax messages.
+
+        Args:
+            state (str): Climax state ("active" or "inactive")
+            connected_pairs (list): List of connected neighbor pairs [[statue1, statue2], ...]
+            missing_pairs (list): List of missing neighbor pairs needed for climax
+        """
+        with self.lock:
+            self.climax_state = state
+            self.climax_connected_pairs = connected_pairs
+            self.climax_missing_pairs = missing_pairs
 
     def format_cell(self, level: float, is_self: bool = False, threshold: Optional[float] = None) -> str:
         """Format a single cell with level and box indicators.
@@ -337,6 +356,24 @@ class StatusDisplay:
         # Header
         print("=== Missing Link MQTT Status Monitor ===\n", end='', flush=True)
         print("\n", end='', flush=True)  # Blank line
+
+        # Climax status section
+        with self.lock:
+            climax_indicator = "●" if self.climax_state == "active" else "○"
+            climax_label = "CLIMAX"
+
+            if self.climax_state == "active":
+                # Show active climax
+                print(f"{climax_indicator} {climax_label}: ACTIVE\n", end='', flush=True)
+            else:
+                # Show inactive climax with missing pairs
+                if self.climax_missing_pairs:
+                    missing_str = ", ".join([f"{p[0]}↔{p[1]}" for p in self.climax_missing_pairs])
+                    print(f"{climax_indicator} {climax_label}: INACTIVE - Missing: {missing_str}\n", end='', flush=True)
+                else:
+                    print(f"{climax_indicator} {climax_label}: INACTIVE\n", end='', flush=True)
+
+        print("\n", end='', flush=True)  # Blank line after climax status
 
         # Get current detector→emitters mapping from link tracker
         detector_emitters = self.link_tracker.get_detector_emitters()

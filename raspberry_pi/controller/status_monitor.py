@@ -55,6 +55,14 @@ SIGNALS_MQTT_TOPIC = "missing_link/signals"
 #     "threshold": 0.010
 # }
 
+# Topic for climax event status
+CLIMAX_MQTT_TOPIC = "missing_link/climax"
+# {
+#     "state": "active" | "inactive",
+#     "connected_pairs": [["eros", "elektra"], ...],
+#     "missing_pairs": [["sophia", "ultimo"], ...]
+# }
+
 # MQTT broker settings - matches controller.py
 MQTT_BROKER = "127.0.0.1"  # Default: localhost
 MQTT_PORT = 1883  # Default MQTT port
@@ -67,6 +75,11 @@ mqttc: Any = None
 link_tracker: Any = None
 status_display: Any = None
 display_thread: Any = None
+
+# Climax state tracking
+climax_state: str = "inactive"
+climax_connected_pairs: list = []
+climax_missing_pairs: list = []
 
 
 def create_mock_devices():
@@ -97,6 +110,10 @@ def on_connect(client, userdata, flags, reason_code, properties):
     # Subscribe to signals topic (includes threshold data)
     client.subscribe(SIGNALS_MQTT_TOPIC, qos=MQTT_QOS)
     print(f"Subscribed to topic: {SIGNALS_MQTT_TOPIC}")
+
+    # Subscribe to climax topic
+    client.subscribe(CLIMAX_MQTT_TOPIC, qos=MQTT_QOS)
+    print(f"Subscribed to topic: {CLIMAX_MQTT_TOPIC}")
 
     print("\nWaiting for MQTT messages...\n")
 
@@ -166,6 +183,20 @@ def on_message(client, userdata, msg):
                     print(f"Warning: Unknown emitter statue: {emitter_name}")
                 except (TypeError, ValueError) as e:
                     print(f"Warning: Invalid signal level for {emitter_name}: {e}")
+
+        # Handle climax events
+        elif msg.topic == CLIMAX_MQTT_TOPIC:
+            global climax_state, climax_connected_pairs, climax_missing_pairs
+
+            payload = json.loads(msg.payload)
+
+            # Extract climax state
+            climax_state = payload.get("state", "inactive")
+            climax_connected_pairs = payload.get("connected_pairs", [])
+            climax_missing_pairs = payload.get("missing_pairs", [])
+
+            # Update status display with climax data
+            status_display.update_climax_state(climax_state, climax_connected_pairs, climax_missing_pairs)
 
     except json.JSONDecodeError:
         print(f"Warning: Failed to parse JSON message: {msg.payload}")
