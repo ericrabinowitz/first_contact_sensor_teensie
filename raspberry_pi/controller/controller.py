@@ -974,7 +974,7 @@ def handle_contact_event(payload: dict):
             music_playback.set_broadcast_mode(True)
             if debug:
                 print("Enabled climax mode: mixing all channels to all outputs")
-            leds_active(new_actives, effect_key='climax')
+            leds_active(active_statues, effect_key='climax')
         # Publish climax active state
         publish_mqtt(CLIMAX_MQTT_TOPIC, {
             "state": "active",
@@ -988,6 +988,8 @@ def handle_contact_event(payload: dict):
             music_playback.set_broadcast_mode(False)
             if debug:
                 print("Disabled climax mode: returning to normal routing")
+        # Revert LEDs back to normal active mode for still-active statues
+        leds_active(active_statues, effect_key='active')
 
     if missing_pairs:
         # Publish climax inactive state with missing pairs
