@@ -4,7 +4,9 @@ This module contains tone frequencies and other configuration
 parameters used throughout the contact detection system.
 """
 
-from audio.devices import Statue
+import ultraimport as ui
+
+Statue = ui.ultraimport("__dir__/../config/constants.py", "Statue")
 
 # Frequencies from frequency_sweep_20250630_152512.log
 # All achieved 100% detection with good SNR despite cable losses

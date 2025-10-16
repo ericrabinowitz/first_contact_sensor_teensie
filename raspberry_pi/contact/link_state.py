@@ -27,7 +27,9 @@ Example:
 
 from typing import TYPE_CHECKING, Optional
 
-from audio.devices import Statue
+import ultraimport as ui
+
+Statue = ui.ultraimport("__dir__/../config/constants.py", "Statue")
 
 if TYPE_CHECKING:
     from audio.music import ToggleableMultiChannelPlayback
