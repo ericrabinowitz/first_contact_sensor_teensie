@@ -94,6 +94,12 @@ HAPTIC_MQTT_TOPIC = "missing_link/haptic"  # Topic for haptic motor commands
 # {
 #     "statue": "eros",  # Statue to turn on the haptic motors for
 # }
+CLIMAX_MQTT_TOPIC = "missing_link/climax"  # Topic for climax event status
+# {
+#     "state": "active" | "inactive",               # Current climax state
+#     "connected_pairs": [["eros", "elektra"], ...], # Currently connected neighbor pairs
+#     "missing_pairs": [["sophia", "ultimo"], ...]   # Neighbor pairs needed for climax (when inactive)
+# }
 WLED_MQTT_TOPIC = "wled/{}/api"  # Topic template for WLED commands, fill in board name
 STATUS_TOPIC = "$SYS/broker/clients/connected"  # Topic for MQTT client status
 # For unix socket grant permission to file
@@ -221,36 +227,26 @@ teensy_config = {
         "emit": 10077,
         "detect": [Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",  # derived from the dnsmasq.conf file
-        "ip_address": "",  # derived from the dnsmasq.conf file
     },
     Statue.ELEKTRA: {
         "emit": 12274,
         "detect": [Statue.EROS, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
     Statue.ARIEL: {
         "emit": 14643,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
     Statue.SOPHIA: {
         "emit": 17227,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.ULTIMO, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
     Statue.ULTIMO: {
         "emit": 19467,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ARIEL],
         "threshold": 0.01,
-        "mac_address": "",
-        "ip_address": "",
     },
 }
 
@@ -304,14 +300,16 @@ def extract_addresses():
             mac_address = parts[0].strip()
             ip_address = parts[1].strip()
             hostname = parts[2].strip() if len(parts) >= 3 else ""
-            if hostname in statues:
-                statue = Statue(hostname)
-                teensy_config[statue].update(
-                    {
-                        "mac_address": mac_address,
-                        "ip_address": ip_address,
-                    }
-                )
+            # Remove the mac_address and ip_address from the teensy config.
+            # It uses hostname <-> statue name identification instead.
+            # if hostname in statues:
+            #     statue = Statue(hostname)
+            #     teensy_config[statue].update(
+            #         {
+            #             "mac_address": mac_address,
+            #             "ip_address": ip_address,
+            #         }
+            #     )
             if hostname in boards:
                 board = Board(hostname)
                 board_config[board] = {
@@ -475,13 +473,14 @@ def update_active_statues(
     return new_actives, new_dormants, was_dormant != now_dormant
 
 
-def update_active_links() -> tuple[bool, bool, Set[tuple[Statue, Statue]]]:  # pyright: ignore[reportInvalidTypeForm]
+def update_active_links() -> tuple[bool, bool, List[List[str]], List[List[str]]]:  # pyright: ignore[reportInvalidTypeForm]
     """Update the active links between neighboring statues and detect climax events.
 
     Returns:
         climax_started: True if climax just began
         climax_stopped: True if climax just ended
-        active_links: Set of currently connected neighbor pairs (normalized tuples)
+        connected_pairs: List of connected neighbor pairs as [[statue1, statue2], ...]
+        missing_pairs: List of missing neighbor pairs needed for climax
     """
     global climax_is_active, active_links
 
@@ -534,7 +533,23 @@ def update_active_links() -> tuple[bool, bool, Set[tuple[Statue, Statue]]]:  # p
     elif climax_stopped:
         print("Climax has stopped.")
 
-    return climax_started, climax_stopped, new_active_links
+    # Convert to JSON-friendly format for MQTT
+    # Calculate all neighbor pairs as a set for comparison
+    all_neighbor_pairs_set = set()
+    for statue1, statue2 in neighbor_pairs:
+        if statue1.value < statue2.value:
+            all_neighbor_pairs_set.add((statue1, statue2))
+        else:
+            all_neighbor_pairs_set.add((statue2, statue1))
+
+    # Calculate missing pairs
+    missing_links_set = all_neighbor_pairs_set - new_active_links
+
+    # Convert to JSON-friendly lists
+    connected_pairs_json = [[s1.value, s2.value] for s1, s2 in sorted(new_active_links)]
+    missing_pairs_json = [[s1.value, s2.value] for s1, s2 in sorted(missing_links_set)]
+
+    return climax_started, climax_stopped, connected_pairs_json, missing_pairs_json
 
 
 def get_channel(statue: Statue) -> int:  # pyright: ignore[reportInvalidTypeForm]
@@ -554,7 +569,16 @@ def publish_mqtt(topic: str, payload: dict):
 
 def send_config():
     """Send the Teensy configuration via MQTT."""
-    publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
+    try:
+        if debug:
+            print(f"Sending Teensy configuration to {CONFIG_RESP_MQTT_TOPIC}")
+        publish_mqtt(CONFIG_RESP_MQTT_TOPIC, teensy_config)
+        if debug:
+            print("Configuration sent successfully")
+    except Exception as e:
+        print(f"ERROR: Failed to send config: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def set_debug(enable: bool):
@@ -923,7 +947,7 @@ def handle_contact_event(payload: dict):
     new_actives, new_dormants, transitioned = update_active_statues(payload)
 
     # Check for climax events
-    climax_started, climax_stopped, current_active_links = update_active_links()
+    climax_started, climax_stopped, connected_pairs, missing_pairs = update_active_links()
 
     if transitioned:
         change_playback_state()
@@ -951,7 +975,12 @@ def handle_contact_event(payload: dict):
             if debug:
                 print("Enabled climax mode: mixing all channels to all outputs")
             leds_active(new_actives, effect_key='climax')
-        # Future: publish_mqtt("missing_link/climax", {"state": "active", "links": list(current_active_links)})
+        # Publish climax active state
+        publish_mqtt(CLIMAX_MQTT_TOPIC, {
+            "state": "active",
+            "connected_pairs": connected_pairs,
+            "missing_pairs": []
+        })
     elif climax_stopped:
         control_relay(activate=False)
         # Disable climax mode: return to normal per-channel routing
@@ -959,7 +988,14 @@ def handle_contact_event(payload: dict):
             music_playback.set_broadcast_mode(False)
             if debug:
                 print("Disabled climax mode: returning to normal routing")
-        # Future: publish_mqtt("missing_link/climax", {"state": "inactive"})
+
+    if missing_pairs:
+        # Publish climax inactive state with missing pairs
+        publish_mqtt(CLIMAX_MQTT_TOPIC, {
+            "state": "inactive",
+            "connected_pairs": connected_pairs,
+            "missing_pairs": missing_pairs
+        })
 
 
 # ### Debug server
@@ -1097,7 +1133,10 @@ def on_message(mqttc, userdata, msg):
         print(f"Received message on topic {msg.topic}: {msg.payload}")
 
     if msg.topic == CONFIG_REQ_MQTT_TOPIC:
-        send_config()
+        try:
+            send_config()
+        except Exception as e:
+            print(f"ERROR: Config request handler failed: {e}")
 
     if msg.topic == LINK_MQTT_TOPIC:
         try:

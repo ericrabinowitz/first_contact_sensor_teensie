@@ -20,6 +20,7 @@ Execute: ./status_monitor.py
 """
 
 import json
+import re
 import signal
 import sys
 import threading
@@ -41,6 +42,27 @@ LINK_MQTT_TOPIC = "missing_link/contact"
 #     "emitters": ["elektra"], # Statues currently linked to the detector
 # }
 
+# Topic for signal level reports
+SIGNALS_MQTT_TOPIC = "missing_link/signals"
+# {
+#     "detector": "eros",
+#     "signals": {
+#         "elektra": 0.123,
+#         "sophia": 0.045,
+#         "ultimo": 0.001,
+#         "ariel": 0.000
+#     },
+#     "threshold": 0.010
+# }
+
+# Topic for climax event status
+CLIMAX_MQTT_TOPIC = "missing_link/climax"
+# {
+#     "state": "active" | "inactive",
+#     "connected_pairs": [["eros", "elektra"], ...],
+#     "missing_pairs": [["sophia", "ultimo"], ...]
+# }
+
 # MQTT broker settings - matches controller.py
 MQTT_BROKER = "127.0.0.1"  # Default: localhost
 MQTT_PORT = 1883  # Default MQTT port
@@ -53,6 +75,11 @@ mqttc: Any = None
 link_tracker: Any = None
 status_display: Any = None
 display_thread: Any = None
+
+# Climax state tracking
+climax_state: str = "inactive"
+climax_connected_pairs: list = []
+climax_missing_pairs: list = []
 
 
 def create_mock_devices():
@@ -79,38 +106,97 @@ def on_connect(client, userdata, flags, reason_code, properties):
     # Subscribe to contact topic
     client.subscribe(LINK_MQTT_TOPIC, qos=MQTT_QOS)
     print(f"Subscribed to topic: {LINK_MQTT_TOPIC}")
+
+    # Subscribe to signals topic (includes threshold data)
+    client.subscribe(SIGNALS_MQTT_TOPIC, qos=MQTT_QOS)
+    print(f"Subscribed to topic: {SIGNALS_MQTT_TOPIC}")
+
+    # Subscribe to climax topic
+    client.subscribe(CLIMAX_MQTT_TOPIC, qos=MQTT_QOS)
+    print(f"Subscribed to topic: {CLIMAX_MQTT_TOPIC}")
+
     print("\nWaiting for MQTT messages...\n")
 
 
 def on_message(client, userdata, msg):
-    """MQTT message callback - handles incoming contact events."""
+    """MQTT message callback - handles incoming contact and signals events."""
     try:
-        payload = json.loads(msg.payload)
+        # Handle contact events
+        if msg.topic == LINK_MQTT_TOPIC:
+            payload = json.loads(msg.payload)
 
-        # Extract detector and emitters from payload
-        detector_name = payload.get("detector", "")
-        emitters_names = payload.get("emitters", [])
+            # Extract detector and emitters from payload
+            detector_name = payload.get("detector", "")
+            emitters_names = payload.get("emitters", [])
 
-        # Convert to Statue enums
-        try:
-            detector = Statue(detector_name)
-        except ValueError:
-            print(f"Warning: Unknown detector statue: {detector_name}")
-            return
-
-        emitters = []
-        for emitter_name in emitters_names:
+            # Convert to Statue enums
             try:
-                emitter = Statue(emitter_name)
-                emitters.append(emitter)
+                detector = Statue(detector_name)
             except ValueError:
-                print(f"Warning: Unknown emitter statue: {emitter_name}")
+                print(f"Warning: Unknown detector statue: {detector_name}")
+                return
 
-        # Update link tracker with new state
-        link_tracker.update_detector_emitters(detector, emitters)
+            emitters = []
+            for emitter_name in emitters_names:
+                try:
+                    emitter = Statue(emitter_name)
+                    emitters.append(emitter)
+                except ValueError:
+                    print(f"Warning: Unknown emitter statue: {emitter_name}")
 
-        # Update timestamp in display
-        status_display.update_detector_timestamp(detector)
+            # Update link tracker with new state
+            link_tracker.update_detector_emitters(detector, emitters)
+
+            # Update timestamp in display
+            status_display.update_detector_timestamp(detector)
+
+        # Handle signals events (includes threshold data)
+        elif msg.topic == SIGNALS_MQTT_TOPIC:
+            # Preprocess payload to handle NaN values from Teensy
+            payload_str = msg.payload.decode('utf-8')
+            # Replace nan/NaN with 0.0 (treat as no signal)
+            #payload_str = re.sub(r'\bnan\b', '0.0', payload_str, flags=re.IGNORECASE)
+            payload = json.loads(payload_str)
+
+            # Extract detector, signals dict, and threshold
+            detector_name = payload.get("detector", "")
+            signals = payload.get("signals", {})
+            threshold = payload.get("threshold", 0.0)
+
+            try:
+                detector = Statue(detector_name)
+            except ValueError:
+                print(f"Warning: Unknown detector statue: {detector_name}")
+                return
+
+            # Update threshold for this detector
+            if threshold > 0:
+                status_display.update_threshold(detector, threshold)
+
+            # Update detection metrics for each emitter
+            for emitter_name, level in signals.items():
+                try:
+                    emitter = Statue(emitter_name)
+                    # Update display with signal level
+                    status_display.update_metrics(detector, emitter, level)
+                except ValueError:
+                    print(f"Warning: Unknown emitter statue: {emitter_name}")
+                except (TypeError, ValueError) as e:
+                    print(f"Warning: Invalid signal level for {emitter_name}: {e}")
+
+        # Handle climax events
+        elif msg.topic == CLIMAX_MQTT_TOPIC:
+            global climax_state, climax_connected_pairs, climax_missing_pairs
+
+            payload = json.loads(msg.payload)
+
+            # Extract climax state
+            climax_state = payload.get("state", "inactive")
+            climax_connected_pairs = payload.get("connected_pairs", [])
+            climax_missing_pairs = payload.get("missing_pairs", [])
+
+            # Update status display with climax data
+            status_display.update_climax_state(climax_state, climax_connected_pairs, climax_missing_pairs)
 
     except json.JSONDecodeError:
         print(f"Warning: Failed to parse JSON message: {msg.payload}")
@@ -118,7 +204,7 @@ def on_message(client, userdata, msg):
         print(f"Error processing message: {e}")
 
 
-def on_disconnect(client, userdata, reason_code, properties):
+def on_disconnect(client, userdata, disconnect_flags, reason_code, properties):
     """MQTT disconnection callback."""
     print(f"\nDisconnected from MQTT broker: {reason_code}")
 

@@ -4,6 +4,7 @@
 #include "StatueConfig.h"
 #include "defines.h"
 #include <ArduinoJson.h>
+#include <math.h>
 
 // External function from StatueConfig.cpp
 extern int getStatueIndex(const char *name);
@@ -110,6 +111,10 @@ void initMqtt() {
 
   client.setServer(getServer(), 1883);
   client.setCallback(mqttSubCallback);
+
+  // Increase buffer size to handle config messages (~650 bytes)
+  // Default is 256 bytes which is too small
+  client.setBufferSize(1024);
 }
 
 /*
@@ -165,6 +170,65 @@ void publishState(ContactState state) {
   } else {
     Serial.println("Failed to publish detection state");
   }
+}
+
+void publishSignals() {
+  // External reference to signal levels from AudioSense.ino
+  extern float detectorSignals[MAX_STATUES - 1];
+
+  // Build JSON message with current signal levels for all detectors
+  char jsonMsg[256];
+  char signalsJson[128];
+
+  // Start building the signals object
+  strcpy(signalsJson, "{");
+  bool first = true;
+
+  int detectorIndex = 0;
+  for (int statue_idx = 0; statue_idx < NUM_STATUES; statue_idx++) {
+    if (statue_idx == MY_STATUE_INDEX)
+      continue;
+
+    if (!first) {
+      strcat(signalsJson, ",");
+    }
+
+    // Convert statue name to lowercase
+    String statueName = String(STATUE_NAMES[statue_idx]);
+    statueName.toLowerCase();
+
+    // Get signal level and sanitize NaN values
+    float signalLevel = detectorSignals[detectorIndex];
+    if (isnan(signalLevel)) {
+      signalLevel = 0.0;
+    }
+
+    // Add "statuename": level entry
+    char entry[32];
+    snprintf(entry, sizeof(entry), "\"%s\":%.3f", statueName.c_str(),
+             signalLevel);
+    strcat(signalsJson, entry);
+
+    first = false;
+    detectorIndex++;
+  }
+  strcat(signalsJson, "}");
+
+  // Get detector name (this statue)
+  String detectorName = String(MY_STATUE_NAME);
+  detectorName.toLowerCase();
+
+  // Get this statue's threshold from the global array
+  float myThreshold = STATUE_THRESHOLDS[MY_STATUE_INDEX];
+
+  // Format complete JSON message with threshold
+  snprintf(jsonMsg, sizeof(jsonMsg),
+           "{\"detector\":\"%s\",\"signals\":%s,\"threshold\":%.3f}",
+           detectorName.c_str(), signalsJson, myThreshold);
+
+  // Publish to missing_link/signals topic (no debug output - too verbose at
+  // 2Hz)
+  client.publish("missing_link/signals", jsonMsg);
 }
 
 // Load default configuration from program memory

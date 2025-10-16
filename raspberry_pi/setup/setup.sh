@@ -46,6 +46,10 @@ controller.enable
 controller.restart
 controller.status
 
+# Configure status monitor to auto-start in terminal window.
+monitor.cpconf
+monitor.status
+
 tools.install
 
 # Add additional commands above this line. Script might fail after

@@ -91,6 +91,12 @@ class StatusDisplay:
         self.detection_metrics = {}
         # Track last update timestamp per detector
         self.last_update: dict[Statue, float] = {}
+        # Track threshold per statue (from MQTT config messages)
+        self.thresholds: dict[Statue, float] = {}
+        # Track climax state (for MQTT mode)
+        self.climax_state: str = "inactive"
+        self.climax_connected_pairs: list = []
+        self.climax_missing_pairs: list = []
         self.lock = threading.Lock()
         self.first_draw = True
 
@@ -139,17 +145,57 @@ class StatusDisplay:
         with self.lock:
             self.last_update[detector] = time.time()
 
-    def format_cell(self, level: float, is_self: bool = False) -> str:
-        """Format a single cell with level and box indicators."""
+    def update_threshold(self, statue: Statue, threshold: float) -> None:
+        """Update the detection threshold for a statue.
+
+        Called when receiving MQTT config messages with threshold values.
+
+        Args:
+            statue (Statue): The statue whose threshold is being updated
+            threshold (float): The detection threshold value
+        """
+        with self.lock:
+            self.thresholds[statue] = threshold
+
+    def update_climax_state(self, state: str, connected_pairs: list, missing_pairs: list) -> None:
+        """Update the climax state.
+
+        Called when receiving MQTT climax messages.
+
+        Args:
+            state (str): Climax state ("active" or "inactive")
+            connected_pairs (list): List of connected neighbor pairs [[statue1, statue2], ...]
+            missing_pairs (list): List of missing neighbor pairs needed for climax
+        """
+        with self.lock:
+            self.climax_state = state
+            self.climax_connected_pairs = connected_pairs
+            self.climax_missing_pairs = missing_pairs
+
+    def format_cell(self, level: float, is_self: bool = False, threshold: Optional[float] = None) -> str:
+        """Format a single cell with level and box indicators.
+
+        Args:
+            level: Signal level (0.0-1.0)
+            is_self: If True, format as self-detection marker
+            threshold: Detection threshold to use for box indicators. If None, uses dynConfig["touch_threshold"]
+
+        Returns:
+            7-character string with visual indicators
+        """
         if is_self:
             return "  ---  "
 
+        # Use provided threshold or fall back to global default
+        if threshold is None:
+            threshold = dynConfig["touch_threshold"]
+
         level_str = f"{level:.3f}"
 
-        if level > dynConfig["touch_threshold"]:
+        if level > threshold:
             # LINKED - double box around value
             return f"╔{level_str:^5}╗"
-        elif level > dynConfig["touch_threshold"] * 0.5:
+        elif level > threshold * 0.5:
             # WEAK - single box around value
             return f"┌{level_str:^5}┐"
         else:
@@ -167,6 +213,14 @@ class StatusDisplay:
     def show_cursor(self):
         """Show terminal cursor."""
         print("\033[?25h", end='', flush=True)
+
+    def enter_alt_screen(self):
+        """Enter alternate screen buffer."""
+        print("\033[?1049h", end='', flush=True)
+
+    def exit_alt_screen(self):
+        """Exit alternate screen buffer."""
+        print("\033[?1049l", end='', flush=True)
 
     def move_cursor_home(self):
         """Move cursor to home position without clearing."""
@@ -224,7 +278,7 @@ class StatusDisplay:
         for d in self.devices:
             statue = d['statue']
             name = statue.value.upper()
-            
+
             # Use dynamic frequency if frequency controller is available
             if self.freq_controller:
                 freq = self.freq_controller.get_current_frequency(statue)
@@ -239,7 +293,7 @@ class StatusDisplay:
             else:
                 freq = TONE_FREQUENCIES.get(statue, 0)
                 freq_str = f"{freq:.0f}"
-            
+
             # Each cell is centered in 9 chars
             header_line1 += f"  {name:^7}  "
             header_line2 += f"  {freq_str:^7}  "
@@ -296,21 +350,42 @@ class StatusDisplay:
         Shows detector → emitters in a simple table format with timestamps
         and placeholders for future level/SNR data.
         """
-        if self.first_draw:
-            self.clear_screen()
-            self.first_draw = False
-        else:
-            self.move_cursor_home()
+        # Always clear screen to prevent smearing
+        self.clear_screen()
 
         # Header
-        print("=== Missing Link MQTT Status Monitor ===\r\n\r", flush=True)
+        print("=== Missing Link MQTT Status Monitor ===\n", end='', flush=True)
+        print("\n", end='', flush=True)  # Blank line
+
+        # Climax status section
+        with self.lock:
+            climax_indicator = "●" if self.climax_state == "active" else "○"
+            climax_label = "CLIMAX"
+
+            if self.climax_state == "active":
+                # Show active climax
+                print(f"{climax_indicator} {climax_label}: ACTIVE\n", end='', flush=True)
+            else:
+                # Show inactive climax with missing pairs
+                if self.climax_missing_pairs:
+                    missing_str = ", ".join([f"{p[0]}↔{p[1]}" for p in self.climax_missing_pairs])
+                    print(f"{climax_indicator} {climax_label}: INACTIVE - Missing: {missing_str}\n", end='', flush=True)
+                else:
+                    print(f"{climax_indicator} {climax_label}: INACTIVE\n", end='', flush=True)
+
+        print("\n", end='', flush=True)  # Blank line after climax status
 
         # Get current detector→emitters mapping from link tracker
         detector_emitters = self.link_tracker.get_detector_emitters()
 
-        # Table header
-        print(f"{'DETECTOR':<12} {'EMITTERS':<30} {'LAST UPDATE':<15} {'LEVEL':<8} {'SNR':<8}\r", flush=True)
-        print("─" * 80 + "\r", flush=True)
+        # Build table header with column for each statue
+        header = f"{'DETECTOR':<10} {'EMITTERS':<20} {'UPDATE':<10}"
+        for device in self.devices:
+            statue = device['statue']
+            header += f" {statue.value.upper():<7}"
+        header += f" {'THRESHOLD':<9}"
+        print(header + "\n", end='', flush=True)
+        print("─" * len(header) + "\n", end='', flush=True)
 
         current_time = time.time()
         with self.lock:
@@ -321,58 +396,88 @@ class StatusDisplay:
 
                 # Format emitters list
                 if emitters:
-                    emitters_str = ", ".join([e.value for e in emitters])
+                    emitters_str = ",".join([e.value for e in emitters])
                     status_indicator = "●"  # Filled circle for linked
                 else:
                     emitters_str = "(none)"
                     status_indicator = "○"  # Empty circle for unlinked
 
-                # Format last update time
+                # Format last update time (shortened)
                 last_update_time = self.last_update.get(detector, 0.0)
                 if last_update_time == 0.0:
                     update_str = "Never"
                 else:
                     elapsed = current_time - last_update_time
                     if elapsed < 60:
-                        update_str = f"{elapsed:.1f}s ago"
+                        update_str = f"{elapsed:.1f}s"
                     elif elapsed < 3600:
-                        update_str = f"{elapsed/60:.1f}m ago"
+                        update_str = f"{elapsed/60:.1f}m"
                     else:
-                        update_str = f"{elapsed/3600:.1f}h ago"
+                        update_str = f"{elapsed/3600:.1f}h"
 
-                # Placeholders for level and SNR
-                level_str = "[TBD]"
-                snr_str = "[TBD]"
+                # Build row starting with detector, emitters, update
+                line = f"{status_indicator} {detector.value:<8} {emitters_str:<20} {update_str:<10}"
+
+                # Add level column for each emitter statue
+                for emitter_device in self.devices:
+                    emitter = emitter_device['statue']
+
+                    if detector == emitter:
+                        # Can't detect self
+                        cell = self.format_cell(0.0, is_self=True)
+                    else:
+                        # Get level from detection metrics
+                        level = 0.0
+                        if detector in self.detection_metrics and emitter in self.detection_metrics[detector]:
+                            level = self.detection_metrics[detector][emitter]['level']
+
+                        # Use detector-specific threshold if available
+                        detector_threshold = self.thresholds.get(detector, None)
+                        cell = self.format_cell(level, is_self=False, threshold=detector_threshold)
+
+                    line += f" {cell}"
+
+                # Add threshold column
+                if detector in self.thresholds:
+                    threshold_str = f"{self.thresholds[detector]:.3f}"
+                else:
+                    threshold_str = "[N/A]"
+                line += f" {threshold_str:<9}"
 
                 # Print row with padding
-                line = f"{status_indicator} {detector.value:<10} {emitters_str:<30} {update_str:<15} {level_str:<8} {snr_str:<8}"
-                print(f"{line:<100}\r", flush=True)
+                print(f"{line:<120}\n", end='', flush=True)
 
         # Legend
-        print("\r\nLegend: ● = Linked  ○ = Unlinked\r", flush=True)
-        print("Note: LEVEL and SNR will be populated when available in MQTT messages\r", flush=True)
-        print("\r\nPress Ctrl+C to stop\r", flush=True)
-
-        # Add blank lines to ensure clean overwrites
-        print("\r\n" * 3, end='', flush=True)
+        print("\n", end='', flush=True)  # Blank line
+        print("Legend: ● = Linked  ○ = Unlinked  --- = Self-detection\n", end='', flush=True)
+        print("        ╔═╗ LINKED (>threshold)  ┌─┐ WEAK (>threshold×0.5)  Plain: NO SIGNAL\n", end='', flush=True)
+        print("Signal levels updated from missing_link/signals MQTT topic (published every 100ms)\n", end='', flush=True)
+        print("Box indicators based on per-detector threshold values shown in THRESHOLD column\n", end='', flush=True)
+        print("\n", end='', flush=True)  # Blank line
+        print("Press Ctrl+C to stop\n", end='', flush=True)
 
     def run(self) -> None:
         """Run the display update loop."""
+        self.enter_alt_screen()
         self.hide_cursor()
-        while self.running:
-            try:
-                if self.mqtt_mode:
-                    self.draw_mqtt_interface()
-                else:
-                    self.draw_interface()
-                time.sleep(0.25)  # Update every 250ms (4Hz)
-            except Exception:
-                # Don't crash the display thread
-                pass
+        try:
+            while self.running:
+                try:
+                    if self.mqtt_mode:
+                        self.draw_mqtt_interface()
+                    else:
+                        self.draw_interface()
+                    time.sleep(0.25)  # Update every 250ms (4Hz)
+                except Exception:
+                    # Don't crash the display thread
+                    pass
+        finally:
+            # Always clean up, even on exception
+            self.show_cursor()
+            self.exit_alt_screen()
 
     def stop(self) -> None:
         """Stop the display."""
         self.running = False
         time.sleep(0.2)  # Give display thread time to exit
-        self.show_cursor()
-        self.clear_screen()
+        # Cleanup is now handled in run() finally block

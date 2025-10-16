@@ -90,6 +90,10 @@ I found it helpful to wire one of the buttons to the two pin contacts for conven
 #include "Networking.h"
 #include "defines.h"
 
+// Timing for periodic signal monitoring
+elapsedMillis sinceSignalPublish = 0;
+const uint16_t signal_publish_period_ms = 100;
+
 void setup() {
   // Display Setup
   displaySetup();
@@ -138,6 +142,12 @@ void loop() {
 #if !STANDALONE_MODE
   // Make sure we're connected to MQTT broker.
   mqttLoop();
+
+  // Periodically publish signal levels for monitoring
+  if (sinceSignalPublish >= signal_publish_period_ms) {
+    publishSignals();
+    sinceSignalPublish = 0;
+  }
 #endif
 
   // Retrieve the current contact state.

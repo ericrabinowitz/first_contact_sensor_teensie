@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Missing Link Status Monitor
+Comment=Auto-start status monitor in fullscreen terminal
+Exec=lxterminal --title="Missing Link Status Monitor" --geometry=120x40 -e bash -c "/home/pi/first_contact_sensor_teensie/raspberry_pi/controller/status_monitor.py; echo; echo 'Process exited. Press Enter to close.'; read"
+Terminal=false
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
