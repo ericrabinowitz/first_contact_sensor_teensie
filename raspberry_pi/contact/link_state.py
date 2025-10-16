@@ -164,12 +164,16 @@ class LinkStateTracker:
         """Update all links for a detector based on MQTT emitters list.
 
         This method is designed for MQTT message format where each detector reports
-        its complete list of current emitters. It replaces all existing links for
-        the detector with the new emitters list, maintaining bidirectional consistency.
+        its complete list of current emitters. It replaces the detector's outgoing
+        links with the new emitters list. Links are unidirectional - each detector
+        independently reports what it sees.
+
+        Statue active/dormant state uses OR logic: a statue is active if it has
+        ANY outgoing links (detects someone) OR incoming links (someone detects it).
 
         Args:
             detector (Statue): The detector statue reporting its state
-            emitters (list[Statue]): Complete list of statues currently linked to detector
+            emitters (list[Statue]): Complete list of statues currently detected
 
         Returns:
             bool: True if any state changed, False if no change
@@ -186,30 +190,39 @@ class LinkStateTracker:
         added_emitters = new_emitters - old_emitters
         removed_emitters = old_emitters - new_emitters
 
-        # Process removed emitters
-        for emitter in removed_emitters:
-            self.links[detector].discard(emitter)
-            self.links[emitter].discard(detector)
+        # Update only detector's outgoing links (unidirectional)
+        if added_emitters or removed_emitters:
+            self.links[detector] = new_emitters
             changed = True
-            if not self.quiet:
-                print(f"🔌 Link broken: {detector.value} ↔ {emitter.value}")
 
-        # Process added emitters
-        for emitter in added_emitters:
-            self.links[detector].add(emitter)
-            self.links[emitter].add(detector)
-            changed = True
-            if not self.quiet:
-                print(f"🔗 Link established: {detector.value} ↔ {emitter.value}")
+            # Print changes
+            for emitter in removed_emitters:
+                if not self.quiet:
+                    print(f"🔌 Link removed: {detector.value} → {emitter.value}")
 
-        # Update has_links status and audio channels for all affected statues
+            for emitter in added_emitters:
+                if not self.quiet:
+                    print(f"🔗 Link added: {detector.value} → {emitter.value}")
+
+        # Compute has_links for all affected statues using OR logic
+        # Affected statues: detector + all added/removed emitters
         affected_statues = {detector} | added_emitters | removed_emitters
+
         for statue in affected_statues:
             old_has_links = self.has_links[statue]
-            self.has_links[statue] = len(self.links[statue]) > 0
 
+            # Check outgoing links (what this statue detects)
+            has_outgoing = len(self.links[statue]) > 0
+
+            # Check incoming links (who detects this statue)
+            has_incoming = any(statue in self.links[other] for other in Statue if other != statue)
+
+            # OR logic: active if either direction has links
+            self.has_links[statue] = has_outgoing or has_incoming
+
+            # Update audio and print status if state changed
             if old_has_links != self.has_links[statue]:
-                status = "linked" if self.has_links[statue] else "unlinked"
+                status = "active" if self.has_links[statue] else "dormant"
                 if not self.quiet:
                     print(f"  → {statue.value} is now {status}")
                 changed = True
