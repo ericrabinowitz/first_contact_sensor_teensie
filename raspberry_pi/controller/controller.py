@@ -143,7 +143,7 @@ EFFECTS = {
     "dormant": Effect.NOISE,
     "arch": Effect.LIGHTHOUSE,
     "hand": Effect.SOLID,
-    "climax": Effect.FIREWORKS,
+    "climax": Effect.CHASE_RAINBOW,
     "hand-dormant": Effect.NOISE,
     "heart-dormant": Effect.SOLID,
     "hand-active": Effect.SOLID,
@@ -776,6 +776,7 @@ def manage_power():
 
 
 def leds_active(statues: Set[Statue], effect_key='active'):
+    orig_effect_key = effect_key
     if no_leds:
         return
     if debug:
@@ -793,6 +794,7 @@ def leds_active(statues: Set[Statue], effect_key='active'):
         color = COLORS.get(statue, COLORS["dormant"])
         for board, seg_map in segment_map[statue].items():
             for segment_name, seg_id in seg_map.items():
+                effect_key = orig_effect_key
                 # Segment name is either 'hands' or contains 'heart'.
                 if "hand" in segment_name:
                     effect_key = "hand-active"
@@ -810,7 +812,7 @@ def leds_active(statues: Set[Statue], effect_key='active'):
                     }
                 )
                 if debug:
-                    print(f"[active] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
+                    print(f"[{orig_effect_key}] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
 
     for board, payload in board_payloads.items():
         if len(payload["seg"]) == 0:
