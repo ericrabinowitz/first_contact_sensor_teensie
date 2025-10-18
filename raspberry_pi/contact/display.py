@@ -397,10 +397,11 @@ class StatusDisplay:
                 # Format emitters list
                 if emitters:
                     emitters_str = ",".join([e.value for e in emitters])
-                    status_indicator = "●"  # Filled circle for linked
                 else:
                     emitters_str = "(none)"
-                    status_indicator = "○"  # Empty circle for unlinked
+
+                # Status indicator based on has_links (includes both outgoing and incoming)
+                status_indicator = "●" if self.link_tracker.has_links[detector] else "○"
 
                 # Format last update time (shortened)
                 last_update_time = self.last_update.get(detector, 0.0)
