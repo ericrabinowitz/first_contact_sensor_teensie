@@ -120,6 +120,18 @@ PALETTE_ID = 3
 
 ACTIVE_SPEED = 255
 
+SPEED = {
+    'active': 255,
+    'climax': 180,
+}
+DEFAULT_SPEED = 128
+
+
+INTENSTITY = {
+    'climax': 180,
+}
+DEFAULT_INTENSITY = 128
+
 # TODO: pick colors
 COLORS = {
     Statue.EROS: [[255, 0, 0], [255, 0, 0], [255, 0, 100]],  # red
@@ -820,7 +832,8 @@ def leds_active(statues: Set[Statue], effect_key='active'):
                         "col": color,
                         "fx": fx,
                         "pal": 0,
-                        "sx": ACTIVE_SPEED,
+                        "sx": SPEED.get(effect_key, DEFAULT_SPEED),
+                        "ix": INTENSTITY.get(effect_key, DEFAULT_INTENSITY),
                     }
                 )
                 if debug:
