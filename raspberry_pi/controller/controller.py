@@ -134,11 +134,11 @@ DEFAULT_INTENSITY = 128
 
 # TODO: pick colors
 COLORS = {
-    Statue.EROS: [[255, 0, 0], [255, 0, 0], [255, 0, 100]],  # red
-    Statue.ELEKTRA: [[0, 0, 255], [0, 200, 255], [0, 25, 255]],  # blue
+    Statue.EROS: [[255, 0, 100], [255, 0, 0], [255, 0, 100]],  # red
+    Statue.ELEKTRA: [[0, 25, 255], [0, 200, 255], [0, 25, 255]],  # blue
     Statue.ARIEL: [[255, 200, 0], [255, 255, 0], [255, 255, 0]],  # yellow
     Statue.SOPHIA: [[8, 255, 0], [66, 237, 160], [66, 237, 160]],  # green
-    Statue.ULTIMO: [[255, 160, 0], [255, 199, 94], [255, 199, 94]],  # orange
+    Statue.ULTIMO: [[255, 100, 0], [255, 199, 94], [255, 199, 94]],  # orange
     "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
 }
 
