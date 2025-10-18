@@ -36,4 +36,5 @@ class Effect(IntEnum):
     LIGHTHOUSE = 41  # consider scanner
     HEARTBEAT = 100
     CHASE_RAINBOW = 30
+    BREATHE = 2
     # Add some effect for climax and use that.

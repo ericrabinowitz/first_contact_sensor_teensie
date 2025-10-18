@@ -118,14 +118,24 @@ MQTT_QOS = 0  # Quality of Service
 # TODO: test different palettes, like the default one
 PALETTE_ID = 3
 
+ACTIVE_SPEED = 255
+
 # TODO: pick colors
 COLORS = {
-    Statue.EROS: [[255, 0, 100], [225, 0, 255], [255, 0, 100]],  # red
-    Statue.ELEKTRA: [[0, 25, 255], [0, 200, 255], [0, 25, 255]],  # blue
+    Statue.EROS: [[255, 0, 0], [255, 0, 0], [255, 0, 100]],  # red
+    Statue.ELEKTRA: [[0, 0, 255], [0, 200, 255], [0, 25, 255]],  # blue
     Statue.ARIEL: [[255, 200, 0], [255, 255, 0], [255, 255, 0]],  # yellow
     Statue.SOPHIA: [[8, 255, 0], [66, 237, 160], [66, 237, 160]],  # green
-    Statue.ULTIMO: [[255, 100, 0], [255, 199, 94], [255, 199, 94]],  # orange
+    Statue.ULTIMO: [[255, 160, 0], [255, 199, 94], [255, 199, 94]],  # orange
     "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
+}
+
+ACTIVE_COLORS = {
+    Statue.EROS: [[255, 0, 0], [0, 0, 0], [0, 0, 0]],  # red
+    Statue.ELEKTRA: [[0, 0, 255], [0, 0, 0], [0, 0, 0]],  # blue
+    Statue.ARIEL: [[255, 200, 0], [0, 0, 0], [0, 0, 0]],  # yellow
+    Statue.SOPHIA: [[8, 255, 0], [0, 0, 0], [0, 0, 0]],  # green
+    Statue.ULTIMO: [[255, 160, 0], [0, 0, 0], [0, 0, 0]],  # orange
 }
 
 BRIGHTNESS = {
@@ -139,7 +149,7 @@ BRIGHTNESS = {
 }
 
 EFFECTS = {
-    "active": Effect.FIREWORKS,
+    "active": Effect.BREATHE,
     "dormant": Effect.NOISE,
     "arch": Effect.LIGHTHOUSE,
     "hand": Effect.SOLID,
@@ -791,7 +801,6 @@ def leds_active(statues: Set[Statue], effect_key='active'):
         }
 
     for statue in statues:
-        color = COLORS.get(statue, COLORS["dormant"])
         for board, seg_map in segment_map[statue].items():
             for segment_name, seg_id in seg_map.items():
                 effect_key = orig_effect_key
@@ -800,6 +809,8 @@ def leds_active(statues: Set[Statue], effect_key='active'):
                     effect_key = "hand-active"
                 elif "heart" in segment_name:
                     effect_key = "heart-active"
+                color_map = ACTIVE_COLORS if effect_key == "active" else COLORS
+                color = color_map.get(statue, COLORS["dormant"])
                 bri = BRIGHTNESS[effect_key]
                 fx = EFFECTS[effect_key]
                 board_payloads[board]["seg"].append(
@@ -808,7 +819,8 @@ def leds_active(statues: Set[Statue], effect_key='active'):
                         "bri": bri,
                         "col": color,
                         "fx": fx,
-                        "pal": PALETTE_ID,
+                        "pal": 0,
+                        "sx": ACTIVE_SPEED,
                     }
                 )
                 if debug:
