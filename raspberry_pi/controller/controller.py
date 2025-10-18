@@ -823,7 +823,6 @@ def leds_active(statues: Set[Statue], effect_key='active'):
 
 
 def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
-    effect_key = 'dormant'
     if no_leds:
         print("No leds: skipping dormant")
         return
@@ -842,6 +841,7 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
         for board, seg_map in segment_map[statue].items():
             for segment_name, seg_id in seg_map.items():
                 # Segment name is either 'hands' or contains 'heart'.
+                effect_key = "dormant"
                 color_key = "dormant"
                 if "hand" in segment_name:
                     effect_key = "hand-dormant"
