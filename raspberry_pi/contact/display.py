@@ -691,7 +691,7 @@ class StatusDisplay:
                     if self.log_handle and not self.replay_mode:
                         self.log_snapshot()
 
-                    time.sleep(0.25)  # Update every 250ms (4Hz)
+                    time.sleep(0.5)  # Update every 500ms (2Hz)
                 except Exception:
                     # Don't crash the display thread
                     pass
