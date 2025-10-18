@@ -59,14 +59,15 @@ RELAY2_MAX_DURATION = 3.0  # Maximum duration in seconds for relay 2
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONGS = [
-    "Missing Link Playa 1 - 6 channel.wav",
+    #"Missing Link Playa 1 - 6 channel.wav",
     "Connection - 6 channel.wav",
-    "Connection - 6 channel reverse.wav",
+    #"Connection - 6 channel reverse.wav",
     #"Missing Link Playa 2 - 6 Channel.wav",
     "Electricity - 6 channel.wav",
     #"Electricity - 6 channel reverse.wav",
     #"Missing Link Playa 3 - 6 Channel.wav",
     "Dusty Hands 6 channel.wav",
+    #"Dusty Hands 6 channel reverse.wav",
     #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
     #    "Missing Link Playa 3 - Five Channel.wav",
 ]
