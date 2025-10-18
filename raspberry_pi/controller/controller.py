@@ -51,8 +51,8 @@ SUNSET = datetime.time(19, 00)  # 7:00 PM
 POWER_CHECK_INTERVAL_SECS = 60
 
 # Relay configuration
-RELAY_GPIO_PIN = 17  # GPIO 17 (Pin 11) - Main relay
-RELAY2_GPIO_PIN = 27  # GPIO 27 (Pin 13) - Timed relay
+RELAY_GPIO_PIN = 27  # GPIO 17 (Pin 11) - Main relay
+RELAY2_GPIO_PIN = 17  # GPIO 27 (Pin 13) - Timed relay
 RELAY_ACTIVE_HIGH = False  # True = HIGH activates relay, False = LOW activates relay
 RELAY2_MAX_DURATION = 3.0  # Maximum duration in seconds for relay 2
 
