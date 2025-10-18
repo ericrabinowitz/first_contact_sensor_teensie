@@ -44,9 +44,9 @@ USB_ADAPTER: str = "usb"  # Match any USB device
 STATUES = [
     Statue.EROS,
     Statue.ELEKTRA,
-    Statue.ARIEL,
-    Statue.SOPHIA,
     Statue.ULTIMO,
+    Statue.SOPHIA,
+    Statue.ARIEL,
 ]
 
 
