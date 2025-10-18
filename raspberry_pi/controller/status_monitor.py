@@ -17,8 +17,11 @@ This script runs independently from the controller and is useful for:
 - Remote monitoring from a development machine
 
 Execute: ./status_monitor.py
+         ./status_monitor.py --log session.jsonl
+         ./status_monitor.py --replay session.jsonl
 """
 
+import argparse
 import json
 import re
 import signal
@@ -234,7 +237,35 @@ def main():
     """Main entry point for status monitor."""
     global mqttc, link_tracker, status_display, display_thread
 
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='MQTT Status Monitor for Missing Link installation'
+    )
+    parser.add_argument(
+        '--log',
+        type=str,
+        metavar='FILE',
+        help='Log status snapshots to JSONL file'
+    )
+    parser.add_argument(
+        '--replay',
+        type=str,
+        metavar='FILE',
+        help='Replay status snapshots from JSONL file'
+    )
+    args = parser.parse_args()
+
+    # Validate arguments
+    if args.log and args.replay:
+        print("Error: Cannot use --log and --replay at the same time")
+        sys.exit(1)
+
     print("=== Missing Link MQTT Status Monitor ===\n")
+
+    if args.replay:
+        print(f"Replay mode: Loading data from {args.replay}\n")
+    elif args.log:
+        print(f"Logging mode: Saving snapshots to {args.log}\n")
 
     # Create link tracker (no audio playback, quiet mode)
     link_tracker = LinkStateTracker(playback=None, quiet=True)
@@ -247,38 +278,44 @@ def main():
         link_tracker=link_tracker,
         devices=devices,
         freq_controller=None,
-        mqtt_mode=True
+        mqtt_mode=True,
+        log_file=args.log,
+        replay_file=args.replay
     )
-
-    # Set up MQTT client
-    mqttc = mqtt.Client(
-        mqtt.CallbackAPIVersion.VERSION2,
-        protocol=mqtt.MQTTProtocolVersion.MQTTv311,
-        clean_session=True,
-        client_id="status_monitor",
-    )
-
-    if MQTT_USER and MQTT_PASSWORD:
-        mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
-
-    mqttc.on_connect = on_connect
-    mqttc.on_message = on_message
-    mqttc.on_disconnect = on_disconnect
 
     # Set up signal handler for graceful shutdown
     signal.signal(signal.SIGINT, signal_handler)
 
-    # Connect to MQTT broker
-    try:
-        mqttc.connect(MQTT_BROKER, MQTT_PORT)
-    except Exception as e:
-        print(f"Error: Failed to connect to MQTT broker at {MQTT_BROKER}:{MQTT_PORT}")
-        print(f"Details: {e}")
-        print("\nMake sure the MQTT broker is running and accessible.")
-        sys.exit(1)
+    # Only set up MQTT if not in replay mode
+    if not args.replay:
+        # Set up MQTT client
+        mqttc = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            protocol=mqtt.MQTTProtocolVersion.MQTTv311,
+            clean_session=True,
+            client_id="status_monitor",
+        )
 
-    # Start MQTT loop in background
-    mqttc.loop_start()
+        if MQTT_USER and MQTT_PASSWORD:
+            mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
+
+        mqttc.on_connect = on_connect
+        mqttc.on_message = on_message
+        mqttc.on_disconnect = on_disconnect
+
+        # Connect to MQTT broker
+        try:
+            mqttc.connect(MQTT_BROKER, MQTT_PORT)
+        except Exception as e:
+            print(f"Error: Failed to connect to MQTT broker at {MQTT_BROKER}:{MQTT_PORT}")
+            print(f"Details: {e}")
+            print("\nMake sure the MQTT broker is running and accessible.")
+            sys.exit(1)
+
+        # Start MQTT loop in background
+        mqttc.loop_start()
+    else:
+        print("Replay mode: Skipping MQTT connection\n")
 
     # Start display thread
     display_thread = threading.Thread(target=status_display.run, daemon=True)

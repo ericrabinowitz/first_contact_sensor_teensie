@@ -35,8 +35,13 @@ Example Display:
     SOPHIA      │   0.000    0.001     ---
 """
 
+import json
+import select
+import sys
+import termios
 import threading
 import time
+import tty
 from typing import TYPE_CHECKING, Any, Optional
 
 import ultraimport as ui
@@ -73,7 +78,7 @@ class StatusDisplay:
         running (bool): Controls the display update loop
     """
 
-    def __init__(self, link_tracker: 'LinkStateTracker', devices: list[dict[str, Any]], freq_controller=None, mqtt_mode: bool = False) -> None:
+    def __init__(self, link_tracker: 'LinkStateTracker', devices: list[dict[str, Any]], freq_controller=None, mqtt_mode: bool = False, log_file: Optional[str] = None, replay_file: Optional[str] = None) -> None:
         """Initialize the status display.
 
         Args:
@@ -81,6 +86,8 @@ class StatusDisplay:
             devices (list): List of device configurations with statue info
             freq_controller (FrequencyController, optional): Frequency controller for interactive mode
             mqtt_mode (bool): If True, use MQTT-optimized display instead of detection matrix
+            log_file (str, optional): Path to JSONL file for logging snapshots
+            replay_file (str, optional): Path to JSONL file for replay mode
         """
         self.link_tracker = link_tracker
         self.devices = devices
@@ -99,6 +106,22 @@ class StatusDisplay:
         self.climax_missing_pairs: list = []
         self.lock = threading.Lock()
         self.first_draw = True
+
+        # Logging support
+        self.log_file = log_file
+        self.log_handle = None
+        if self.log_file:
+            self.log_handle = open(self.log_file, 'a')
+
+        # Replay support
+        self.replay_mode = replay_file is not None
+        self.replay_data: list[dict] = []
+        self.replay_index: int = 0
+        if replay_file:
+            self.load_replay_data(replay_file)
+            # Start at first snapshot
+            if self.replay_data:
+                self.restore_snapshot(self.replay_data[0])
 
         # Initialize 2D metrics for all statue pairs
         for detector_device in devices:
@@ -171,6 +194,177 @@ class StatusDisplay:
             self.climax_state = state
             self.climax_connected_pairs = connected_pairs
             self.climax_missing_pairs = missing_pairs
+
+    def capture_snapshot(self) -> dict:
+        """Capture current state as a serializable snapshot.
+
+        Returns:
+            dict: Complete state snapshot with timestamp
+        """
+        with self.lock:
+            # Convert detection_metrics to serializable format
+            metrics_serializable = {}
+            for detector, targets in self.detection_metrics.items():
+                metrics_serializable[detector.value] = {}
+                for target, metrics in targets.items():
+                    metrics_serializable[detector.value][target.value] = metrics.copy()
+
+            # Convert links to serializable format
+            links_serializable = {}
+            for statue, linked_set in self.link_tracker.links.items():
+                links_serializable[statue.value] = [s.value for s in linked_set]
+
+            # Convert has_links to serializable format
+            has_links_serializable = {statue.value: has_link for statue, has_link in self.link_tracker.has_links.items()}
+
+            # Convert last_update to serializable format
+            last_update_serializable = {statue.value: timestamp for statue, timestamp in self.last_update.items()}
+
+            # Convert thresholds to serializable format
+            thresholds_serializable = {statue.value: threshold for statue, threshold in self.thresholds.items()}
+
+            snapshot = {
+                'timestamp': time.time(),
+                'detection_metrics': metrics_serializable,
+                'links': links_serializable,
+                'has_links': has_links_serializable,
+                'last_update': last_update_serializable,
+                'thresholds': thresholds_serializable,
+                'climax_state': self.climax_state,
+                'climax_connected_pairs': self.climax_connected_pairs,
+                'climax_missing_pairs': self.climax_missing_pairs,
+            }
+            return snapshot
+
+    def log_snapshot(self) -> None:
+        """Log current state snapshot to JSONL file."""
+        if not self.log_handle:
+            return
+        snapshot = self.capture_snapshot()
+        self.log_handle.write(json.dumps(snapshot) + '\n')
+        self.log_handle.flush()
+
+    def restore_snapshot(self, snapshot: dict) -> None:
+        """Restore state from a snapshot.
+
+        Args:
+            snapshot (dict): Snapshot to restore from
+        """
+        with self.lock:
+            # Restore detection_metrics
+            self.detection_metrics = {}
+            for detector_str, targets in snapshot.get('detection_metrics', {}).items():
+                detector = Statue(detector_str)
+                self.detection_metrics[detector] = {}
+                for target_str, metrics in targets.items():
+                    target = Statue(target_str)
+                    self.detection_metrics[detector][target] = metrics.copy()
+
+            # Restore links
+            links_dict = {}
+            for statue_str, linked_list in snapshot.get('links', {}).items():
+                statue = Statue(statue_str)
+                links_dict[statue] = set(Statue(s) for s in linked_list)
+            self.link_tracker.links = links_dict
+
+            # Restore has_links
+            has_links_dict = {}
+            for statue_str, has_link in snapshot.get('has_links', {}).items():
+                statue = Statue(statue_str)
+                has_links_dict[statue] = has_link
+            self.link_tracker.has_links = has_links_dict
+
+            # Restore last_update
+            self.last_update = {}
+            for statue_str, timestamp in snapshot.get('last_update', {}).items():
+                statue = Statue(statue_str)
+                self.last_update[statue] = timestamp
+
+            # Restore thresholds
+            self.thresholds = {}
+            for statue_str, threshold in snapshot.get('thresholds', {}).items():
+                statue = Statue(statue_str)
+                self.thresholds[statue] = threshold
+
+            # Restore climax state
+            self.climax_state = snapshot.get('climax_state', 'inactive')
+            self.climax_connected_pairs = snapshot.get('climax_connected_pairs', [])
+            self.climax_missing_pairs = snapshot.get('climax_missing_pairs', [])
+
+    def load_replay_data(self, file_path: str) -> None:
+        """Load replay data from JSONL file.
+
+        Args:
+            file_path (str): Path to JSONL file
+        """
+        self.replay_data = []
+        try:
+            with open(file_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        snapshot = json.loads(line)
+                        self.replay_data.append(snapshot)
+            print(f"Loaded {len(self.replay_data)} snapshots from {file_path}")
+        except Exception as e:
+            print(f"Error loading replay data: {e}")
+            self.replay_data = []
+
+    def get_keyboard_input(self) -> Optional[str]:
+        """Non-blocking keyboard input reader.
+
+        Returns:
+            str or None: Key pressed, or None if no input
+        """
+        if select.select([sys.stdin], [], [], 0)[0]:
+            return sys.stdin.read(1)
+        return None
+
+    def handle_replay_navigation(self) -> None:
+        """Handle keyboard navigation in replay mode."""
+        key = self.get_keyboard_input()
+        if not key:
+            return
+
+        max_index = len(self.replay_data) - 1
+        if max_index < 0:
+            return
+
+        changed = False
+
+        if key == 'j' or key == '\x1b[D':  # j or left arrow
+            # Step backward
+            if self.replay_index > 0:
+                self.replay_index -= 1
+                changed = True
+        elif key == 'l' or key == '\x1b[C':  # l or right arrow
+            # Step forward
+            if self.replay_index < max_index:
+                self.replay_index += 1
+                changed = True
+        elif key == 'h' or key == '\x1b[H':  # h or Home
+            # Jump to start
+            self.replay_index = 0
+            changed = True
+        elif key == ';' or key == '\x1b[F':  # ; or End
+            # Jump to end
+            self.replay_index = max_index
+            changed = True
+        elif key in '0123456789':
+            # Jump to percentage
+            percent = int(key) * 10
+            if percent == 0:
+                self.replay_index = 0
+            else:
+                self.replay_index = int(max_index * percent / 100)
+            changed = True
+        elif key == 'q':
+            # Quit
+            self.running = False
+
+        if changed:
+            self.restore_snapshot(self.replay_data[self.replay_index])
+            self.first_draw = True  # Force redraw
 
     def format_cell(self, level: float, is_self: bool = False, threshold: Optional[float] = None) -> str:
         """Format a single cell with level and box indicators.
@@ -354,7 +548,19 @@ class StatusDisplay:
         self.clear_screen()
 
         # Header
-        print("=== Missing Link MQTT Status Monitor ===\n", end='', flush=True)
+        if self.replay_mode:
+            print("=== Missing Link MQTT Status Monitor - REPLAY MODE ===\n", end='', flush=True)
+            # Show replay position and timestamp
+            if self.replay_data:
+                current_snapshot = self.replay_data[self.replay_index]
+                timestamp = current_snapshot.get('timestamp', 0)
+                import datetime
+                dt = datetime.datetime.fromtimestamp(timestamp)
+                timestamp_str = dt.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                print(f"Frame {self.replay_index + 1}/{len(self.replay_data)} - {timestamp_str}\n", end='', flush=True)
+                print("Controls: j/← Prev | l/→ Next | h/Home Start | ;/End End | 0-9 Jump % | q Quit\n", end='', flush=True)
+        else:
+            print("=== Missing Link MQTT Status Monitor ===\n", end='', flush=True)
         print("\n", end='', flush=True)  # Blank line
 
         # Climax status section
@@ -461,18 +667,43 @@ class StatusDisplay:
         """Run the display update loop."""
         self.enter_alt_screen()
         self.hide_cursor()
+
+        # Set up raw terminal mode for replay keyboard input
+        old_settings = None
+        if self.replay_mode:
+            old_settings = termios.tcgetattr(sys.stdin)
+            tty.setcbreak(sys.stdin.fileno())
+
         try:
             while self.running:
                 try:
+                    # Handle replay navigation
+                    if self.replay_mode:
+                        self.handle_replay_navigation()
+
+                    # Draw interface
                     if self.mqtt_mode:
                         self.draw_mqtt_interface()
                     else:
                         self.draw_interface()
+
+                    # Log snapshot if logging enabled
+                    if self.log_handle and not self.replay_mode:
+                        self.log_snapshot()
+
                     time.sleep(0.25)  # Update every 250ms (4Hz)
                 except Exception:
                     # Don't crash the display thread
                     pass
         finally:
+            # Restore terminal settings
+            if old_settings:
+                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+
+            # Close log file
+            if self.log_handle:
+                self.log_handle.close()
+
             # Always clean up, even on exception
             self.show_cursor()
             self.exit_alt_screen()
