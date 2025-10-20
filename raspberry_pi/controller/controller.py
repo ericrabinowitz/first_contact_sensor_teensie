@@ -542,8 +542,14 @@ def update_active_links() -> tuple[bool, bool, List[List[str]], List[List[str]]]
             else:
                 new_active_links.add((statue2, statue1))
 
-    # Determine if climax is active (all 5 neighbor pairs connected)
-    new_climax_active = len(new_active_links) == num_statues
+    # Determine if climax should be active with persistence logic
+    if not climax_is_active:
+        # Not in climax: require all neighbor pairs to start climax
+        new_climax_active = len(new_active_links) == num_statues
+    else:
+        # Already in climax: persist as long as all 5 statues remain active
+        # This allows individual links to flake without ending climax
+        new_climax_active = len(active_statues) == num_statues
 
     # Detect state transitions
     climax_started = new_climax_active and not climax_is_active
