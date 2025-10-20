@@ -1014,12 +1014,6 @@ def handle_contact_event(payload: dict):
             if debug:
                 print("Enabled climax mode: mixing all channels to all outputs")
             leds_active(active_statues, effect_key='climax')
-        # Publish climax active state
-        publish_mqtt(CLIMAX_MQTT_TOPIC, {
-            "state": "active",
-            "connected_pairs": connected_pairs,
-            "missing_pairs": []
-        })
     elif climax_stopped:
         control_relay(activate=False)
         # Disable climax mode: return to normal per-channel routing
@@ -1030,13 +1024,12 @@ def handle_contact_event(payload: dict):
         # Revert LEDs back to normal active mode for still-active statues
         leds_active(active_statues, effect_key='active')
 
-    if missing_pairs:
-        # Publish climax inactive state with missing pairs
-        publish_mqtt(CLIMAX_MQTT_TOPIC, {
-            "state": "inactive",
-            "connected_pairs": connected_pairs,
-            "missing_pairs": missing_pairs
-        })
+    # Always publish current climax state on any contact event
+    publish_mqtt(CLIMAX_MQTT_TOPIC, {
+        "state": "active" if climax_is_active else "inactive",
+        "connected_pairs": connected_pairs,
+        "missing_pairs": missing_pairs
+    })
 
 
 # ### Debug server
