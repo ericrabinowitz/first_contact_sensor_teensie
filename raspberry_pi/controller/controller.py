@@ -123,7 +123,6 @@ MQTT_QOS = 0  # Quality of Service
 # TODO: test different palettes, like the default one
 PALETTE_ID = 3
 
-ACTIVE_SPEED = 255
 
 SPEED = {
     'active': 255,
