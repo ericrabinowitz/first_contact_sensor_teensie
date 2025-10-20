@@ -30,7 +30,7 @@ import sounddevice as sd
 
 BLOCK_SIZE = 1024  # Default block size for audio processing
 CLIMAX_MIX_GAIN = 0.5  # Gain factor for mixing all channels in climax mode
-MUSIC_GAIN = 1 # Gain factor for playing active audio.
+MUSIC_GAIN = 1  # Gain factor for playing active audio.
 
 class ToggleableMultiChannelPlayback:
     """Manages synchronized multi-channel audio playback across multiple devices.
