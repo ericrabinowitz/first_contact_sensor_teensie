@@ -12,7 +12,7 @@ Type=simple
 User={{ user }}
 Group={{ user }}
 
-# Environment=DEBUG=1
+Environment=DEBUG=1
 # Environment=TEST_MODE_NO_LEDS=1
 Environment=CONSERVE_POWER=1
 Environment=PATH=/home/{{ user }}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
