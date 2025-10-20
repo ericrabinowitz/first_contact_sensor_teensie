@@ -126,15 +126,15 @@ wled-test: sync ## Run WLED test
 ## Climax Simulation
 climax-on: ## Simulate full climax mode (all statues connected in circular topology)
 	@echo "Triggering climax mode on $(SSH_TARGET) - connecting all adjacent statue pairs..."
-	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"eros\", \"emitters\":[\"elektra\", \"ariel\"]}'" && echo "✓ eros ↔ elektra, ultimo"
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"eros\", \"emitters\":[\"elektra\", \"ariel\"]}'" && echo "✓ eros ↔ elektra, ariel"
 	@sleep 0.5
-	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"elektra\", \"emitters\":[\"eros\", \"ultimo\"]}'" && echo "✓ elektra ↔ eros, ariel"
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"elektra\", \"emitters\":[\"eros\", \"ultimo\"]}'" && echo "✓ elektra ↔ eros, ultimo"
 	@sleep 0.5
-	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ariel\", \"emitters\":[\"eros\", \"sophia\"]}'" && echo "✓ ariel ↔ elektra, sophia"
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ariel\", \"emitters\":[\"eros\", \"sophia\"]}'" && echo "✓ ariel ↔ eros, sophia"
 	@sleep 0.5
 	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"sophia\", \"emitters\":[\"ariel\", \"ultimo\"]}'" && echo "✓ sophia ↔ ariel, ultimo"
 	@sleep 0.5
-	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ultimo\", \"emitters\":[\"sophia\", \"elektra\"]}'" && echo "✓ ultimo ↔ sophia, eros"
+	@ssh $(SSH_TARGET) "curl -s -H 'Content-Type: application/json' -X POST http://192.168.4.1:8080/contact -d '{\"detector\":\"ultimo\", \"emitters\":[\"sophia\", \"elektra\"]}'" && echo "✓ ultimo ↔ sophia, elektra"
 	@echo "✓ Climax mode activated"
 
 climax-off: ## Simulate turning off climax mode (disconnect all statues)
