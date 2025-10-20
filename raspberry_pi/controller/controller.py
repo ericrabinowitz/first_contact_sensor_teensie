@@ -132,7 +132,7 @@ SPEED = {
 DEFAULT_SPEED = 128
 
 
-INTENSTITY = {
+INTENSITY = {
     'climax': 180,
 }
 DEFAULT_INTENSITY = 128
@@ -838,7 +838,7 @@ def leds_active(statues: Set[Statue], effect_key='active'):
                         "fx": fx,
                         "pal": 0,
                         "sx": SPEED.get(effect_key, DEFAULT_SPEED),
-                        "ix": INTENSTITY.get(effect_key, DEFAULT_INTENSITY),
+                        "ix": INTENSITY.get(effect_key, DEFAULT_INTENSITY),
                     }
                 )
                 if debug:
