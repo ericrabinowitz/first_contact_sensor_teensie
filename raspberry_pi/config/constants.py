@@ -14,9 +14,9 @@ class Statue(StrEnum):
 
     EROS = auto()
     ELEKTRA = auto()
-    ARIEL = auto()
-    SOPHIA = auto()
     ULTIMO = auto()
+    SOPHIA = auto()
+    ARIEL = auto()
 
 
 class Board(StrEnum):
@@ -35,4 +35,6 @@ class Effect(IntEnum):
     NOISE = 71
     LIGHTHOUSE = 41  # consider scanner
     HEARTBEAT = 100
+    CHASE_RAINBOW = 30
+    BREATHE = 2
     # Add some effect for climax and use that.

@@ -51,18 +51,23 @@ SUNSET = datetime.time(19, 00)  # 7:00 PM
 POWER_CHECK_INTERVAL_SECS = 60
 
 # Relay configuration
-RELAY_GPIO_PIN = 17  # GPIO 17 (Pin 11) - Main relay
-RELAY2_GPIO_PIN = 27  # GPIO 27 (Pin 13) - Timed relay
+RELAY_GPIO_PIN = 27  # GPIO 27 (Pin 13) - Main relay
+RELAY2_GPIO_PIN = 17  # GPIO 17 (Pin 11) - Timed relay
 RELAY_ACTIVE_HIGH = False  # True = HIGH activates relay, False = LOW activates relay
 RELAY2_MAX_DURATION = 3.0  # Maximum duration in seconds for relay 2
 
 # Folder for audio files
 SONG_DIR = os.path.join(os.path.dirname(__file__), "../../audio_files")
 ACTIVE_SONGS = [
-    "Missing Link Playa 1 - 6 channel.wav",
-    "Missing Link Playa 2 - 6 Channel.wav",
-#    "Missing Link Playa 3 - 6 Channel.wav",
+    #"Missing Link Playa 1 - 6 channel.wav",
+    "Connection - 6 channel.wav",
+    #"Connection - 6 channel reverse.wav",
+    #"Missing Link Playa 2 - 6 Channel.wav",
+    "Electricity - 6 channel.wav",
+    #"Electricity - 6 channel reverse.wav",
+    #"Missing Link Playa 3 - 6 Channel.wav",
     "Dusty Hands 6 channel.wav",
+    #"Dusty Hands 6 channel reverse.wav",
     #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
     #    "Missing Link Playa 3 - Five Channel.wav",
 ]
@@ -118,14 +123,35 @@ MQTT_QOS = 0  # Quality of Service
 # TODO: test different palettes, like the default one
 PALETTE_ID = 3
 
+
+SPEED = {
+    'active': 255,
+    'climax': 180,
+}
+DEFAULT_SPEED = 128
+
+
+INTENSITY = {
+    'climax': 180,
+}
+DEFAULT_INTENSITY = 128
+
 # TODO: pick colors
 COLORS = {
-    Statue.EROS: [[255, 0, 100], [225, 0, 255], [255, 0, 100]],  # red
+    Statue.EROS: [[255, 0, 100], [225, 0, 0], [255, 0, 100]],  # red
     Statue.ELEKTRA: [[0, 25, 255], [0, 200, 255], [0, 25, 255]],  # blue
     Statue.ARIEL: [[255, 200, 0], [255, 255, 0], [255, 255, 0]],  # yellow
     Statue.SOPHIA: [[8, 255, 0], [66, 237, 160], [66, 237, 160]],  # green
     Statue.ULTIMO: [[255, 100, 0], [255, 199, 94], [255, 199, 94]],  # orange
     "dormant": [[255, 255, 255], [0, 0, 0], [0, 0, 0]],
+}
+
+SOLID_COLORS = {
+    Statue.EROS: [[255, 0, 0], [0, 0, 0], [0, 0, 0]],  # red
+    Statue.ELEKTRA: [[0, 0, 255], [0, 0, 0], [0, 0, 0]],  # blue
+    Statue.ARIEL: [[255, 200, 0], [0, 0, 0], [0, 0, 0]],  # yellow
+    Statue.SOPHIA: [[8, 255, 0], [0, 0, 0], [0, 0, 0]],  # green
+    Statue.ULTIMO: [[255, 160, 0], [0, 0, 0], [0, 0, 0]],  # orange
 }
 
 BRIGHTNESS = {
@@ -139,11 +165,11 @@ BRIGHTNESS = {
 }
 
 EFFECTS = {
-    "active": Effect.FIREWORKS,
+    "active": Effect.BREATHE,
     "dormant": Effect.NOISE,
     "arch": Effect.LIGHTHOUSE,
     "hand": Effect.SOLID,
-    "climax": Effect.FIREWORKS,
+    "climax": Effect.CHASE_RAINBOW,
     "hand-dormant": Effect.NOISE,
     "heart-dormant": Effect.SOLID,
     "hand-active": Effect.SOLID,
@@ -226,27 +252,27 @@ teensy_config = {
     Statue.EROS: {
         "emit": 10077,
         "detect": [Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.ELEKTRA: {
         "emit": 12274,
         "detect": [Statue.EROS, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.ARIEL: {
         "emit": 14643,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.SOPHIA: {
         "emit": 17227,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.ULTIMO, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.ULTIMO: {
         "emit": 19467,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
 }
 
@@ -776,6 +802,7 @@ def manage_power():
 
 
 def leds_active(statues: Set[Statue], effect_key='active'):
+    orig_effect_key = effect_key
     if no_leds:
         return
     if debug:
@@ -790,14 +817,16 @@ def leds_active(statues: Set[Statue], effect_key='active'):
         }
 
     for statue in statues:
-        color = COLORS.get(statue, COLORS["dormant"])
         for board, seg_map in segment_map[statue].items():
             for segment_name, seg_id in seg_map.items():
+                effect_key = orig_effect_key
                 # Segment name is either 'hands' or contains 'heart'.
                 if "hand" in segment_name:
                     effect_key = "hand-active"
                 elif "heart" in segment_name:
                     effect_key = "heart-active"
+                color_map = SOLID_COLORS if effect_key == "active" else COLORS
+                color = color_map.get(statue, COLORS["dormant"])
                 bri = BRIGHTNESS[effect_key]
                 fx = EFFECTS[effect_key]
                 board_payloads[board]["seg"].append(
@@ -806,11 +835,13 @@ def leds_active(statues: Set[Statue], effect_key='active'):
                         "bri": bri,
                         "col": color,
                         "fx": fx,
-                        "pal": PALETTE_ID,
+                        "pal": 0,
+                        "sx": SPEED.get(effect_key, DEFAULT_SPEED),
+                        "ix": INTENSITY.get(effect_key, DEFAULT_INTENSITY),
                     }
                 )
                 if debug:
-                    print(f"[active] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
+                    print(f"[{orig_effect_key}] Setting {statue} {segment_name} on {board} to fx={fx} with brightness={bri} and color={color}")
 
     for board, payload in board_payloads.items():
         if len(payload["seg"]) == 0:
@@ -823,7 +854,6 @@ def leds_active(statues: Set[Statue], effect_key='active'):
 
 
 def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm]
-    effect_key = 'dormant'
     if no_leds:
         print("No leds: skipping dormant")
         return
@@ -842,15 +872,18 @@ def leds_dormant(statues: Set[Statue]):  # pyright: ignore[reportInvalidTypeForm
         for board, seg_map in segment_map[statue].items():
             for segment_name, seg_id in seg_map.items():
                 # Segment name is either 'hands' or contains 'heart'.
+                effect_key = "dormant"
                 color_key = "dormant"
+                color_map = COLORS
                 if "hand" in segment_name:
                     effect_key = "hand-dormant"
                     color_key = statue
+                    color_map = SOLID_COLORS
                 elif "heart" in segment_name:
                     effect_key = "heart-dormant"
 
                 fx = EFFECTS[effect_key]
-                color = COLORS[color_key]
+                color = color_map[color_key]
                 bri = BRIGHTNESS[effect_key]
 
                 if debug:

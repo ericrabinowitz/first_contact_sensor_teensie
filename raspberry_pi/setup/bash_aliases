@@ -54,13 +54,31 @@ controller.install() {
 # Status monitor autostart management
 MONITOR_DESKTOP="status-monitor.desktop"
 AUTOSTART_DIR="$HOME/.config/autostart"
+LXTERMINAL_DIR="$HOME/.config/lxterminal"
 
-alias monitor.cpconf="mkdir -p $AUTOSTART_DIR && cp $MONITOR_DESKTOP $AUTOSTART_DIR/"
+monitor_cpconf() {
+  # Copy autostart desktop file
+  mkdir -p "$AUTOSTART_DIR"
+  cp "$MONITOR_DESKTOP" "$AUTOSTART_DIR/"
+
+  # Configure lxterminal with larger font
+  mkdir -p "$LXTERMINAL_DIR"
+  cp lxterminal.conf "$LXTERMINAL_DIR/"
+
+  # Configure Openbox to maximize the status monitor window
+  ./openbox-setup.sh
+}
+
+# Status monitor log file location
+MONITOR_LOG="$HOME/first_contact_sensor_teensie/logs/status_monitor.jsonl"
+
 alias monitor.enable="monitor.cpconf"
 alias monitor.disable="rm -f $AUTOSTART_DIR/$MONITOR_DESKTOP"
-alias monitor.start="lxterminal --title='Missing Link Status Monitor' --geometry=120x40 -e bash -c '$HOME/first_contact_sensor_teensie/raspberry_pi/controller/status_monitor.py; echo; echo \"Process exited. Press Enter to close.\"; read' &"
+alias monitor.start="mkdir -p $HOME/first_contact_sensor_teensie/logs && lxterminal --title='Missing Link Status Monitor' --geometry=120x40 -e bash -c '$HOME/first_contact_sensor_teensie/raspberry_pi/controller/status_monitor.py --log $MONITOR_LOG; echo; echo \"Process exited. Press Enter to close.\"; read' &"
+alias monitor.logs="lxterminal --title='Missing Link Status Monitor - REPLAY' --geometry=120x40 -e bash -c '$HOME/first_contact_sensor_teensie/raspberry_pi/controller/status_monitor.py --replay $MONITOR_LOG; echo; echo \"Process exited. Press Enter to close.\"; read' &"
 alias monitor.kill="pkill -f status_monitor.py"
 alias monitor.status="pgrep -fa status_monitor.py || echo 'Status monitor not running'"
+alias monitor.cpconfig="monitor_cpconf"
 
 tools.install() {
   sudo apt install -y vim git less curl wget net-tools arp-scan iproute2 dnsutils ethtool libusb-dev sysstat

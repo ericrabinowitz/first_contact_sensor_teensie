@@ -8,5 +8,7 @@ __pycache__/
 # C extensions
 *.so
 
-
+# Log files
+logs/
+*.jsonl
 
