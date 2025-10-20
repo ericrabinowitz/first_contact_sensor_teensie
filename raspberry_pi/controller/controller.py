@@ -253,27 +253,27 @@ teensy_config = {
     Statue.EROS: {
         "emit": 10077,
         "detect": [Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.ELEKTRA: {
         "emit": 12274,
         "detect": [Statue.EROS, Statue.SOPHIA, Statue.ULTIMO, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.ARIEL: {
         "emit": 14643,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ULTIMO],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.SOPHIA: {
         "emit": 17227,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.ULTIMO, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
     Statue.ULTIMO: {
         "emit": 19467,
         "detect": [Statue.EROS, Statue.ELEKTRA, Statue.SOPHIA, Statue.ARIEL],
-        "threshold": 0.01,
+        "threshold": 0.002,
     },
 }
 
