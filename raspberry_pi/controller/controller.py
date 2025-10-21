@@ -542,8 +542,14 @@ def update_active_links() -> tuple[bool, bool, List[List[str]], List[List[str]]]
             else:
                 new_active_links.add((statue2, statue1))
 
-    # Determine if climax is active (all 5 neighbor pairs connected)
-    new_climax_active = len(new_active_links) == num_statues
+    # Determine if climax should be active with persistence logic
+    if not climax_is_active:
+        # Not in climax: require all neighbor pairs to start climax
+        new_climax_active = len(new_active_links) == num_statues
+    else:
+        # Already in climax: persist as long as all 5 statues remain active
+        # This allows individual links to flake without ending climax
+        new_climax_active = len(active_statues) == num_statues
 
     # Detect state transitions
     climax_started = new_climax_active and not climax_is_active
@@ -1008,12 +1014,6 @@ def handle_contact_event(payload: dict):
             if debug:
                 print("Enabled climax mode: mixing all channels to all outputs")
             leds_active(active_statues, effect_key='climax')
-        # Publish climax active state
-        publish_mqtt(CLIMAX_MQTT_TOPIC, {
-            "state": "active",
-            "connected_pairs": connected_pairs,
-            "missing_pairs": []
-        })
     elif climax_stopped:
         control_relay(activate=False)
         # Disable climax mode: return to normal per-channel routing
@@ -1024,13 +1024,12 @@ def handle_contact_event(payload: dict):
         # Revert LEDs back to normal active mode for still-active statues
         leds_active(active_statues, effect_key='active')
 
-    if missing_pairs:
-        # Publish climax inactive state with missing pairs
-        publish_mqtt(CLIMAX_MQTT_TOPIC, {
-            "state": "inactive",
-            "connected_pairs": connected_pairs,
-            "missing_pairs": missing_pairs
-        })
+    # Always publish current climax state on any contact event
+    publish_mqtt(CLIMAX_MQTT_TOPIC, {
+        "state": "active" if climax_is_active else "inactive",
+        "connected_pairs": connected_pairs,
+        "missing_pairs": missing_pairs
+    })
 
 
 # ### Debug server
