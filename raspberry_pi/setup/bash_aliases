@@ -25,6 +25,18 @@ alias aliases="vim ~/.bash_aliases && source ~/.bashrc"
 alias leases="cat /var/lib/misc/dnsmasq.leases"
 alias arp.local="arp -a | grep 192.168.4."
 
+# NTP monitoring aliases
+alias ntp.status="timedatectl status"
+alias ntp.show="timedatectl show"
+alias ntp.monitor.status="systemctl status ntp-monitor.timer ntp-monitor.service"
+alias ntp.monitor.logs="journalctl -u ntp-monitor.service -f"
+alias ntp.monitor.run="sudo /usr/local/bin/ntp-monitor.sh"
+alias ntp.monitor.timer="systemctl list-timers ntp-monitor.timer"
+
+# Test NTP server
+alias ntp.test="timedatectl show | grep -E 'NTPSynchronized|ServerName|ServerAddress'"
+alias ntp.check="ping -c 1 -W 1 192.168.4.2 && echo 'Pi Zero NTP server is reachable' || echo 'Pi Zero NTP server is NOT reachable'"
+
 # Generic service aliases using a loop
 for service in NetworkManager mosquitto dnsmasq controller; do
   # To get status and logs.

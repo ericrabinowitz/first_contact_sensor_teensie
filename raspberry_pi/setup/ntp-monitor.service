@@ -1,0 +1,12 @@
+[Unit]
+Description=Check NTP sync and update controller environment
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ntp-monitor.sh
+StandardOutput=journal
+StandardError=journal
+
+# Don't restart on failure for oneshot services run by timer
+# The timer will handle the scheduling
