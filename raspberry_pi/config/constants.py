@@ -14,9 +14,9 @@ class Statue(StrEnum):
 
     EROS = auto()
     ELEKTRA = auto()
-    ULTIMO = auto()
-    SOPHIA = auto()
     ARIEL = auto()
+    SOPHIA = auto()
+    ULTIMO = auto()
 
 
 class Board(StrEnum):
