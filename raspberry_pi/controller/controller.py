@@ -73,7 +73,7 @@ ACTIVE_SONGS = [
     "Unscruz Song - 6 channel.wav",
 ]
 DORMANT_SONG = "Missing Link Playa Dormant - 5 channel deux.wav"
-DORMANT_TIMEOUT_SECONDS = 10  # Time in dormant before advancing to next song
+DORMANT_TIMEOUT_SECONDS = 30  # Time in dormant before advancing to next song
 DNSMASQ_FILE = os.path.join(os.path.dirname(__file__), "../setup/dnsmasq.conf")
 
 # MQTT server settings
