@@ -70,6 +70,7 @@ ACTIVE_SONGS = [
     #"Dusty Hands 6 channel reverse.wav",
     #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
     #    "Missing Link Playa 3 - Five Channel.wav",
+    "Unscruz Song - 6 channel.wav",
 ]
 DORMANT_SONG = "Missing Link Playa Dormant - 5 channel deux.wav"
 DORMANT_TIMEOUT_SECONDS = 10  # Time in dormant before advancing to next song
