@@ -66,7 +66,7 @@ ACTIVE_SONGS = [
     "Electricity - 6 channel.wav",
     #"Electricity - 6 channel reverse.wav",
     #"Missing Link Playa 3 - 6 Channel.wav",
-    "Dusty Hands 6 channel.wav",
+    "Dusty Hands - 6 channel.wav",
     #"Dusty Hands 6 channel reverse.wav",
     #    "Missing Link Playa 1 - 6 Channel 6-7.wav",
     #    "Missing Link Playa 3 - Five Channel.wav",
